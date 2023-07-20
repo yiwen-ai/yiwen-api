@@ -1,0 +1,103 @@
+openapi: '3.0.1'
+info:
+  title: Yiwen-API
+  version: 'v1'
+servers:
+  - url: https://api.yiwen.ltd
+tags:
+  - name: Scraping
+    description: 读取 web 文章内容
+  - name: Creation
+    description: 草稿、稿件
+  - name: Publication
+    description: 作品、出版物
+components:
+  securitySchemes:
+    CookieSession:
+      name: Session
+      type: apiKey
+      in: cookie
+    HeaderAuthorizationCWT:
+      type: http
+      scheme: bearer
+      bearerFormat: CWT
+  parameters:
+    QueryEncodedUrl:
+      name: url
+      in: query
+      required: true
+      description: ''
+      schema:
+        type: string
+  schemas:
+    ScrapingDocument:
+      type: object
+      properties:
+        id:
+          type: string
+          format: byte
+          description: Xid 对象，scraping id
+        url:
+          type: string
+          description: 经过服务器处理的 url
+        src:
+          type: string
+          description: 用户原始输入的 url
+        title:
+          type: string
+          description: 从 web 读取到的文章标题
+        meta:
+          type: object
+          description: 从 web 读取到的文章元数据，一般以 `og:` 为前缀
+        content:
+          type: string
+          format: byte
+          description: CBOR 格式的文章内容
+  responses:
+    ErrorResponse:
+      description: 标准错误返回结果
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+                description: 错误代号
+                example: NotFound
+              message:
+                type: string
+                description: 错误详情
+                example: some thing not found
+    ScrapingResponse:
+      description: 读取 web 文章的返回结果
+      content:
+        application/cbor:
+          schema:
+            type: object
+            properties:
+              result:
+                type: object
+                $ref: '#/components/schemas/ScrapingDocument'
+        application/json:
+          schema:
+            type: object
+            properties:
+              result:
+                type: object
+                $ref: '#/components/schemas/ScrapingDocument'
+paths:
+  /v1/scraping:
+    get:
+      tags:
+        - Scraping
+      summary: 获取指定 url 文章内容。
+      security:
+        - CookieSession: []
+        - HeaderAuthorizationCWT: []
+      parameters:
+        - $ref: '#/components/parameters/QueryEncodedUrl'
+      responses:
+        '200':
+          description: OK
+          $ref: '#/components/responses/ScrapingResponse'
