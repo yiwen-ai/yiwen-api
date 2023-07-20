@@ -1,0 +1,359 @@
+[
+  {
+    "id": "P0IIc7",
+    "texts": [
+      "RFC 8949"
+    ]
+  },
+  {
+    "id": "BTneht",
+    "texts": [
+      "CBOR"
+    ]
+  },
+  {
+    "id": "Zu0SlI",
+    "texts": [
+      "December 2020"
+    ]
+  },
+  {
+    "id": "dF6WTI",
+    "texts": [
+      "Bormann \u0026 Hoffman"
+    ]
+  },
+  {
+    "id": "ZcTD0N",
+    "texts": [
+      "Standards Track"
+    ]
+  },
+  {
+    "id": "NeFX5i",
+    "texts": [
+      "[Page]"
+    ]
+  },
+  {
+    "id": "------",
+    "texts": []
+  },
+  {
+    "id": "Esp9G6",
+    "texts": [
+      "Stream:"
+    ]
+  },
+  {
+    "id": "------",
+    "texts": []
+  },
+  {
+    "id": "ykuRdu",
+    "texts": [
+      "Internet Engineering Task Force (IETF)"
+    ]
+  },
+  {
+    "id": "------",
+    "texts": []
+  },
+  {
+    "id": "Bzu3LN",
+    "texts": [
+      "RFC:"
+    ]
+  },
+  {
+    "id": "------",
+    "texts": []
+  },
+  {
+    "id": "So_EX_",
+    "texts": [
+      "8949"
+    ]
+  },
+  {
+    "id": "------",
+    "texts": []
+  },
+  {
+    "id": "XJ3kDl",
+    "texts": [
+      "STD:"
+    ]
+  },
+  {
+    "id": "------",
+    "texts": []
+  },
+  {
+    "id": "iXTN96",
+    "texts": [
+      "94"
+    ]
+  },
+  {
+    "id": "------",
+    "texts": []
+  },
+  {
+    "id": "ZyQS8E",
+    "texts": [
+      "Obsoletes:"
+    ]
+  },
+  {
+    "id": "------",
+    "texts": []
+  },
+  {
+    "id": "fkCfTY",
+    "texts": [
+      "7049"
+    ]
+  },
+  {
+    "id": "------",
+    "texts": []
+  },
+  {
+    "id": "v2UVlm",
+    "texts": [
+      "Category:"
+    ]
+  },
+  {
+    "id": "------",
+    "texts": []
+  },
+  {
+    "id": "sjkTIt",
+    "texts": [
+      "Standards Track"
+    ]
+  },
+  {
+    "id": "------",
+    "texts": []
+  },
+  {
+    "id": "p44P7k",
+    "texts": [
+      "Published:"
+    ]
+  },
+  {
+    "id": "------",
+    "texts": []
+  },
+  {
+    "id": "PgXtyE",
+    "texts": [
+      "December 2020"
+    ]
+  },
+  {
+    "id": "------",
+    "texts": []
+  },
+  {
+    "id": "ZQkEh4",
+    "texts": [
+      "ISSN:"
+    ]
+  },
+  {
+    "id": "------",
+    "texts": []
+  },
+  {
+    "id": "VqNG-t",
+    "texts": [
+      "2070-1721"
+    ]
+  },
+  {
+    "id": "------",
+    "texts": []
+  },
+  {
+    "id": "fDWtAH",
+    "texts": [
+      "Authors:"
+    ]
+  },
+  {
+    "id": "------",
+    "texts": []
+  },
+  {
+    "id": "uYBGj1",
+    "texts": [
+      "C. Bormann"
+    ]
+  },
+  {
+    "id": "------",
+    "texts": []
+  },
+  {
+    "id": "dAu0Y6",
+    "texts": [
+      "Universität Bremen TZI"
+    ]
+  },
+  {
+    "id": "------",
+    "texts": []
+  },
+  {
+    "id": "-ap73j",
+    "texts": [
+      "P. Hoffman"
+    ]
+  },
+  {
+    "id": "------",
+    "texts": []
+  },
+  {
+    "id": "TfXZtu",
+    "texts": [
+      "ICANN"
+    ]
+  },
+  {
+    "id": "------",
+    "texts": []
+  },
+  {
+    "id": "hrx7vP",
+    "texts": [
+      "RFC 8949"
+    ]
+  },
+  {
+    "id": "------",
+    "texts": []
+  },
+  {
+    "id": "fDN0HK",
+    "texts": [
+      "Concise Binary Object Representation (CBOR)"
+    ]
+  },
+  {
+    "id": "------",
+    "texts": []
+  },
+  {
+    "id": "tACRwp",
+    "texts": [
+      "Abstract"
+    ]
+  },
+  {
+    "id": "------",
+    "texts": []
+  },
+  {
+    "id": "cVn1gn",
+    "texts": [
+      "The Concise Binary Object Representation (CBOR) is a data format whose design goals include the possibility of extremely small code size, fairly small message size, and extensibility without the need for version negotiation. These design goals make it different from earlier binary serializations such as ASN.1 and MessagePack.",
+      "¶"
+    ]
+  },
+  {
+    "id": "------",
+    "texts": []
+  },
+  {
+    "id": "LQRLg5",
+    "texts": [
+      "This document obsoletes RFC 7049, providing editorial improvements, new details, and errata fixes while keeping full compatibility with the interchange format of RFC 7049. It does not create a new version of the format.",
+      "¶"
+    ]
+  },
+  {
+    "id": "------",
+    "texts": []
+  },
+  {
+    "id": "U-U8GZ",
+    "texts": [
+      "Status of This Memo"
+    ]
+  },
+  {
+    "id": "------",
+    "texts": []
+  },
+  {
+    "id": "SZs2_g",
+    "texts": [
+      "This is an Internet Standards Track document.",
+      "¶"
+    ]
+  },
+  {
+    "id": "------",
+    "texts": []
+  },
+  {
+    "id": "YYc-za",
+    "texts": [
+      "This document is a product of the Internet Engineering Task Force (IETF). It represents the consensus of the IETF community. It has received public review and has been approved for publication by the Internet Engineering Steering Group (IESG). Further information on Internet Standards is available in Section 2 of RFC 7841.",
+      "¶"
+    ]
+  },
+  {
+    "id": "------",
+    "texts": []
+  },
+  {
+    "id": "Y1aQ_O",
+    "texts": [
+      "Information about the current status of this document, any errata, and how to provide feedback on it may be obtained at ",
+      "https://www.rfc-editor.org/info/rfc8949",
+      ".",
+      "¶"
+    ]
+  },
+  {
+    "id": "------",
+    "texts": []
+  },
+  {
+    "id": "U3xaP7",
+    "texts": [
+      "Copyright Notice"
+    ]
+  },
+  {
+    "id": "------",
+    "texts": []
+  },
+  {
+    "id": "Kc0v44",
+    "texts": [
+      "Copyright (c) 2020 IETF Trust and the persons identified as the document authors. All rights reserved.",
+      "¶"
+    ]
+  },
+  {
+    "id": "------",
+    "texts": []
+  },
+  {
+    "id": "l29RKz",
+    "texts": [
+      "This document is subject to BCP 78 and the IETF Trust's Legal Provisions Relating to IETF Documents (",
+      "https://trustee.ietf.org/license-info",
+      ") in effect on the date of publication of this document. Please review these documents carefully, as they describe your rights and restrictions with respect to this document. Code Components extracted from this document must include Simplified BSD License text as described in Section 4.e of the Trust Legal Provisions and are provided without warranty as described in the Simplified BSD License.",
+      "¶"
+    ]
+  }
+]

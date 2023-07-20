@@ -65,7 +65,21 @@ func (id ID) MarshalJSON() ([]byte, error) {
 }
 
 func (id *ID) UnmarshalJSON(data []byte) error {
+	if id == nil {
+		return errors.New("util.ID.UnmarshalJSON: nil pointer")
+	}
 	return (*xid.ID)(id).UnmarshalJSON(data)
+}
+
+func (id ID) MarshalText() ([]byte, error) {
+	return xid.ID(id).MarshalText()
+}
+
+func (id *ID) UnmarshalText(data []byte) error {
+	if id == nil {
+		return errors.New("util.ID.UnmarshalText: nil pointer")
+	}
+	return (*xid.ID)(id).UnmarshalText(data)
 }
 
 type UUID uuid.UUID
@@ -110,28 +124,28 @@ func (id *UUID) UnmarshalText(data []byte) error {
 	return (*uuid.UUID)(id).UnmarshalText(data)
 }
 
-type Raw []byte
+type CBORRaw []byte
 
-func (r Raw) String() string {
+func (r CBORRaw) String() string {
 	return base64.RawURLEncoding.EncodeToString(r)
 }
 
-func (r Raw) MarshalCBOR() ([]byte, error) {
+func (r CBORRaw) MarshalCBOR() ([]byte, error) {
 	if len(r) == 0 {
 		return []byte{0xf6}, nil
 	}
 	return r, nil
 }
 
-func (r *Raw) UnmarshalCBOR(data []byte) error {
+func (r *CBORRaw) UnmarshalCBOR(data []byte) error {
 	if r == nil {
-		return errors.New("util.Raw: UnmarshalCBOR on nil pointer")
+		return errors.New("util.CBORRaw: UnmarshalCBOR on nil pointer")
 	}
 	*r = append((*r)[0:0], data...)
 	return nil
 }
 
-func (r Raw) MarshalJSON() ([]byte, error) {
+func (r CBORRaw) MarshalJSON() ([]byte, error) {
 	if len(r) == 0 {
 		return []byte("null"), nil
 	}
@@ -139,12 +153,12 @@ func (r Raw) MarshalJSON() ([]byte, error) {
 	return []byte("\"" + base64.RawURLEncoding.EncodeToString(r) + "\""), nil
 }
 
-func (r *Raw) UnmarshalJSON(data []byte) error {
+func (r *CBORRaw) UnmarshalJSON(data []byte) error {
 	if r == nil {
-		return errors.New("util.Raw: UnmarshalJSON on nil pointer")
+		return errors.New("util.CBORRaw: UnmarshalJSON on nil pointer")
 	}
 	if len(data) < 2 || data[0] != '"' || data[len(data)-1] != '"' {
-		return errors.New("util.Raw: UnmarshalJSON with invalid data")
+		return errors.New("util.CBORRaw: UnmarshalJSON with invalid data")
 	}
 	data, err := base64.RawURLEncoding.DecodeString(string(data[1 : len(data)-1]))
 	if err == nil {

@@ -17,6 +17,7 @@ func init() {
 type APIs struct {
 	Healthz     *Healthz
 	Creation    *Creation
+	Jarvis      *Jarvis
 	Publication *Publication
 	Scraping    *Scraping
 }
@@ -25,6 +26,7 @@ func newAPIs(blls *bll.Blls) *APIs {
 	return &APIs{
 		Healthz:     &Healthz{blls},
 		Creation:    &Creation{blls},
+		Jarvis:      &Jarvis{blls},
 		Publication: &Publication{blls},
 		Scraping:    &Scraping{blls},
 	}
@@ -43,41 +45,47 @@ func newRouters(apis *APIs) []*gear.Router {
 		TrailingSlashRedirect: false,
 	})
 
+	// /v1/xxx 都需要认证
 	router.Use(middleware.AuthToken(true).Auth)
 
 	router.Get("/scraping", apis.Scraping.Create)
+	router.Get("/search/in_group", apis.Jarvis.GroupSearch)
+	router.Get("/search/by_original_url", apis.Jarvis.OriginalSearch)
 
 	router.Post("/creation", apis.Creation.Create)
-	router.Get("/creation", apis.Creation.Create)
-	router.Patch("/creation", apis.Creation.Create)
-	router.Delete("/creation", apis.Creation.Create)
+	router.Get("/creation", apis.Creation.Get)
+	router.Patch("/creation", apis.Creation.Update)
+	router.Delete("/creation", apis.Creation.Delete)
 
-	router.Post("/creation/list", apis.Creation.Create)
-	router.Patch("/creation/archive", apis.Creation.Create)
-	router.Patch("/creation/redraft", apis.Creation.Create)
+	router.Post("/creation/list", apis.Creation.List)
+	router.Patch("/creation/archive", apis.Creation.Archive)
+	router.Patch("/creation/redraft", apis.Creation.Redraft)
 	router.Patch("/creation/review", todo)
 	router.Patch("/creation/approve", todo)
-	router.Patch("/creation/release", apis.Creation.Create)
-	router.Put("/creation/update_content", apis.Creation.Create)
+	router.Patch("/creation/release", apis.Creation.Release)
+	router.Put("/creation/update_content", apis.Creation.UpdateContent)
 	router.Patch("/creation/update_content", todo)
 	router.Post("/creation/assist", todo)
 
-	router.Post("/publication", apis.Publication.Create)
-	router.Get("/publication", apis.Publication.Create)
-	router.Patch("/publication", apis.Publication.Create)
-	router.Delete("/publication", apis.Publication.Create)
+	router.Post("/publication", todo)
+	router.Get("/publication", todo)
+	router.Patch("/publication", todo)
+	router.Delete("/publication", todo)
 
-	router.Post("/publication/list", apis.Publication.Create)
-	router.Patch("/publication/archive", apis.Publication.Create)
-	router.Patch("/publication/redraft", apis.Publication.Create)
+	router.Post("/publication/list", todo)
+	router.Patch("/publication/archive", todo)
+	router.Patch("/publication/redraft", todo)
 	router.Patch("/publication/approve", todo)
-	router.Patch("/publication/publish", apis.Publication.Create)
-	router.Put("/publication/update_content", apis.Publication.Create)
+	router.Patch("/publication/publish", todo)
+	router.Put("/publication/update_content", todo)
 	router.Post("/publication/assist", todo)
 
+	// 以下 API 不需要认证
 	rx := gear.NewRouter()
-	// health check
 	rx.Get("/healthz", apis.Healthz.Get)
+	rx.Get("/languages", apis.Jarvis.ListLanguages)
+	// 搜索公开内容
+	rx.Get("/search", apis.Jarvis.Search)
 
 	return []*gear.Router{router, rx}
 }

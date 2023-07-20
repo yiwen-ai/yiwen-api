@@ -42,6 +42,7 @@ func (m AuthToken) Auth(ctx *gear.Context) error {
 	}
 
 	ctxHeader := make(http.Header)
+	// inject auth headers into context for base service
 	util.CopyHeader(ctxHeader, ctx.Req.Header,
 		"x-real-ip",
 		"x-request-id",
