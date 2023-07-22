@@ -129,6 +129,25 @@ func (a *Creation) List(ctx *gear.Context) error {
 	return ctx.OkSend(output)
 }
 
+func (a *Creation) ListArchived(ctx *gear.Context) error {
+	input := &bll.Pagination{}
+	if err := ctx.ParseBody(input); err != nil {
+		return err
+	}
+
+	if err := a.checkReadPermission(ctx, input.GID); err != nil {
+		return err
+	}
+
+	input.Status = bll.Int8Ptr(-1)
+	output, err := a.blls.Writing.ListCreation(ctx, input)
+	if err != nil {
+		return gear.ErrInternalServerError.From(err)
+	}
+
+	return ctx.OkSend(output)
+}
+
 func (a *Creation) Archive(ctx *gear.Context) error {
 	input := &bll.UpdateCreationStatusInput{}
 	if err := ctx.ParseBody(input); err != nil {
@@ -256,7 +275,7 @@ func (a *Creation) checkReadPermission(ctx *gear.Context, gid util.ID) error {
 	if err != nil {
 		return gear.ErrInternalServerError.From(err)
 	}
-	if role < -1 {
+	if role < 0 {
 		return gear.ErrForbidden.WithMsg("no permission")
 	}
 

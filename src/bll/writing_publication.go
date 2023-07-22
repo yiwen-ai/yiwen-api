@@ -73,7 +73,7 @@ func (b *Writing) CreatePublication(ctx context.Context, input *CreatePublicatio
 
 type QueryPublication struct {
 	GID      util.ID `json:"gid" cbor:"gid" query:"gid" validate:"required"`
-	ID       util.ID `json:"cid" cbor:"cid" query:"cid" validate:"required"`
+	CID      util.ID `json:"cid" cbor:"cid" query:"cid" validate:"required"`
 	Language string  `json:"language" cbor:"language" validate:"required"`
 	Version  int16   `json:"version" cbor:"version" validate:"required"`
 	Fields   string  `json:"fields" cbor:"fields" query:"fields"`
@@ -88,7 +88,7 @@ func (b *Writing) GetPublication(ctx context.Context, input *QueryPublication) (
 
 	query := url.Values{}
 	query.Add("gid", input.GID.String())
-	query.Add("cid", input.ID.String())
+	query.Add("cid", input.CID.String())
 	query.Add("language", input.Language)
 	query.Add("version", strconv.Itoa(int(input.Version)))
 	if input.Fields != "" {
@@ -137,7 +137,7 @@ func (b *Writing) DeletePublication(ctx context.Context, input *QueryPublication
 
 	query := url.Values{}
 	query.Add("gid", input.GID.String())
-	query.Add("cid", input.ID.String())
+	query.Add("cid", input.CID.String())
 	query.Add("language", input.Language)
 	query.Add("version", strconv.Itoa(int(input.Version)))
 
@@ -146,6 +146,40 @@ func (b *Writing) DeletePublication(ctx context.Context, input *QueryPublication
 	}
 
 	return output.Result, nil
+}
+
+func (b *Writing) ListPublication(ctx context.Context, input *Pagination) (*SuccessResponse[[]*PublicationOutput], error) {
+	output := SuccessResponse[[]*PublicationOutput]{}
+	if err := b.svc.Post(ctx, "/v1/publication/list", input, &output); err != nil {
+		return nil, err
+	}
+
+	return &output, nil
+}
+
+type QueryAPublication struct {
+	GID util.ID `json:"gid" cbor:"gid" query:"gid" validate:"required"`
+	CID util.ID `json:"cid" cbor:"cid" query:"cid" validate:"required"`
+}
+
+func (i *QueryAPublication) Validate() error {
+	if err := util.Validator.Struct(i); err != nil {
+		return gear.ErrBadRequest.From(err)
+	}
+
+	return nil
+}
+
+func (b *Writing) GetPublicationList(ctx context.Context, input *QueryAPublication) (*SuccessResponse[[]*PublicationOutput], error) {
+	output := SuccessResponse[[]*PublicationOutput]{}
+	query := url.Values{}
+	query.Add("gid", input.GID.String())
+	query.Add("cid", input.CID.String())
+	if err := b.svc.Get(ctx, "/v1/publication/publish_list?"+query.Encode(), &output); err != nil {
+		return nil, err
+	}
+
+	return &output, nil
 }
 
 type UpdatePublicationStatusInput struct {

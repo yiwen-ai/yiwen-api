@@ -60,7 +60,7 @@ func newRouters(apis *APIs) []*gear.Router {
 	router.Delete("/creation", apis.Creation.Delete)
 
 	router.Post("/creation/list", apis.Creation.List)
-	// router.Post("/creation/list_archived", apis.Creation.ListArchived)
+	router.Post("/creation/list_archived", apis.Creation.ListArchived)
 	router.Patch("/creation/archive", apis.Creation.Archive)
 	router.Patch("/creation/redraft", apis.Creation.Redraft)
 	router.Patch("/creation/review", todo)
@@ -75,9 +75,10 @@ func newRouters(apis *APIs) []*gear.Router {
 	router.Patch("/publication", apis.Publication.Update)
 	router.Delete("/publication", apis.Publication.Delete)
 
-	// router.Post("/publication/list_published", apis.Publication.ListPublished)
-	// router.Post("/publication/list_unpublished", apis.Publication.ListUnpublished)
-	// router.Post("/publication/list_archived", apis.Publication.ListArchived)
+	router.Get("/publication/publish_list", apis.Publication.GetPublishList)
+	router.Post("/publication/list_published", apis.Publication.ListPublished)
+	router.Post("/publication/list", apis.Publication.List)
+	router.Post("/publication/list_archived", apis.Publication.ListArchived)
 	router.Patch("/publication/archive", apis.Publication.Archive)
 	router.Patch("/publication/redraft", apis.Publication.Redraft)
 	router.Patch("/publication/publish", apis.Publication.Publish)

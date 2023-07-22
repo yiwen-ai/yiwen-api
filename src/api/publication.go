@@ -89,7 +89,7 @@ func (a *Publication) Delete(ctx *gear.Context) error {
 		return err
 	}
 
-	creation, err := a.checkWritePermission(ctx, input.GID, input.ID, input.Language, input.Version)
+	creation, err := a.checkWritePermission(ctx, input.GID, input.CID, input.Language, input.Version)
 	if err != nil {
 		return err
 	}
@@ -104,6 +104,80 @@ func (a *Publication) Delete(ctx *gear.Context) error {
 	}
 
 	return ctx.OkSend(bll.SuccessResponse[bool]{Result: output})
+}
+
+func (a *Publication) List(ctx *gear.Context) error {
+	input := &bll.Pagination{}
+	if err := ctx.ParseBody(input); err != nil {
+		return err
+	}
+
+	if err := a.checkReadPermission(ctx, input.GID); err != nil {
+		return err
+	}
+
+	output, err := a.blls.Writing.ListPublication(ctx, input)
+	if err != nil {
+		return gear.ErrInternalServerError.From(err)
+	}
+
+	return ctx.OkSend(output)
+}
+
+func (a *Publication) ListArchived(ctx *gear.Context) error {
+	input := &bll.Pagination{}
+	if err := ctx.ParseBody(input); err != nil {
+		return err
+	}
+
+	if err := a.checkReadPermission(ctx, input.GID); err != nil {
+		return err
+	}
+
+	input.Status = bll.Int8Ptr(-1)
+	output, err := a.blls.Writing.ListPublication(ctx, input)
+	if err != nil {
+		return gear.ErrInternalServerError.From(err)
+	}
+
+	return ctx.OkSend(output)
+}
+
+func (a *Publication) ListPublished(ctx *gear.Context) error {
+	input := &bll.Pagination{}
+	if err := ctx.ParseBody(input); err != nil {
+		return err
+	}
+
+	if err := a.checkReadPermission(ctx, input.GID); err != nil {
+		return err
+	}
+
+	input.Status = bll.Int8Ptr(2)
+	output, err := a.blls.Writing.ListPublication(ctx, input)
+	if err != nil {
+		return gear.ErrInternalServerError.From(err)
+	}
+
+	return ctx.OkSend(output)
+}
+
+func (a *Publication) GetPublishList(ctx *gear.Context) error {
+	input := &bll.QueryAPublication{}
+	if err := ctx.ParseURL(input); err != nil {
+		return err
+	}
+
+	if err := a.checkReadPermission(ctx, input.GID); err != nil {
+		input.GID = util.ANON
+	}
+
+	output, err := a.blls.Writing.GetPublicationList(ctx, input)
+	if err != nil {
+		return gear.ErrInternalServerError.From(err)
+	}
+
+	return ctx.OkSend(output)
 }
 
 func (a *Publication) Archive(ctx *gear.Context) error {
@@ -239,7 +313,7 @@ func (a *Publication) checkWritePermission(ctx *gear.Context, gid, cid util.ID, 
 
 	publication, err := a.blls.Writing.GetPublication(ctx, &bll.QueryPublication{
 		GID:      gid,
-		ID:       cid,
+		CID:      cid,
 		Language: language,
 		Version:  version,
 		Fields:   "status,creator,updated_at",
