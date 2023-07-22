@@ -14,7 +14,7 @@ type Writing struct {
 }
 
 type SearchInput struct {
-	Q        string   `json:"q" cbor:"q" query:"q"`
+	Q        string   `json:"q" cbor:"q" query:"q" validate:"required"`
 	Language string   `json:"language" cbor:"language" query:"language"`
 	GID      *util.ID `json:"gid" cbor:"gid" query:"gid"`
 }

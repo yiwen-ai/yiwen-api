@@ -22,8 +22,8 @@ func (b *Userbase) UserGroupRole(ctx context.Context, uid, gid util.ID) (int8, e
 	output := SuccessResponse[GroupInfo]{}
 	api := fmt.Sprintf("/v1/user/get_group?gid=%s&fields=cn,status", gid.String())
 	err := b.svc.Get(ctx, api, &output)
-	if err == nil && output.Result.Status > -2 && output.Result.Role != nil {
-		role := *output.Result.Role
+	if err == nil && output.Result.Status > -2 && output.Result.MyRole != nil {
+		role := *output.Result.MyRole
 		if role > -2 {
 			return role, nil
 		}
@@ -32,6 +32,74 @@ func (b *Userbase) UserGroupRole(ctx context.Context, uid, gid util.ID) (int8, e
 	}
 
 	return -2, gear.ErrForbidden.WithMsg("user not in group")
+}
+
+type Group struct {
+	ID          util.ID      `json:"id" cbor:"id"`
+	CN          string       `json:"cn" cbor:"cn"`
+	Name        string       `json:"name" cbor:"name"`
+	Logo        string       `json:"logo" cbor:"logo"`
+	Website     string       `json:"website" cbor:"website"`
+	Status      int8         `json:"status" cbor:"status"`
+	Kind        int8         `json:"kind" cbor:"kind"`
+	CreatedAt   int64        `json:"created_at" cbor:"created_at"`
+	UpdatedAt   int64        `json:"updated_at" cbor:"updated_at"`
+	Email       string       `json:"email,omitempty" cbor:"email,omitempty"`
+	LegalName   string       `json:"legal_name,omitempty" cbor:"legal_name,omitempty"`
+	Keywords    []string     `json:"keywords,omitempty" cbor:"keywords,omitempty"`
+	Slogan      string       `json:"slogan,omitempty" cbor:"slogan,omitempty"`
+	Address     string       `json:"address,omitempty" cbor:"address,omitempty"`
+	Description util.CBORRaw `json:"description,omitempty" cbor:"description,omitempty"`
+	MyRole      int8         `json:"_role" cbor:"_role"`
+	MyPriority  int8         `json:"_priority" cbor:"_priority"`
+	UID         *util.ID     `json:"uid,omitempty" cbor:"uid,omitempty"` // should clear this field when return to client
+	Owner       *UserInfo    `json:"owner,omitempty" cbor:"owner,omitempty"`
+}
+
+type Groups []Group
+
+func (list *Groups) LoadUsers(loader func(ids ...util.ID) []UserInfo) {
+	if len(*list) == 0 {
+		return
+	}
+
+	ids := make([]util.ID, 0, len(*list))
+	for _, g := range *list {
+		if g.UID != nil {
+			ids = append(ids, *g.UID)
+		}
+	}
+
+	users := loader(ids...)
+	if len(users) == 0 {
+		return
+	}
+
+	infoMap := make(map[util.ID]*UserInfo, len(users))
+	for i := range users {
+		infoMap[*users[i].ID] = &users[i]
+		infoMap[*users[i].ID].ID = nil
+	}
+
+	for i := range *list {
+		(*list)[i].Owner = infoMap[*(*list)[i].UID]
+		(*list)[i].UID = nil
+	}
+}
+
+func (b *Userbase) MyGroups(ctx context.Context) (Groups, error) {
+	input := Pagination{
+		GID:      util.ZeroID,
+		PageSize: Int16Ptr(100),
+		Fields:   &[]string{},
+	}
+
+	output := SuccessResponse[Groups]{}
+	if err := b.svc.Post(ctx, "/v1/user/list_groups", input, &output); err != nil {
+		return nil, err
+	}
+
+	return output.Result, nil
 }
 
 type IDs struct {

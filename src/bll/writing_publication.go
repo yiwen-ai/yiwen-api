@@ -9,15 +9,15 @@ import (
 
 // TODO: more validation
 type CreatePublicationInput struct {
-	GID      util.ID           `json:"gid" cbor:"gid"`
-	CID      util.ID           `json:"cid" cbor:"cid"`
+	GID      util.ID           `json:"gid" cbor:"gid" validate:"required"`
+	CID      util.ID           `json:"cid" cbor:"cid" validate:"required"`
 	Language string            `json:"language" cbor:"language" validate:"required"`
 	Version  int16             `json:"version" cbor:"version" validate:"required"`
 	Draft    *PublicationDraft `json:"draft,omitempty" cbor:"draft,omitempty"`
 }
 
 type PublicationDraft struct {
-	GID         util.ID      `json:"gid" cbor:"gid"`
+	GID         util.ID      `json:"gid" cbor:"gid" validate:"required"`
 	Language    string       `json:"language" cbor:"language" validate:"required"`
 	Model       string       `json:"model" cbor:"model" validate:"required"`
 	Genre       []string     `json:"genre" cbor:"genre"`

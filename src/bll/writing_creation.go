@@ -10,7 +10,7 @@ import (
 
 // TODO: more validation
 type CreateCreationInput struct {
-	GID         util.ID      `json:"gid" cbor:"gid"`
+	GID         util.ID      `json:"gid" cbor:"gid" validate:"required"`
 	Language    string       `json:"language" cbor:"language"`
 	OriginalUrl string       `json:"original_url" cbor:"original_url" validate:"http_url"`
 	Genre       []string     `json:"genre" cbor:"genre"`
@@ -67,8 +67,8 @@ func (b *Writing) CreateCreation(ctx context.Context, input *CreateCreationInput
 }
 
 type QueryCreation struct {
-	GID    util.ID `json:"gid" cbor:"gid" query:"gid"`
-	ID     util.ID `json:"id" cbor:"id" query:"id"`
+	GID    util.ID `json:"gid" cbor:"gid" query:"gid" validate:"required"`
+	ID     util.ID `json:"id" cbor:"id" query:"id" validate:"required"`
 	Fields string  `json:"fields" cbor:"fields" query:"fields"`
 }
 
@@ -94,8 +94,8 @@ func (b *Writing) GetCreation(ctx context.Context, input *QueryCreation) (*Creat
 
 // TODO: more validation
 type UpdateCreationInput struct {
-	GID         util.ID   `json:"gid" cbor:"gid"`
-	ID          util.ID   `json:"id" cbor:"id"`
+	GID         util.ID   `json:"gid" cbor:"gid" validate:"required"`
+	ID          util.ID   `json:"id" cbor:"id" validate:"required"`
 	UpdatedAt   int64     `json:"updated_at" cbor:"updated_at"  validate:"required"`
 	Title       *string   `json:"title,omitempty" cbor:"title,omitempty" validate:"required"`
 	Description *string   `json:"description,omitempty" cbor:"description,omitempty"`
@@ -148,8 +148,8 @@ func (b *Writing) ListCreation(ctx context.Context, input *Pagination) (*Success
 
 // TODO: more validation
 type UpdateCreationStatusInput struct {
-	GID       util.ID `json:"gid" cbor:"gid"`
-	ID        util.ID `json:"id" cbor:"id"`
+	GID       util.ID `json:"gid" cbor:"gid" validate:"required"`
+	ID        util.ID `json:"id" cbor:"id" validate:"required"`
 	UpdatedAt int64   `json:"updated_at" cbor:"updated_at" validate:"required"`
 	Status    int8    `json:"status" cbor:"status" validate:"required"`
 }
@@ -173,8 +173,8 @@ func (b *Writing) UpdateCreationStatus(ctx context.Context, input *UpdateCreatio
 
 // TODO: more validation
 type UpdateCreationContentInput struct {
-	GID       util.ID      `json:"gid" cbor:"gid"`
-	ID        util.ID      `json:"id" cbor:"id"`
+	GID       util.ID      `json:"gid" cbor:"gid" validate:"required"`
+	ID        util.ID      `json:"id" cbor:"id" validate:"required"`
 	UpdatedAt int64        `json:"updated_at" cbor:"updated_at" validate:"required"`
 	Language  string       `json:"language" cbor:"language" validate:"required"`
 	Content   util.CBORRaw `json:"content" cbor:"content" validate:"required"`

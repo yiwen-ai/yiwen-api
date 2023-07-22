@@ -53,18 +53,16 @@ type UserInfo struct {
 }
 
 type GroupInfo struct {
-	ID       util.ID `json:"id" cbor:"id"`
-	CN       string  `json:"cn" cbor:"cn"`
-	Name     string  `json:"name" cbor:"name"`
-	Logo     string  `json:"logo" cbor:"logo"`
-	Status   int8    `json:"status" cbor:"status"`
-	Kind     *int8   `json:"kind,omitempty" cbor:"kind,omitempty"`
-	Role     *int8   `json:"_role,omitempty" cbor:"_role,omitempty"`
-	Priority *int8   `json:"_priority,omitempty" cbor:"_priority,omitempty"`
+	ID     util.ID `json:"id" cbor:"id"`
+	CN     string  `json:"cn" cbor:"cn"`
+	Name   string  `json:"name" cbor:"name"`
+	Logo   string  `json:"logo" cbor:"logo"`
+	Status int8    `json:"status" cbor:"status"`
+	MyRole *int8   `json:"_role,omitempty" cbor:"_role,omitempty"`
 }
 
 type Pagination struct {
-	GID       util.ID       `json:"gid" cbor:"gid"`
+	GID       util.ID       `json:"gid" cbor:"gid" validate:"required"`
 	PageToken *util.CBORRaw `json:"page_token,omitempty" cbor:"page_token,omitempty"`
 	PageSize  *int16        `json:"page_size,omitempty" cbor:"page_size,omitempty"`
 	Status    *int8         `json:"status,omitempty" cbor:"status,omitempty"`
@@ -77,4 +75,20 @@ func (i *Pagination) Validate() error {
 	}
 
 	return nil
+}
+
+func Int8Ptr(i int8) *int8 {
+	return &i
+}
+
+func Int16Ptr(i int16) *int16 {
+	return &i
+}
+
+func IntPtr(i int) *int {
+	return &i
+}
+
+func StringPtr(str string) *string {
+	return &str
 }

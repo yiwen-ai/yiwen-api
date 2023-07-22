@@ -17,6 +17,7 @@ func init() {
 type APIs struct {
 	Healthz     *Healthz
 	Creation    *Creation
+	Group       *Group
 	Jarvis      *Jarvis
 	Publication *Publication
 	Scraping    *Scraping
@@ -26,6 +27,7 @@ func newAPIs(blls *bll.Blls) *APIs {
 	return &APIs{
 		Healthz:     &Healthz{blls},
 		Creation:    &Creation{blls},
+		Group:       &Group{blls},
 		Jarvis:      &Jarvis{blls},
 		Publication: &Publication{blls},
 		Scraping:    &Scraping{blls},
@@ -79,6 +81,10 @@ func newRouters(apis *APIs) []*gear.Router {
 	router.Patch("/publication/publish", todo)
 	router.Put("/publication/update_content", todo)
 	router.Post("/publication/assist", todo)
+
+	router.Post("/group/list_my", apis.Group.ListMy)
+	router.Post("/group/list_following", todo)
+	router.Post("/group/list_subscribing", todo)
 
 	// 以下 API 不需要认证
 	rx := gear.NewRouter()

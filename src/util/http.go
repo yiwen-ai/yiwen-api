@@ -11,6 +11,7 @@ import (
 	"net/http"
 	"net/url"
 	"runtime"
+	"strings"
 	"time"
 
 	"github.com/fxamacker/cbor/v2"
@@ -168,12 +169,14 @@ func RequestCBOR(ctx context.Context, cli *http.Client, method, api string, inpu
 			api, resp.StatusCode, err, string(data))
 	}
 
+	fmt.Printf("%x\n", data)
+
 	return cbor.Unmarshal(data, output)
 }
 
 func CopyHeader(dst http.Header, src http.Header, names ...string) {
 	for k, vv := range src {
-		if len(names) > 0 && !StringSliceHas(names, k) {
+		if len(names) > 0 && !StringSliceHas(names, strings.ToLower(k)) {
 			continue
 		}
 
