@@ -25,13 +25,8 @@ func (a *Creation) Create(ctx *gear.Context) error {
 		return gear.ErrBadRequest.From(err)
 	}
 
-	sess := gear.CtxValue[middleware.Session](ctx)
-	role, err := a.blls.Userbase.UserGroupRole(ctx, sess.UserID, input.GID)
-	if err != nil {
-		return gear.ErrForbidden.From(err)
-	}
-	if role < 0 {
-		return gear.ErrForbidden.WithMsg("no permission")
+	if err := a.checkCreatePermission(ctx, input.GID); err != nil {
+		return err
 	}
 
 	te, err := a.blls.Jarvis.DetectLang(ctx, bll.DetectLangInput{
@@ -58,7 +53,7 @@ func (a *Creation) Get(ctx *gear.Context) error {
 		return err
 	}
 
-	if err := a.checkCreationReadPermission(ctx, input.GID); err != nil {
+	if err := a.checkReadPermission(ctx, input.GID); err != nil {
 		return err
 	}
 
@@ -76,13 +71,13 @@ func (a *Creation) Update(ctx *gear.Context) error {
 		return err
 	}
 
-	creation, err := a.checkCreationWritePermission(ctx, input.GID, input.ID)
+	creation, err := a.checkWritePermission(ctx, input.GID, input.ID)
 	if err != nil {
 		return err
 	}
 
 	if *creation.Status != 0 && *creation.Status != 1 {
-		return gear.ErrBadRequest.WithMsg("cannot delete creation, status is not 0 or 1")
+		return gear.ErrBadRequest.WithMsg("cannot update creation, status is not 0 or 1")
 	}
 
 	output, err := a.blls.Writing.UpdateCreation(ctx, input)
@@ -99,7 +94,7 @@ func (a *Creation) Delete(ctx *gear.Context) error {
 		return err
 	}
 
-	creation, err := a.checkCreationWritePermission(ctx, input.GID, input.ID)
+	creation, err := a.checkWritePermission(ctx, input.GID, input.ID)
 	if err != nil {
 		return err
 	}
@@ -122,7 +117,7 @@ func (a *Creation) List(ctx *gear.Context) error {
 		return err
 	}
 
-	if err := a.checkCreationReadPermission(ctx, input.GID); err != nil {
+	if err := a.checkReadPermission(ctx, input.GID); err != nil {
 		return err
 	}
 
@@ -140,7 +135,7 @@ func (a *Creation) Archive(ctx *gear.Context) error {
 		return err
 	}
 
-	_, err := a.checkCreationWritePermission(ctx, input.GID, input.ID)
+	_, err := a.checkWritePermission(ctx, input.GID, input.ID)
 	if err != nil {
 		return err
 	}
@@ -160,7 +155,7 @@ func (a *Creation) Redraft(ctx *gear.Context) error {
 		return err
 	}
 
-	_, err := a.checkCreationWritePermission(ctx, input.GID, input.ID)
+	_, err := a.checkWritePermission(ctx, input.GID, input.ID)
 	if err != nil {
 		return err
 	}
@@ -180,13 +175,47 @@ func (a *Creation) Release(ctx *gear.Context) error {
 		return err
 	}
 
-	creation, err := a.checkCreationWritePermission(ctx, input.GID, input.CID)
+	creation, err := a.checkWritePermission(ctx, input.GID, input.CID)
 	if err != nil {
 		return err
 	}
 
 	if *creation.Status != 2 {
-		return gear.ErrBadRequest.WithMsg("cannot delete creation, status is not 2")
+		sess := gear.CtxValue[middleware.Session](ctx)
+		if sess.UserID != input.GID {
+			return gear.ErrBadRequest.WithMsg("cannot release creation, status is not 2")
+		}
+		if *creation.Status == -1 {
+			return gear.ErrBadRequest.WithMsg("cannot release creation, status is -1")
+		}
+
+		// 用户私有 group 自动提升 status，无需 review 和 approve
+		statusInput := &bll.UpdateCreationStatusInput{
+			GID: input.GID,
+			ID:  input.CID,
+		}
+
+		if *creation.Status == 0 {
+			statusInput.Status = 1
+			statusInput.UpdatedAt = *creation.UpdatedAt
+			output, err := a.blls.Writing.UpdateCreationStatus(ctx, statusInput)
+			if err != nil {
+				return gear.ErrInternalServerError.From(err)
+			}
+			creation.Status = output.Status
+			creation.UpdatedAt = output.UpdatedAt
+		}
+
+		if *creation.Status == 1 {
+			statusInput.Status = 2
+			statusInput.UpdatedAt = *creation.UpdatedAt
+			output, err := a.blls.Writing.UpdateCreationStatus(ctx, statusInput)
+			if err != nil {
+				return gear.ErrInternalServerError.From(err)
+			}
+			creation.Status = output.Status
+			creation.UpdatedAt = output.UpdatedAt
+		}
 	}
 
 	input.Draft = nil
@@ -204,7 +233,7 @@ func (a *Creation) UpdateContent(ctx *gear.Context) error {
 		return err
 	}
 
-	creation, err := a.checkCreationWritePermission(ctx, input.GID, input.ID)
+	creation, err := a.checkWritePermission(ctx, input.GID, input.ID)
 	if err != nil {
 		return err
 	}
@@ -221,7 +250,7 @@ func (a *Creation) UpdateContent(ctx *gear.Context) error {
 	return ctx.OkSend(bll.SuccessResponse[*bll.CreationOutput]{Result: output})
 }
 
-func (a *Creation) checkCreationReadPermission(ctx *gear.Context, gid util.ID) error {
+func (a *Creation) checkReadPermission(ctx *gear.Context, gid util.ID) error {
 	sess := gear.CtxValue[middleware.Session](ctx)
 	role, err := a.blls.Userbase.UserGroupRole(ctx, sess.UserID, gid)
 	if err != nil {
@@ -234,7 +263,20 @@ func (a *Creation) checkCreationReadPermission(ctx *gear.Context, gid util.ID) e
 	return nil
 }
 
-func (a *Creation) checkCreationWritePermission(ctx *gear.Context, gid, cid util.ID) (*bll.CreationOutput, error) {
+func (a *Creation) checkCreatePermission(ctx *gear.Context, gid util.ID) error {
+	sess := gear.CtxValue[middleware.Session](ctx)
+	role, err := a.blls.Userbase.UserGroupRole(ctx, sess.UserID, gid)
+	if err != nil {
+		return gear.ErrInternalServerError.From(err)
+	}
+	if role < 0 {
+		return gear.ErrForbidden.WithMsg("no permission")
+	}
+
+	return nil
+}
+
+func (a *Creation) checkWritePermission(ctx *gear.Context, gid, cid util.ID) (*bll.CreationOutput, error) {
 	sess := gear.CtxValue[middleware.Session](ctx)
 	role, err := a.blls.Userbase.UserGroupRole(ctx, sess.UserID, gid)
 	if err != nil {
@@ -247,7 +289,7 @@ func (a *Creation) checkCreationWritePermission(ctx *gear.Context, gid, cid util
 	creation, err := a.blls.Writing.GetCreation(ctx, &bll.QueryCreation{
 		GID:    gid,
 		ID:     cid,
-		Fields: "status,creator",
+		Fields: "status,creator,updated_at",
 	})
 
 	if err != nil {

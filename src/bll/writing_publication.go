@@ -2,6 +2,8 @@ package bll
 
 import (
 	"context"
+	"net/url"
+	"strconv"
 
 	"github.com/teambition/gear"
 	"github.com/yiwen-ai/yiwen-api/src/util"
@@ -63,6 +65,136 @@ type PublicationOutput struct {
 func (b *Writing) CreatePublication(ctx context.Context, input *CreatePublicationInput) (*PublicationOutput, error) {
 	output := SuccessResponse[PublicationOutput]{}
 	if err := b.svc.Post(ctx, "/v1/publication", input, &output); err != nil {
+		return nil, err
+	}
+
+	return &output.Result, nil
+}
+
+type QueryPublication struct {
+	GID      util.ID `json:"gid" cbor:"gid" query:"gid" validate:"required"`
+	ID       util.ID `json:"cid" cbor:"cid" query:"cid" validate:"required"`
+	Language string  `json:"language" cbor:"language" validate:"required"`
+	Version  int16   `json:"version" cbor:"version" validate:"required"`
+	Fields   string  `json:"fields" cbor:"fields" query:"fields"`
+}
+
+func (i *QueryPublication) Validate() error {
+	return nil
+}
+
+func (b *Writing) GetPublication(ctx context.Context, input *QueryPublication) (*PublicationOutput, error) {
+	output := SuccessResponse[PublicationOutput]{}
+
+	query := url.Values{}
+	query.Add("gid", input.GID.String())
+	query.Add("cid", input.ID.String())
+	query.Add("language", input.Language)
+	query.Add("version", strconv.Itoa(int(input.Version)))
+	if input.Fields != "" {
+		query.Add("fields", input.Fields)
+	}
+	if err := b.svc.Get(ctx, "/v1/publication?"+query.Encode(), &output); err != nil {
+		return nil, err
+	}
+
+	return &output.Result, nil
+}
+
+type UpdatePublicationInput struct {
+	GID         util.ID   `json:"gid" cbor:"gid" validate:"required"`
+	ID          util.ID   `json:"id" cbor:"id" validate:"required"`
+	Language    string    `json:"language" cbor:"language" validate:"required"`
+	Version     int16     `json:"version" cbor:"version" validate:"required"`
+	UpdatedAt   int64     `json:"updated_at" cbor:"updated_at"  validate:"required"`
+	Model       string    `json:"model,omitempty" cbor:"model,omitempty" validate:"required"`
+	Title       *string   `json:"title,omitempty" cbor:"title,omitempty" validate:"required"`
+	Description *string   `json:"description,omitempty" cbor:"description,omitempty"`
+	Cover       *string   `json:"cover,omitempty" cbor:"cover,omitempty" validate:"http_url"`
+	Keywords    *[]string `json:"keywords,omitempty" cbor:"keywords,omitempty"`
+	Summary     *string   `json:"summary,omitempty" cbor:"summary,omitempty"`
+}
+
+func (i *UpdatePublicationInput) Validate() error {
+	if err := util.Validator.Struct(i); err != nil {
+		return gear.ErrBadRequest.From(err)
+	}
+
+	return nil
+}
+
+func (b *Writing) UpdatePublication(ctx context.Context, input *UpdatePublicationInput) (*PublicationOutput, error) {
+	output := SuccessResponse[PublicationOutput]{}
+	if err := b.svc.Patch(ctx, "/v1/publication", input, &output); err != nil {
+		return nil, err
+	}
+
+	return &output.Result, nil
+}
+
+func (b *Writing) DeletePublication(ctx context.Context, input *QueryPublication) (bool, error) {
+	output := SuccessResponse[bool]{}
+
+	query := url.Values{}
+	query.Add("gid", input.GID.String())
+	query.Add("cid", input.ID.String())
+	query.Add("language", input.Language)
+	query.Add("version", strconv.Itoa(int(input.Version)))
+
+	if err := b.svc.Delete(ctx, "/v1/publication?"+query.Encode(), &output); err != nil {
+		return false, err
+	}
+
+	return output.Result, nil
+}
+
+type UpdatePublicationStatusInput struct {
+	GID       util.ID `json:"gid" cbor:"gid" validate:"required"`
+	CID       util.ID `json:"cid" cbor:"cid" validate:"required"`
+	Language  string  `json:"language" cbor:"language" validate:"required"`
+	Version   int16   `json:"version" cbor:"version" validate:"required"`
+	UpdatedAt int64   `json:"updated_at" cbor:"updated_at" validate:"required"`
+	Status    int8    `json:"status" cbor:"status" validate:"required"`
+}
+
+func (i *UpdatePublicationStatusInput) Validate() error {
+	if err := util.Validator.Struct(i); err != nil {
+		return gear.ErrBadRequest.From(err)
+	}
+
+	return nil
+}
+
+func (b *Writing) UpdatePublicationStatus(ctx context.Context, input *UpdatePublicationStatusInput) (*PublicationOutput, error) {
+	output := SuccessResponse[PublicationOutput]{}
+	if err := b.svc.Patch(ctx, "/v1/publication/update_status", input, &output); err != nil {
+		return nil, err
+	}
+
+	return &output.Result, nil
+}
+
+// TODO: more validation
+type UpdatePublicationContentInput struct {
+	GID       util.ID      `json:"gid" cbor:"gid" validate:"required"`
+	CID       util.ID      `json:"cid" cbor:"cid" validate:"required"`
+	Language  string       `json:"language" cbor:"language" validate:"required"`
+	Version   int16        `json:"version" cbor:"version" validate:"required"`
+	UpdatedAt int64        `json:"updated_at" cbor:"updated_at" validate:"required"`
+	Content   util.CBORRaw `json:"content" cbor:"content" validate:"required"`
+}
+
+func (i *UpdatePublicationContentInput) Validate() error {
+	if err := util.Validator.Struct(i); err != nil {
+		return gear.ErrBadRequest.From(err)
+	}
+
+	return nil
+}
+
+func (b *Writing) UpdatePublicationContent(ctx context.Context, input *UpdatePublicationContentInput) (*PublicationOutput, error) {
+	output := SuccessResponse[PublicationOutput]{}
+	if err := b.svc.Put(ctx, "/v1/publication/update_content", input, &output); err != nil {
 		return nil, err
 	}
 

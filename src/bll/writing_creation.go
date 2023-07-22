@@ -190,7 +190,7 @@ func (i *UpdateCreationContentInput) Validate() error {
 
 func (b *Writing) UpdateCreationContent(ctx context.Context, input *UpdateCreationContentInput) (*CreationOutput, error) {
 	output := SuccessResponse[CreationOutput]{}
-	if err := b.svc.Patch(ctx, "/v1/creation/update_content", input, &output); err != nil {
+	if err := b.svc.Put(ctx, "/v1/creation/update_content", input, &output); err != nil {
 		return nil, err
 	}
 

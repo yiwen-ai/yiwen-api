@@ -169,7 +169,7 @@ func RequestCBOR(ctx context.Context, cli *http.Client, method, api string, inpu
 			api, resp.StatusCode, err, string(data))
 	}
 
-	fmt.Printf("%x\n", data)
+	// fmt.Printf("%x\n", data)
 
 	return cbor.Unmarshal(data, output)
 }
