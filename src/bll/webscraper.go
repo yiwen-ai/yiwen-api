@@ -34,7 +34,7 @@ type ScrapingOutput struct {
 	Src     string            `json:"src" cbor:"src"`
 	Title   string            `json:"title" cbor:"title"`
 	Meta    map[string]string `json:"meta" cbor:"meta"`
-	Content util.CBORRaw      `json:"content" cbor:"content"`
+	Content util.Bytes        `json:"content" cbor:"content"`
 }
 
 func (b *Webscraper) Search(ctx context.Context, targetUrl string) (*ScrapingOutput, error) {

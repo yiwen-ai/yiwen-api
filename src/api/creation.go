@@ -25,6 +25,11 @@ func (a *Creation) Create(ctx *gear.Context) error {
 		return gear.ErrBadRequest.From(err)
 	}
 
+	contents := doc.ToTEContents()
+	if len(contents) == 0 {
+		return gear.ErrBadRequest.WithMsg("empty content")
+	}
+
 	if err := a.checkCreatePermission(ctx, input.GID); err != nil {
 		return err
 	}
@@ -32,7 +37,7 @@ func (a *Creation) Create(ctx *gear.Context) error {
 	te, err := a.blls.Jarvis.DetectLang(ctx, bll.DetectLangInput{
 		GID:      input.GID,
 		Language: input.Language,
-		Content:  doc.ToTEContents(),
+		Content:  contents,
 	})
 	if err != nil {
 		return gear.ErrInternalServerError.From(err)

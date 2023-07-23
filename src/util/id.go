@@ -124,28 +124,25 @@ func (id *UUID) UnmarshalText(data []byte) error {
 	return (*uuid.UUID)(id).UnmarshalText(data)
 }
 
-type CBORRaw []byte
+type Bytes []byte
 
-func (r CBORRaw) String() string {
+func (r Bytes) String() string {
 	return base64.RawURLEncoding.EncodeToString(r)
 }
 
-func (r CBORRaw) MarshalCBOR() ([]byte, error) {
-	if len(r) == 0 {
-		return []byte{0xf6}, nil
-	}
-	return r, nil
+func (r Bytes) MarshalCBOR() ([]byte, error) {
+	return cbor.Marshal([]byte(r))
 }
 
-func (r *CBORRaw) UnmarshalCBOR(data []byte) error {
+func (r *Bytes) UnmarshalCBOR(data []byte) error {
 	if r == nil {
-		return errors.New("util.CBORRaw: UnmarshalCBOR on nil pointer")
+		return errors.New("util.Bytes: UnmarshalCBOR on nil pointer")
 	}
-	*r = append((*r)[0:0], data...)
+	cbor.Unmarshal(data, (*[]byte)(r))
 	return nil
 }
 
-func (r CBORRaw) MarshalJSON() ([]byte, error) {
+func (r Bytes) MarshalJSON() ([]byte, error) {
 	if len(r) == 0 {
 		return []byte("null"), nil
 	}
@@ -153,12 +150,12 @@ func (r CBORRaw) MarshalJSON() ([]byte, error) {
 	return []byte("\"" + base64.RawURLEncoding.EncodeToString(r) + "\""), nil
 }
 
-func (r *CBORRaw) UnmarshalJSON(data []byte) error {
+func (r *Bytes) UnmarshalJSON(data []byte) error {
 	if r == nil {
-		return errors.New("util.CBORRaw: UnmarshalJSON on nil pointer")
+		return errors.New("util.Bytes: UnmarshalJSON on nil pointer")
 	}
 	if len(data) < 2 || data[0] != '"' || data[len(data)-1] != '"' {
-		return errors.New("util.CBORRaw: UnmarshalJSON with invalid data")
+		return errors.New("util.Bytes: UnmarshalJSON with invalid data")
 	}
 	data, err := base64.RawURLEncoding.DecodeString(string(data[1 : len(data)-1]))
 	if err == nil {

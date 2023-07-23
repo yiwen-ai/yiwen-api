@@ -37,10 +37,10 @@ func (b *Blls) Stats(ctx context.Context) (res map[string]any, err error) {
 }
 
 type SuccessResponse[T any] struct {
-	Retry         *int          `json:"retry,omitempty" cbor:"retry,omitempty"`
-	TotalSize     *int          `json:"total_size,omitempty" cbor:"total_size,omitempty"`
-	NextPageToken *util.CBORRaw `json:"next_page_token,omitempty" cbor:"next_page_token,omitempty"`
-	Result        T             `json:"result" cbor:"result"`
+	Retry         *int        `json:"retry,omitempty" cbor:"retry,omitempty"`
+	TotalSize     *int        `json:"total_size,omitempty" cbor:"total_size,omitempty"`
+	NextPageToken *util.Bytes `json:"next_page_token,omitempty" cbor:"next_page_token,omitempty"`
+	Result        T           `json:"result" cbor:"result"`
 }
 
 type UserInfo struct {
@@ -62,11 +62,11 @@ type GroupInfo struct {
 }
 
 type Pagination struct {
-	GID       util.ID       `json:"gid" cbor:"gid" validate:"required"`
-	PageToken *util.CBORRaw `json:"page_token,omitempty" cbor:"page_token,omitempty"`
-	PageSize  *int16        `json:"page_size,omitempty" cbor:"page_size,omitempty"`
-	Status    *int8         `json:"status,omitempty" cbor:"status,omitempty"`
-	Fields    *[]string     `json:"fields,omitempty" cbor:"fields,omitempty"`
+	GID       util.ID     `json:"gid" cbor:"gid" validate:"required"`
+	PageToken *util.Bytes `json:"page_token,omitempty" cbor:"page_token,omitempty"`
+	PageSize  *int16      `json:"page_size,omitempty" cbor:"page_size,omitempty"`
+	Status    *int8       `json:"status,omitempty" cbor:"status,omitempty"`
+	Fields    *[]string   `json:"fields,omitempty" cbor:"fields,omitempty"`
 }
 
 func (i *Pagination) Validate() error {
