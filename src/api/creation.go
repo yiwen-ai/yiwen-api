@@ -117,7 +117,7 @@ func (a *Creation) Delete(ctx *gear.Context) error {
 }
 
 func (a *Creation) List(ctx *gear.Context) error {
-	input := &bll.Pagination{}
+	input := &bll.GIDPagination{}
 	if err := ctx.ParseBody(input); err != nil {
 		return err
 	}
@@ -135,7 +135,7 @@ func (a *Creation) List(ctx *gear.Context) error {
 }
 
 func (a *Creation) ListArchived(ctx *gear.Context) error {
-	input := &bll.Pagination{}
+	input := &bll.GIDPagination{}
 	if err := ctx.ParseBody(input); err != nil {
 		return err
 	}

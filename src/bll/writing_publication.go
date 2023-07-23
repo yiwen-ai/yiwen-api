@@ -14,21 +14,20 @@ type CreatePublicationInput struct {
 	GID      util.ID           `json:"gid" cbor:"gid" validate:"required"`
 	CID      util.ID           `json:"cid" cbor:"cid" validate:"required"`
 	Language string            `json:"language" cbor:"language" validate:"required"`
-	Version  int16             `json:"version" cbor:"version" validate:"required"`
+	Version  int16             `json:"version" cbor:"version" validate:"required,gte=1,lte=10000"`
 	Draft    *PublicationDraft `json:"draft,omitempty" cbor:"draft,omitempty"`
 }
 
 type PublicationDraft struct {
-	GID         util.ID    `json:"gid" cbor:"gid" validate:"required"`
-	Language    string     `json:"language" cbor:"language" validate:"required"`
-	Model       string     `json:"model" cbor:"model" validate:"required"`
-	Genre       []string   `json:"genre" cbor:"genre"`
-	Title       string     `json:"title" cbor:"title" validate:"required"`
-	Description string     `json:"description" cbor:"description"`
-	Cover       string     `json:"cover" cbor:"cover" validate:"http_url"`
-	Keywords    []string   `json:"keywords" cbor:"keywords"`
-	Summary     string     `json:"summary" cbor:"summary"`
-	Content     util.Bytes `json:"content" cbor:"content" validate:"required"`
+	GID      util.ID    `json:"gid" cbor:"gid" validate:"required"`
+	Language string     `json:"language" cbor:"language" validate:"required"`
+	Title    string     `json:"title" cbor:"title" validate:"required,gte=4,lte=256"`
+	Model    *string    `json:"model,omitempty" cbor:"model,omitempty" validate:"omitempty,gte=2,lte=16"`
+	Genre    *[]string  `json:"genre,omitempty" cbor:"genre,omitempty"`
+	Cover    *string    `json:"cover,omitempty" cbor:"cover,omitempty" validate:"omitempty,http_url"`
+	Keywords *[]string  `json:"keywords,omitempty" cbor:"keywords,omitempty" validate:"omitempty,gte=0,lte=5"`
+	Summary  string     `json:"summary" cbor:"summary" validate:"required,gte=4,lte=2048"`
+	Content  util.Bytes `json:"content" cbor:"content" validate:"required"`
 }
 
 func (i *CreatePublicationInput) Validate() error {
@@ -53,7 +52,6 @@ type PublicationOutput struct {
 	OriginalUrl *string     `json:"original_url,omitempty" cbor:"original_url,omitempty"`
 	Genre       *[]string   `json:"genre,omitempty" cbor:"genre,omitempty"`
 	Title       *string     `json:"title,omitempty" cbor:"title,omitempty"`
-	Description *string     `json:"description,omitempty" cbor:"description,omitempty"`
 	Cover       *string     `json:"cover,omitempty" cbor:"cover,omitempty"`
 	Keywords    *[]string   `json:"keywords,omitempty" cbor:"keywords,omitempty"`
 	Authors     *[]string   `json:"authors,omitempty" cbor:"authors,omitempty"`
@@ -75,7 +73,7 @@ type QueryPublication struct {
 	GID      util.ID `json:"gid" cbor:"gid" query:"gid" validate:"required"`
 	CID      util.ID `json:"cid" cbor:"cid" query:"cid" validate:"required"`
 	Language string  `json:"language" cbor:"language" validate:"required"`
-	Version  int16   `json:"version" cbor:"version" validate:"required"`
+	Version  int16   `json:"version" cbor:"version"  validate:"required,gte=1,lte=10000"`
 	Fields   string  `json:"fields" cbor:"fields" query:"fields"`
 }
 
@@ -102,17 +100,16 @@ func (b *Writing) GetPublication(ctx context.Context, input *QueryPublication) (
 }
 
 type UpdatePublicationInput struct {
-	GID         util.ID   `json:"gid" cbor:"gid" validate:"required"`
-	ID          util.ID   `json:"id" cbor:"id" validate:"required"`
-	Language    string    `json:"language" cbor:"language" validate:"required"`
-	Version     int16     `json:"version" cbor:"version" validate:"required"`
-	UpdatedAt   int64     `json:"updated_at" cbor:"updated_at"  validate:"required"`
-	Model       string    `json:"model,omitempty" cbor:"model,omitempty" validate:"required"`
-	Title       *string   `json:"title,omitempty" cbor:"title,omitempty" validate:"required"`
-	Description *string   `json:"description,omitempty" cbor:"description,omitempty"`
-	Cover       *string   `json:"cover,omitempty" cbor:"cover,omitempty" validate:"http_url"`
-	Keywords    *[]string `json:"keywords,omitempty" cbor:"keywords,omitempty"`
-	Summary     *string   `json:"summary,omitempty" cbor:"summary,omitempty"`
+	GID       util.ID   `json:"gid" cbor:"gid" validate:"required"`
+	ID        util.ID   `json:"id" cbor:"id" validate:"required"`
+	Language  string    `json:"language" cbor:"language" validate:"required"`
+	Version   int16     `json:"version" cbor:"version" validate:"required,gte=1,lte=10000"`
+	UpdatedAt int64     `json:"updated_at" cbor:"updated_at"  validate:"required"`
+	Model     *string   `json:"model,omitempty" cbor:"model,omitempty" validate:"omitempty,gte=2,lte=16"`
+	Title     *string   `json:"title,omitempty" cbor:"title,omitempty" validate:"omitempty,gte=4,lte=256"`
+	Cover     *string   `json:"cover,omitempty" cbor:"cover,omitempty" validate:"omitempty,http_url"`
+	Keywords  *[]string `json:"keywords,omitempty" cbor:"keywords,omitempty" validate:"omitempty,gte=0,lte=5"`
+	Summary   *string   `json:"summary,omitempty" cbor:"summary,omitempty" validate:"omitempty,gte=4,lte=2048"`
 }
 
 func (i *UpdatePublicationInput) Validate() error {
@@ -148,7 +145,7 @@ func (b *Writing) DeletePublication(ctx context.Context, input *QueryPublication
 	return output.Result, nil
 }
 
-func (b *Writing) ListPublication(ctx context.Context, input *Pagination) (*SuccessResponse[[]*PublicationOutput], error) {
+func (b *Writing) ListPublication(ctx context.Context, input *GIDPagination) (*SuccessResponse[[]*PublicationOutput], error) {
 	output := SuccessResponse[[]*PublicationOutput]{}
 	if err := b.svc.Post(ctx, "/v1/publication/list", input, &output); err != nil {
 		return nil, err
@@ -186,9 +183,9 @@ type UpdatePublicationStatusInput struct {
 	GID       util.ID `json:"gid" cbor:"gid" validate:"required"`
 	CID       util.ID `json:"cid" cbor:"cid" validate:"required"`
 	Language  string  `json:"language" cbor:"language" validate:"required"`
-	Version   int16   `json:"version" cbor:"version" validate:"required"`
+	Version   int16   `json:"version" cbor:"version" validate:"required,gte=1,lte=10000"`
 	UpdatedAt int64   `json:"updated_at" cbor:"updated_at" validate:"required"`
-	Status    int8    `json:"status" cbor:"status" validate:"required"`
+	Status    int8    `json:"status" cbor:"status" validate:"required,gte=-2,lte=2"`
 }
 
 func (i *UpdatePublicationStatusInput) Validate() error {
@@ -213,7 +210,7 @@ type UpdatePublicationContentInput struct {
 	GID       util.ID    `json:"gid" cbor:"gid" validate:"required"`
 	CID       util.ID    `json:"cid" cbor:"cid" validate:"required"`
 	Language  string     `json:"language" cbor:"language" validate:"required"`
-	Version   int16      `json:"version" cbor:"version" validate:"required"`
+	Version   int16      `json:"version" cbor:"version" validate:"required,gte=1,lte=10000"`
 	UpdatedAt int64      `json:"updated_at" cbor:"updated_at" validate:"required"`
 	Content   util.Bytes `json:"content" cbor:"content" validate:"required"`
 }

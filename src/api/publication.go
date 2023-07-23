@@ -107,7 +107,7 @@ func (a *Publication) Delete(ctx *gear.Context) error {
 }
 
 func (a *Publication) List(ctx *gear.Context) error {
-	input := &bll.Pagination{}
+	input := &bll.GIDPagination{}
 	if err := ctx.ParseBody(input); err != nil {
 		return err
 	}
@@ -125,7 +125,7 @@ func (a *Publication) List(ctx *gear.Context) error {
 }
 
 func (a *Publication) ListArchived(ctx *gear.Context) error {
-	input := &bll.Pagination{}
+	input := &bll.GIDPagination{}
 	if err := ctx.ParseBody(input); err != nil {
 		return err
 	}
@@ -144,7 +144,7 @@ func (a *Publication) ListArchived(ctx *gear.Context) error {
 }
 
 func (a *Publication) ListPublished(ctx *gear.Context) error {
-	input := &bll.Pagination{}
+	input := &bll.GIDPagination{}
 	if err := ctx.ParseBody(input); err != nil {
 		return err
 	}

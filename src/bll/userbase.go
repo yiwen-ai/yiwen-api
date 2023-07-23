@@ -35,25 +35,24 @@ func (b *Userbase) UserGroupRole(ctx context.Context, uid, gid util.ID) (int8, e
 }
 
 type Group struct {
-	ID          util.ID    `json:"id" cbor:"id"`
-	CN          string     `json:"cn" cbor:"cn"`
-	Name        string     `json:"name" cbor:"name"`
-	Logo        string     `json:"logo" cbor:"logo"`
-	Website     string     `json:"website" cbor:"website"`
-	Status      int8       `json:"status" cbor:"status"`
-	Kind        int8       `json:"kind" cbor:"kind"`
-	CreatedAt   int64      `json:"created_at" cbor:"created_at"`
-	UpdatedAt   int64      `json:"updated_at" cbor:"updated_at"`
-	Email       string     `json:"email,omitempty" cbor:"email,omitempty"`
-	LegalName   string     `json:"legal_name,omitempty" cbor:"legal_name,omitempty"`
-	Keywords    []string   `json:"keywords,omitempty" cbor:"keywords,omitempty"`
-	Slogan      string     `json:"slogan,omitempty" cbor:"slogan,omitempty"`
-	Address     string     `json:"address,omitempty" cbor:"address,omitempty"`
-	Description util.Bytes `json:"description,omitempty" cbor:"description,omitempty"`
-	MyRole      int8       `json:"_role" cbor:"_role"`
-	MyPriority  int8       `json:"_priority" cbor:"_priority"`
-	UID         *util.ID   `json:"uid,omitempty" cbor:"uid,omitempty"` // should clear this field when return to client
-	Owner       *UserInfo  `json:"owner,omitempty" cbor:"owner,omitempty"`
+	ID         *util.ID  `json:"id,omitempty" cbor:"id,omitempty"`
+	CN         string    `json:"cn" cbor:"cn"`
+	Name       string    `json:"name" cbor:"name"`
+	Logo       *string   `json:"logo,omitempty" cbor:"logo,omitempty"`
+	Website    *string   `json:"website,omitempty" cbor:"website,omitempty"`
+	Status     *int8     `json:"status,omitempty" cbor:"status,omitempty"`
+	Kind       *int8     `json:"kind,omitempty" cbor:"kind,omitempty"`
+	CreatedAt  *int64    `json:"created_at,omitempty" cbor:"created_at,omitempty"`
+	UpdatedAt  *int64    `json:"updated_at,omitempty" cbor:"updated_at,omitempty"`
+	Email      *string   `json:"email,omitempty" cbor:"email,omitempty"`
+	LegalName  *string   `json:"legal_name,omitempty" cbor:"legal_name,omitempty"`
+	Keywords   *[]string `json:"keywords,omitempty" cbor:"keywords,omitempty"`
+	Slogan     *string   `json:"slogan,omitempty" cbor:"slogan,omitempty"`
+	Address    *string   `json:"address,omitempty" cbor:"address,omitempty"`
+	MyRole     *int8     `json:"_role,omitempty" cbor:"_role,omitempty"`
+	MyPriority *int8     `json:"_priority,omitempty" cbor:"_priority,omitempty"`
+	UID        *util.ID  `json:"uid,omitempty" cbor:"uid,omitempty"` // should clear this field when return to client
+	Owner      *UserInfo `json:"owner,omitempty" cbor:"owner,omitempty"`
 }
 
 type Groups []Group
@@ -89,7 +88,6 @@ func (list *Groups) LoadUsers(loader func(ids ...util.ID) []UserInfo) {
 
 func (b *Userbase) MyGroups(ctx context.Context) (Groups, error) {
 	input := Pagination{
-		GID:      util.ZeroID,
 		PageSize: Int16Ptr(100),
 		Fields:   &[]string{},
 	}

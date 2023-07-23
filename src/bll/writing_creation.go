@@ -11,18 +11,16 @@ import (
 // TODO: more validation
 type CreateCreationInput struct {
 	GID         util.ID    `json:"gid" cbor:"gid" validate:"required"`
-	Language    string     `json:"language" cbor:"language"`
-	OriginalUrl string     `json:"original_url" cbor:"original_url" validate:"http_url"`
-	Genre       []string   `json:"genre" cbor:"genre"`
-	Title       string     `json:"title" cbor:"title" validate:"required"`
-	Description string     `json:"description" cbor:"description"`
-	Cover       string     `json:"cover" cbor:"cover" validate:"http_url"`
-	Keywords    []string   `json:"keywords" cbor:"keywords"`
-	Labels      []string   `json:"labels" cbor:"labels"`
-	Authors     []string   `json:"authors" cbor:"authors"`
-	Summary     string     `json:"summary" cbor:"summary"`
+	Title       string     `json:"title" cbor:"title" validate:"required,gte=4,lte=256"`
 	Content     util.Bytes `json:"content" cbor:"content" validate:"required"`
-	License     string     `json:"license" cbor:"license"`
+	Language    string     `json:"language" cbor:"language"`
+	OriginalUrl *string    `json:"original_url,omitempty" cbor:"original_url,omitempty" validate:"omitempty,http_url"`
+	Genre       *[]string  `json:"genre,omitempty" cbor:"genre,omitempty"`
+	Cover       *string    `json:"cover,omitempty" cbor:"cover,omitempty" validate:"omitempty,http_url"`
+	Keywords    *[]string  `json:"keywords,omitempty" cbor:"keywords,omitempty" validate:"omitempty,gte=0,lte=5"`
+	Labels      *[]string  `json:"labels,omitempty" cbor:"labels,omitempty" validate:"omitempty,gte=0,lte=5"`
+	Authors     *[]string  `json:"authors,omitempty" cbor:"authors,omitempty" validate:"omitempty,gte=0,lte=10"`
+	License     *string    `json:"license,omitempty" cbor:"license,omitempty"`
 }
 
 func (i *CreateCreationInput) Validate() error {
@@ -46,7 +44,6 @@ type CreationOutput struct {
 	OriginalUrl *string     `json:"original_url,omitempty" cbor:"original_url,omitempty"`
 	Genre       *[]string   `json:"genre,omitempty" cbor:"genre,omitempty"`
 	Title       *string     `json:"title,omitempty" cbor:"title,omitempty"`
-	Description *string     `json:"description,omitempty" cbor:"description,omitempty"`
 	Cover       *string     `json:"cover,omitempty" cbor:"cover,omitempty"`
 	Keywords    *[]string   `json:"keywords,omitempty" cbor:"keywords,omitempty"`
 	Labels      *[]string   `json:"labels,omitempty" cbor:"labels,omitempty"`
@@ -94,17 +91,16 @@ func (b *Writing) GetCreation(ctx context.Context, input *QueryCreation) (*Creat
 
 // TODO: more validation
 type UpdateCreationInput struct {
-	GID         util.ID   `json:"gid" cbor:"gid" validate:"required"`
-	ID          util.ID   `json:"id" cbor:"id" validate:"required"`
-	UpdatedAt   int64     `json:"updated_at" cbor:"updated_at"  validate:"required"`
-	Title       *string   `json:"title,omitempty" cbor:"title,omitempty" validate:"required"`
-	Description *string   `json:"description,omitempty" cbor:"description,omitempty"`
-	Cover       *string   `json:"cover,omitempty" cbor:"cover,omitempty" validate:"http_url"`
-	Keywords    *[]string `json:"keywords,omitempty" cbor:"keywords,omitempty"`
-	Labels      *[]string `json:"labels,omitempty" cbor:"labels,omitempty"`
-	Authors     *[]string `json:"authors,omitempty" cbor:"authors,omitempty"`
-	Summary     *string   `json:"summary,omitempty" cbor:"summary,omitempty"`
-	License     *string   `json:"license,omitempty" cbor:"license,omitempty"`
+	GID       util.ID   `json:"gid" cbor:"gid" validate:"required"`
+	ID        util.ID   `json:"id" cbor:"id" validate:"required"`
+	UpdatedAt int64     `json:"updated_at" cbor:"updated_at"  validate:"required"`
+	Title     *string   `json:"title,omitempty" cbor:"title,omitempty" validate:"required,gte=4,lte=256"`
+	Cover     *string   `json:"cover,omitempty" cbor:"cover,omitempty" validate:"omitempty,http_url"`
+	Keywords  *[]string `json:"keywords,omitempty" cbor:"keywords,omitempty" validate:"omitempty,gte=0,lte=5"`
+	Labels    *[]string `json:"labels,omitempty" cbor:"labels,omitempty" validate:"omitempty,gte=0,lte=5"`
+	Authors   *[]string `json:"authors,omitempty" cbor:"authors,omitempty" validate:"omitempty,gte=0,lte=10"`
+	Summary   *string   `json:"summary,omitempty" cbor:"summary,omitempty" validate:"omitempty,gte=4,lte=2048"`
+	License   *string   `json:"license,omitempty" cbor:"license,omitempty"`
 }
 
 func (i *UpdateCreationInput) Validate() error {
@@ -137,7 +133,7 @@ func (b *Writing) DeleteCreation(ctx context.Context, input *QueryCreation) (boo
 	return output.Result, nil
 }
 
-func (b *Writing) ListCreation(ctx context.Context, input *Pagination) (*SuccessResponse[[]*CreationOutput], error) {
+func (b *Writing) ListCreation(ctx context.Context, input *GIDPagination) (*SuccessResponse[[]*CreationOutput], error) {
 	output := SuccessResponse[[]*CreationOutput]{}
 	if err := b.svc.Post(ctx, "/v1/creation/list", input, &output); err != nil {
 		return nil, err
@@ -151,7 +147,7 @@ type UpdateCreationStatusInput struct {
 	GID       util.ID `json:"gid" cbor:"gid" validate:"required"`
 	ID        util.ID `json:"id" cbor:"id" validate:"required"`
 	UpdatedAt int64   `json:"updated_at" cbor:"updated_at" validate:"required"`
-	Status    int8    `json:"status" cbor:"status" validate:"required"`
+	Status    int8    `json:"status" cbor:"status" validate:"required,gte=-2,lte=2"`
 }
 
 func (i *UpdateCreationStatusInput) Validate() error {

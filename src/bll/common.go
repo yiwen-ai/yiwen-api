@@ -62,14 +62,28 @@ type GroupInfo struct {
 }
 
 type Pagination struct {
-	GID       util.ID     `json:"gid" cbor:"gid" validate:"required"`
 	PageToken *util.Bytes `json:"page_token,omitempty" cbor:"page_token,omitempty"`
-	PageSize  *int16      `json:"page_size,omitempty" cbor:"page_size,omitempty"`
-	Status    *int8       `json:"status,omitempty" cbor:"status,omitempty"`
+	PageSize  *int16      `json:"page_size,omitempty" cbor:"page_size,omitempty" validate:"omitempty,gte=5,lte=100"`
 	Fields    *[]string   `json:"fields,omitempty" cbor:"fields,omitempty"`
 }
 
 func (i *Pagination) Validate() error {
+	if err := util.Validator.Struct(i); err != nil {
+		return gear.ErrBadRequest.From(err)
+	}
+
+	return nil
+}
+
+type GIDPagination struct {
+	GID       util.ID     `json:"gid" cbor:"gid" validate:"required"`
+	PageToken *util.Bytes `json:"page_token,omitempty" cbor:"page_token,omitempty"`
+	PageSize  *int16      `json:"page_size,omitempty" cbor:"page_size,omitempty" validate:"omitempty,gte=5,lte=100"`
+	Status    *int8       `json:"status,omitempty" cbor:"status,omitempty"`
+	Fields    *[]string   `json:"fields,omitempty" cbor:"fields,omitempty"`
+}
+
+func (i *GIDPagination) Validate() error {
 	if err := util.Validator.Struct(i); err != nil {
 		return gear.ErrBadRequest.From(err)
 	}

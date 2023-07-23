@@ -24,15 +24,14 @@ func (i *SearchInput) Validate() error {
 }
 
 type SearchDocument struct {
-	GID         util.ID    `json:"gid" cbor:"gid"`
-	CID         util.ID    `json:"cid" cbor:"cid"`
-	Language    string     `json:"language" cbor:"language"`
-	Version     int        `json:"version" cbor:"version"`
-	Kind        int8       `json:"kind" cbor:"kind"`
-	Title       string     `json:"title" cbor:"title"`
-	Description string     `json:"description" cbor:"description"`
-	Summary     string     `json:"summary" cbor:"summary"`
-	Group       *GroupInfo `json:"group,omitempty" cbor:"group,omitempty"`
+	GID      util.ID    `json:"gid" cbor:"gid"`
+	CID      util.ID    `json:"cid" cbor:"cid"`
+	Language string     `json:"language" cbor:"language"`
+	Version  int        `json:"version" cbor:"version"`
+	Kind     int8       `json:"kind" cbor:"kind"`
+	Title    string     `json:"title" cbor:"title"`
+	Summary  string     `json:"summary" cbor:"summary"`
+	Group    *GroupInfo `json:"group,omitempty" cbor:"group,omitempty"`
 }
 
 type SearchOutput struct {

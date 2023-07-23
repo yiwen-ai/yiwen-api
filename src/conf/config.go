@@ -24,7 +24,7 @@ var once sync.Once
 
 func init() {
 	p := &Config
-	readConfig(p)
+	readConfig(p, "../../config/default.toml")
 	if err := p.Validate(); err != nil {
 		panic(err)
 	}
