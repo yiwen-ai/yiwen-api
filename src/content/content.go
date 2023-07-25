@@ -1,5 +1,11 @@
 package content
 
+import (
+	"errors"
+
+	"github.com/fxamacker/cbor/v2"
+)
+
 type PartialNode struct {
 	Type  string               `json:"type" cbor:"type"`
 	Attrs map[string]AttrValue `json:"attrs,omitempty" cbor:"attrs,omitempty"`
@@ -54,4 +60,21 @@ func (d DocumentNode) ToTEContents() []*TEContent {
 		}
 	}
 	return *tes
+}
+
+func ToTEContents(content []byte) (TEContents, error) {
+	if len(content) == 0 {
+		return nil, errors.New("empty content")
+	}
+
+	doc := &DocumentNode{}
+	if err := cbor.Unmarshal(content, doc); err != nil {
+		return nil, err
+	}
+
+	contents := doc.ToTEContents()
+	if len(contents) == 0 {
+		return nil, errors.New("empty content")
+	}
+	return contents, nil
 }

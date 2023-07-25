@@ -55,8 +55,8 @@ func (b *Webscraper) Create(ctx context.Context, targetUrl string) (*ScrapingOut
 	}
 
 	retry := 1
-	if output.Retry != nil && *output.Retry < 10 {
-		retry = *output.Retry
+	if output.Retry < 10 {
+		retry = output.Retry
 	}
 	time.Sleep(time.Duration(retry) * time.Second)
 	api = fmt.Sprintf("/v1/document?id=%s&output=detail", output.Result.ID.String())

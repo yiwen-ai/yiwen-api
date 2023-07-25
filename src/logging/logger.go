@@ -26,9 +26,17 @@ var AccessLogger = gearLogging.New(os.Stdout)
 // Logger is used for the server.
 var Logger = gearLogging.New(os.Stderr)
 
+type Log = gearLogging.Log
+
+func Run(fn func() Log) {
+	if log := fn(); len(log) > 0 {
+		Logger.Warning(log)
+	}
+}
+
 // SrvLog returns a Log with kind of server.
-func SrvLog(format string, args ...interface{}) gearLogging.Log {
-	return gearLogging.Log{
+func SrvLog(format string, args ...interface{}) Log {
+	return Log{
 		"kind":    "server",
 		"message": fmt.Sprintf(format, args...),
 	}

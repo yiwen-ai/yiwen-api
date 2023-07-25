@@ -10,6 +10,10 @@ addr = ":8080"
 # The maximum number of seconds to wait for graceful shutdown.
 graceful_shutdown = 10
 
+[redis]
+prefix = "YWAPI:"
+node = "127.0.0.1:6379"
+
 [base]
 userbase = "http://127.0.0.1:8080"
 writing = "http://127.0.0.1:8080"

@@ -1,11 +1,13 @@
 package middleware
 
 import (
+	"context"
 	"net/http"
 	"strconv"
 	"strings"
 
 	"github.com/teambition/gear"
+	"github.com/yiwen-ai/yiwen-api/src/conf"
 	"github.com/yiwen-ai/yiwen-api/src/util"
 )
 
@@ -19,6 +21,7 @@ type Session struct {
 	UserRating int
 	UserKind   int
 	AppScope   []string
+	RID        string // x-request-id
 }
 
 func (s *Session) HasToken() bool {
@@ -29,15 +32,26 @@ func (s *Session) HasScope(scope string) bool {
 	return util.StringSliceHas(s.AppScope, scope)
 }
 
-type AuthToken bool
+type AuthLevel uint8
 
-func (m AuthToken) Auth(ctx *gear.Context) error {
+const (
+	AuthAllowAnon AuthLevel = iota
+	AuthSession             // cookie session
+	AuthToken               // access token
+)
+
+func (m AuthLevel) Auth(ctx *gear.Context) error {
+	l := uint8(m)
 	sess, err := extractAuth(ctx)
 	if err != nil {
+		if l == 0 {
+			return nil
+		}
+
 		return gear.ErrUnauthorized.From(err)
 	}
 
-	if bool(m) && !sess.HasToken() {
+	if l > 1 && !sess.HasToken() {
 		return gear.ErrUnauthorized.WithMsg("invalid token")
 	}
 
@@ -57,6 +71,17 @@ func (m AuthToken) Auth(ctx *gear.Context) error {
 	return nil
 }
 
+func WithGlobalCtx(ctx *gear.Context) context.Context {
+	gctx := conf.Config.GlobalCtx
+
+	if sess := gear.CtxValue[Session](ctx); sess != nil {
+		gctx = gear.CtxWith[Session](gctx, sess)
+		gctx = gear.CtxWith[util.ContextHTTPHeader](gctx, gear.CtxValue[util.ContextHTTPHeader](ctx))
+	}
+
+	return gctx
+}
+
 func extractAuth(ctx *gear.Context) (*Session, error) {
 	var err error
 	sess := &Session{}
@@ -65,6 +90,7 @@ func extractAuth(ctx *gear.Context) (*Session, error) {
 		return nil, gear.ErrUnauthorized.WithMsg("invalid session")
 	}
 
+	sess.RID = ctx.GetHeader("x-request-id")
 	sess.AppID, err = util.ParseID(ctx.GetHeader("x-auth-app"))
 	if err == nil {
 		if sess.UserStatus, err = strconv.Atoi(ctx.GetHeader("x-auth-user-status")); err != nil {

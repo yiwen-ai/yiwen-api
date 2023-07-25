@@ -36,7 +36,7 @@ type CreationOutput struct {
 	GID         util.ID     `json:"gid" cbor:"gid"`
 	Status      *int8       `json:"status,omitempty" cbor:"status,omitempty"`
 	Rating      *int8       `json:"rating,omitempty" cbor:"rating,omitempty"`
-	Version     *int16      `json:"version,omitempty" cbor:"version,omitempty"`
+	Version     *uint16     `json:"version,omitempty" cbor:"version,omitempty"`
 	Language    *string     `json:"language,omitempty" cbor:"language,omitempty"`
 	Creator     *util.ID    `json:"creator,omitempty" cbor:"creator,omitempty"`
 	CreatedAt   *int64      `json:"created_at,omitempty" cbor:"created_at,omitempty"`

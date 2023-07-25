@@ -88,7 +88,7 @@ func (list *Groups) LoadUsers(loader func(ids ...util.ID) []UserInfo) {
 
 func (b *Userbase) MyGroups(ctx context.Context) (Groups, error) {
 	input := Pagination{
-		PageSize: Int16Ptr(100),
+		PageSize: Uint16Ptr(100),
 		Fields:   &[]string{},
 	}
 

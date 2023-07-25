@@ -41,6 +41,11 @@ type Server struct {
 	GracefulShutdown uint   `json:"graceful_shutdown" toml:"graceful_shutdown"`
 }
 
+type Redis struct {
+	Prefix string `json:"prefix" toml:"prefix"`
+	Node   string `json:"node" toml:"node"`
+}
+
 type Base struct {
 	Userbase   string `json:"userbase" toml:"userbase"`
 	Writing    string `json:"writing" toml:"writing"`
@@ -64,6 +69,7 @@ type ConfigTpl struct {
 	Env       string `json:"env" toml:"env"`
 	Logger    Logger `json:"log" toml:"log"`
 	Server    Server `json:"server" toml:"server"`
+	Redis     Redis  `json:"redis" toml:"redis"`
 	Base      Base   `json:"base" toml:"base"`
 	OSS       OSS    `json:"oss" toml:"oss"`
 }

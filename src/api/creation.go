@@ -1,11 +1,17 @@
 package api
 
 import (
-	"github.com/fxamacker/cbor/v2"
+	"context"
+	"errors"
+	"fmt"
+	"net/http"
+	"time"
+
 	"github.com/teambition/gear"
 
 	"github.com/yiwen-ai/yiwen-api/src/bll"
 	"github.com/yiwen-ai/yiwen-api/src/content"
+	"github.com/yiwen-ai/yiwen-api/src/logging"
 	"github.com/yiwen-ai/yiwen-api/src/middleware"
 	"github.com/yiwen-ai/yiwen-api/src/util"
 )
@@ -20,24 +26,19 @@ func (a *Creation) Create(ctx *gear.Context) error {
 		return err
 	}
 
-	doc := &content.DocumentNode{}
-	if err := cbor.Unmarshal([]byte(input.Content), doc); err != nil {
+	teContents, err := content.ToTEContents([]byte(input.Content))
+	if err != nil {
 		return gear.ErrBadRequest.From(err)
-	}
-
-	contents := doc.ToTEContents()
-	if len(contents) == 0 {
-		return gear.ErrBadRequest.WithMsg("empty content")
 	}
 
 	if err := a.checkCreatePermission(ctx, input.GID); err != nil {
 		return err
 	}
 
-	te, err := a.blls.Jarvis.DetectLang(ctx, bll.DetectLangInput{
+	te, err := a.blls.Jarvis.DetectLang(ctx, &bll.DetectLangInput{
 		GID:      input.GID,
 		Language: input.Language,
-		Content:  contents,
+		Content:  teContents,
 	})
 	if err != nil {
 		return gear.ErrInternalServerError.From(err)
@@ -198,42 +199,89 @@ func (a *Creation) Release(ctx *gear.Context) error {
 	if err := ctx.ParseBody(input); err != nil {
 		return err
 	}
+	input.Model = bll.DefaultModel
 
 	creation, err := a.checkWritePermission(ctx, input.GID, input.CID)
 	if err != nil {
 		return err
 	}
+	if *creation.Status < 0 {
+		return gear.ErrBadRequest.WithMsg("cannot release creation, status is -1")
+	}
 
-	if *creation.Status != 2 {
-		sess := gear.CtxValue[middleware.Session](ctx)
-		if sess.UserID != input.GID {
-			return gear.ErrBadRequest.WithMsg("cannot release creation, status is not 2")
+	gctx := middleware.WithGlobalCtx(ctx)
+	key := fmt.Sprintf("RC:%s:%s", input.GID.String(), input.CID.String())
+	locker, err := a.blls.Locker.Lock(gctx, key, 120*time.Second)
+	if err != nil {
+		return gear.ErrLocked.From(err)
+	}
+
+	sess := gear.CtxValue[middleware.Session](gctx)
+	job := &bll.Job{
+		GID:       creation.GID,
+		CID:       creation.ID,
+		Language:  *creation.Language,
+		Version:   *creation.Version,
+		ExpiresIn: time.Now().Unix() + 120,
+	}
+	go logging.Run(func() logging.Log {
+		defer locker.Release(gctx)
+
+		err := a.release(gctx, creation)
+		if err != nil {
+			return logging.Log{
+				"action":   "release_creation",
+				"rid":      sess.RID,
+				"uid":      sess.UserID.String(),
+				"gid":      creation.GID.String(),
+				"cid":      creation.ID.String(),
+				"language": *creation.Language,
+				"version":  *creation.Version,
+				"error":    err.Error(),
+			}
 		}
-		if *creation.Status == -1 {
-			return gear.ErrBadRequest.WithMsg("cannot release creation, status is -1")
+		return nil
+	})
+
+	return ctx.Send(http.StatusAccepted, bll.SuccessResponse[*bll.PublicationOutput]{
+		Job:    job.String(),
+		Result: nil,
+	})
+}
+
+func (a *Creation) release(gctx context.Context, creation *bll.CreationOutput) error {
+	if *creation.Status != 2 {
+		sess := gear.CtxValue[middleware.Session](gctx)
+		if sess.UserID != creation.GID {
+			return errors.New("cannot release creation, status is not 2")
 		}
 
 		// 用户私有 group 自动提升 status，无需 review 和 approve
 		statusInput := &bll.UpdateCreationStatusInput{
-			GID: input.GID,
-			ID:  input.CID,
+			GID: creation.GID,
+			ID:  creation.ID,
 		}
 
 		if *creation.Status == 0 {
 			statusInput.Status = 1
 			statusInput.UpdatedAt = *creation.UpdatedAt
-			output, err := a.blls.Writing.UpdateCreationStatus(ctx, statusInput)
+			output, err := a.blls.Writing.UpdateCreationStatus(gctx, statusInput)
 			if err != nil {
-				return gear.ErrInternalServerError.From(err)
+				return err
 			}
 			creation.Status = output.Status
 			creation.UpdatedAt = output.UpdatedAt
 		}
 
 		if *creation.Status == 1 {
+			cr, err := a.summarize(gctx, creation.GID, creation.ID)
+			if err != nil {
+				return err
+			}
+
 			statusInput.Status = 2
-			statusInput.UpdatedAt = *creation.UpdatedAt
-			output, err := a.blls.Writing.UpdateCreationStatus(ctx, statusInput)
+			statusInput.UpdatedAt = *cr.UpdatedAt
+			output, err := a.blls.Writing.UpdateCreationStatus(gctx, statusInput)
 			if err != nil {
 				return gear.ErrInternalServerError.From(err)
 			}
@@ -242,13 +290,13 @@ func (a *Creation) Release(ctx *gear.Context) error {
 		}
 	}
 
-	input.Draft = nil
-	output, err := a.blls.Writing.CreatePublication(ctx, input)
-	if err != nil {
-		return gear.ErrInternalServerError.From(err)
-	}
-
-	return ctx.OkSend(bll.SuccessResponse[*bll.PublicationOutput]{Result: output})
+	_, err := a.blls.Writing.CreatePublication(gctx, &bll.CreatePublication{
+		GID:      creation.GID,
+		CID:      creation.ID,
+		Language: *creation.Language,
+		Version:  *creation.Version,
+	})
+	return err
 }
 
 func (a *Creation) UpdateContent(ctx *gear.Context) error {
@@ -313,7 +361,7 @@ func (a *Creation) checkWritePermission(ctx *gear.Context, gid, cid util.ID) (*b
 	creation, err := a.blls.Writing.GetCreation(ctx, &bll.QueryCreation{
 		GID:    gid,
 		ID:     cid,
-		Fields: "status,creator,updated_at",
+		Fields: "status,creator,updated_at,language,version",
 	})
 
 	if err != nil {
@@ -328,4 +376,71 @@ func (a *Creation) checkWritePermission(ctx *gear.Context, gid, cid util.ID) (*b
 	}
 
 	return creation, nil
+}
+
+// summarize and embedding when updating status from 1 to 2
+func (a *Creation) summarize(gctx context.Context, gid, cid util.ID) (*bll.CreationOutput, error) {
+	creation, err := a.blls.Writing.GetCreation(gctx, &bll.QueryCreation{
+		GID:    gid,
+		ID:     cid,
+		Fields: "status,creator,updated_at,language,version,content",
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	if creation.Content == nil || creation.Status == nil {
+		return nil, errors.New("invalid creation")
+	}
+
+	if *creation.Status != 1 {
+		return nil, errors.New("cannot summarize creation content, status is not 1")
+	}
+
+	teContents, err := content.ToTEContents([]byte(*creation.Content))
+	if err != nil {
+		return nil, err
+	}
+
+	sess := gear.CtxValue[middleware.Session](gctx)
+	go logging.Run(func() logging.Log {
+		_, err := a.blls.Jarvis.Embedding(gctx, &bll.EmbeddingInput{
+			GID:      gid,
+			CID:      cid,
+			Language: *creation.Language,
+			Version:  *creation.Version,
+			Content:  teContents,
+		})
+		if err != nil {
+			return logging.Log{
+				"action":   "embedding",
+				"rid":      sess.RID,
+				"uid":      sess.UserID.String(),
+				"gid":      gid.String(),
+				"cid":      cid.String(),
+				"language": *creation.Language,
+				"version":  *creation.Version,
+				"error":    err.Error(),
+			}
+		}
+		return nil
+	})
+
+	summary, err := a.blls.Jarvis.Summarize(gctx, teContents)
+	if err != nil {
+		return nil, err
+	}
+
+	output, err := a.blls.Writing.UpdateCreation(gctx, &bll.UpdateCreationInput{
+		GID:       gid,
+		ID:        cid,
+		UpdatedAt: *creation.UpdatedAt,
+		Summary:   &summary,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return output, nil
 }

@@ -6,28 +6,19 @@ import (
 	"strconv"
 
 	"github.com/teambition/gear"
+	"github.com/yiwen-ai/yiwen-api/src/content"
 	"github.com/yiwen-ai/yiwen-api/src/util"
 )
 
 // TODO: more validation
 type CreatePublicationInput struct {
-	GID      util.ID           `json:"gid" cbor:"gid" validate:"required"`
-	CID      util.ID           `json:"cid" cbor:"cid" validate:"required"`
-	Language string            `json:"language" cbor:"language" validate:"required"`
-	Version  int16             `json:"version" cbor:"version" validate:"required,gte=1,lte=10000"`
-	Draft    *PublicationDraft `json:"draft,omitempty" cbor:"draft,omitempty"`
-}
-
-type PublicationDraft struct {
-	GID      util.ID    `json:"gid" cbor:"gid" validate:"required"`
-	Language string     `json:"language" cbor:"language" validate:"required"`
-	Title    string     `json:"title" cbor:"title" validate:"required,gte=4,lte=256"`
-	Model    *string    `json:"model,omitempty" cbor:"model,omitempty" validate:"omitempty,gte=2,lte=16"`
-	Genre    *[]string  `json:"genre,omitempty" cbor:"genre,omitempty"`
-	Cover    *string    `json:"cover,omitempty" cbor:"cover,omitempty" validate:"omitempty,http_url"`
-	Keywords *[]string  `json:"keywords,omitempty" cbor:"keywords,omitempty" validate:"omitempty,gte=0,lte=5"`
-	Summary  string     `json:"summary" cbor:"summary" validate:"required,gte=4,lte=2048"`
-	Content  util.Bytes `json:"content" cbor:"content" validate:"required"`
+	GID        util.ID  `json:"gid" cbor:"gid" validate:"required"`
+	CID        util.ID  `json:"cid" cbor:"cid" validate:"required"`
+	Language   string   `json:"language" cbor:"language" validate:"required"`
+	Version    uint16   `json:"version" cbor:"version" validate:"required,gte=1,lte=10000"`
+	Model      string   `json:"model" cbor:"model" validate:"omitempty,gte=2,lte=16"`
+	ToGID      *util.ID `json:"to_gid,omitempty" cbor:"to_gid,omitempty"`
+	ToLanguage *string  `json:"to_language,omitempty" cbor:"to_language,omitempty"`
 }
 
 func (i *CreatePublicationInput) Validate() error {
@@ -38,11 +29,31 @@ func (i *CreatePublicationInput) Validate() error {
 	return nil
 }
 
+type CreatePublication struct {
+	GID      util.ID           `json:"gid" cbor:"gid"`
+	CID      util.ID           `json:"cid" cbor:"cid"`
+	Language string            `json:"language" cbor:"language"`
+	Version  uint16            `json:"version" cbor:"version"`
+	Draft    *PublicationDraft `json:"draft,omitempty" cbor:"draft,omitempty"`
+}
+
+type PublicationDraft struct {
+	GID      util.ID    `json:"gid" cbor:"gid"`
+	Language string     `json:"language" cbor:"language"`
+	Title    string     `json:"title" cbor:"title"`
+	Model    string     `json:"model,omitempty" cbor:"model,omitempty"`
+	Genre    []string   `json:"genre,omitempty" cbor:"genre,omitempty"`
+	Cover    string     `json:"cover,omitempty" cbor:"cover,omitempty"`
+	Keywords []string   `json:"keywords,omitempty" cbor:"keywords,omitempty"`
+	Summary  string     `json:"summary" cbor:"summary"`
+	Content  util.Bytes `json:"content" cbor:"content"`
+}
+
 type PublicationOutput struct {
 	GID         util.ID     `json:"gid" cbor:"gid"`
 	CID         util.ID     `json:"cid" cbor:"cid"`
 	Language    string      `json:"language" cbor:"language"`
-	Version     int16       `json:"version" cbor:"version"`
+	Version     uint16      `json:"version" cbor:"version"`
 	Rating      *int8       `json:"rating,omitempty" cbor:"rating,omitempty"`
 	Status      *int8       `json:"status,omitempty" cbor:"status,omitempty"`
 	Creator     *util.ID    `json:"creator,omitempty" cbor:"creator,omitempty"`
@@ -60,7 +71,36 @@ type PublicationOutput struct {
 	License     *string     `json:"license,omitempty" cbor:"license,omitempty"`
 }
 
-func (b *Writing) CreatePublication(ctx context.Context, input *CreatePublicationInput) (*PublicationOutput, error) {
+func (i *PublicationOutput) ToTEContents() (content.TEContents, error) {
+	if i.Title == nil || i.Summary == nil || i.Content == nil {
+		return nil, gear.ErrInternalServerError.WithMsg("empty title or summary or content")
+	}
+	contents, err := content.ToTEContents(*i.Content)
+	if err != nil {
+		return nil, gear.ErrInternalServerError.From(err)
+	}
+
+	contents = append(contents, &content.TEContent{
+		ID:    "title",
+		Texts: []string{*i.Title},
+	}, &content.TEContent{
+		ID:    "summary",
+		Texts: []string{*i.Summary},
+	})
+	if i.Keywords != nil && len(*i.Keywords) > 0 {
+		contents = append(contents, &content.TEContent{
+			ID:    "keywords",
+			Texts: *i.Keywords,
+		})
+	}
+	return contents, nil
+}
+
+func (i *PublicationOutput) IntoPublicationDraft(gid util.ID, language, model string, input content.TEContents) *PublicationDraft {
+	return nil
+}
+
+func (b *Writing) CreatePublication(ctx context.Context, input *CreatePublication) (*PublicationOutput, error) {
 	output := SuccessResponse[PublicationOutput]{}
 	if err := b.svc.Post(ctx, "/v1/publication", input, &output); err != nil {
 		return nil, err
@@ -73,11 +113,28 @@ type QueryPublication struct {
 	GID      util.ID `json:"gid" cbor:"gid" query:"gid" validate:"required"`
 	CID      util.ID `json:"cid" cbor:"cid" query:"cid" validate:"required"`
 	Language string  `json:"language" cbor:"language" validate:"required"`
-	Version  int16   `json:"version" cbor:"version"  validate:"required,gte=1,lte=10000"`
+	Version  uint16  `json:"version" cbor:"version"  validate:"required,gte=1,lte=10000"`
 	Fields   string  `json:"fields" cbor:"fields" query:"fields"`
 }
 
 func (i *QueryPublication) Validate() error {
+	return nil
+}
+
+type QueryPublicationJob struct {
+	JobID string `json:"job" cbor:"job" validate:"required"`
+	Job   *Job   `json:"-" cbor:"-"`
+}
+
+func (i *QueryPublicationJob) Validate() error {
+	if err := util.Validator.Struct(i); err != nil {
+		return gear.ErrBadRequest.From(err)
+	}
+
+	i.Job = &Job{}
+	if err := i.Job.FromString(i.JobID); err != nil {
+		return gear.ErrBadRequest.From(err)
+	}
 	return nil
 }
 
@@ -101,9 +158,9 @@ func (b *Writing) GetPublication(ctx context.Context, input *QueryPublication) (
 
 type UpdatePublicationInput struct {
 	GID       util.ID   `json:"gid" cbor:"gid" validate:"required"`
-	ID        util.ID   `json:"id" cbor:"id" validate:"required"`
+	CID       util.ID   `json:"cid" cbor:"cid" validate:"required"`
 	Language  string    `json:"language" cbor:"language" validate:"required"`
-	Version   int16     `json:"version" cbor:"version" validate:"required,gte=1,lte=10000"`
+	Version   uint16    `json:"version" cbor:"version" validate:"required,gte=1,lte=10000"`
 	UpdatedAt int64     `json:"updated_at" cbor:"updated_at"  validate:"required"`
 	Model     *string   `json:"model,omitempty" cbor:"model,omitempty" validate:"omitempty,gte=2,lte=16"`
 	Title     *string   `json:"title,omitempty" cbor:"title,omitempty" validate:"omitempty,gte=4,lte=256"`
@@ -172,7 +229,7 @@ func (b *Writing) GetPublicationList(ctx context.Context, input *QueryAPublicati
 	query := url.Values{}
 	query.Add("gid", input.GID.String())
 	query.Add("cid", input.CID.String())
-	if err := b.svc.Get(ctx, "/v1/publication/publish_list?"+query.Encode(), &output); err != nil {
+	if err := b.svc.Get(ctx, "/v1/publication/publish?"+query.Encode(), &output); err != nil {
 		return nil, err
 	}
 
@@ -183,7 +240,7 @@ type UpdatePublicationStatusInput struct {
 	GID       util.ID `json:"gid" cbor:"gid" validate:"required"`
 	CID       util.ID `json:"cid" cbor:"cid" validate:"required"`
 	Language  string  `json:"language" cbor:"language" validate:"required"`
-	Version   int16   `json:"version" cbor:"version" validate:"required,gte=1,lte=10000"`
+	Version   uint16  `json:"version" cbor:"version" validate:"required,gte=1,lte=10000"`
 	UpdatedAt int64   `json:"updated_at" cbor:"updated_at" validate:"required"`
 	Status    int8    `json:"status" cbor:"status" validate:"required,gte=-2,lte=2"`
 }
@@ -210,7 +267,7 @@ type UpdatePublicationContentInput struct {
 	GID       util.ID    `json:"gid" cbor:"gid" validate:"required"`
 	CID       util.ID    `json:"cid" cbor:"cid" validate:"required"`
 	Language  string     `json:"language" cbor:"language" validate:"required"`
-	Version   int16      `json:"version" cbor:"version" validate:"required,gte=1,lte=10000"`
+	Version   uint16     `json:"version" cbor:"version" validate:"required,gte=1,lte=10000"`
 	UpdatedAt int64      `json:"updated_at" cbor:"updated_at" validate:"required"`
 	Content   util.Bytes `json:"content" cbor:"content" validate:"required"`
 }

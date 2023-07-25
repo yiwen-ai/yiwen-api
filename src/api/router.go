@@ -40,61 +40,54 @@ func todo(ctx *gear.Context) error {
 
 func newRouters(apis *APIs) []*gear.Router {
 
-	router := gear.NewRouter(gear.RouterOptions{
-		Root:                  "/v1",
-		IgnoreCase:            false,
-		FixedPathRedirect:     false,
-		TrailingSlashRedirect: false,
-	})
+	router := gear.NewRouter()
+	router.Get("/healthz", apis.Healthz.Get)
 
-	// /v1/xxx 都需要认证
-	router.Use(middleware.AuthToken(true).Auth)
+	// 允许匿名访问
+	router.Get("/languages", middleware.AuthAllowAnon.Auth, apis.Jarvis.ListLanguages)
+	router.Get("/search", middleware.AuthAllowAnon.Auth, apis.Jarvis.Search)
+	router.Get("/v1/publication", middleware.AuthAllowAnon.Auth, apis.Publication.Get)
+	router.Get("/v1/publication/publish", middleware.AuthAllowAnon.Auth, apis.Publication.GetPublishList)
+	router.Post("/v1/publication/list_published", middleware.AuthAllowAnon.Auth, apis.Publication.ListPublished)
 
-	router.Get("/scraping", apis.Scraping.Create)
-	router.Get("/search/in_group", apis.Jarvis.GroupSearch)
-	router.Get("/search/by_original_url", apis.Jarvis.OriginalSearch)
+	router.Get("/v1/search", middleware.AuthToken.Auth, apis.Jarvis.Search)
+	router.Get("/v1/search/in_group", middleware.AuthToken.Auth, apis.Jarvis.GroupSearch)
+	router.Get("/v1/search/by_original_url", middleware.AuthToken.Auth, apis.Jarvis.OriginalSearch)
 
-	router.Post("/creation", apis.Creation.Create)
-	router.Get("/creation", apis.Creation.Get)
-	router.Patch("/creation", apis.Creation.Update)
-	router.Delete("/creation", apis.Creation.Delete)
+	router.Get("/v1/scraping", middleware.AuthToken.Auth, apis.Scraping.Create)
 
-	router.Post("/creation/list", apis.Creation.List)
-	router.Post("/creation/list_archived", apis.Creation.ListArchived)
-	router.Patch("/creation/archive", apis.Creation.Archive)
-	router.Patch("/creation/redraft", apis.Creation.Redraft)
-	router.Patch("/creation/review", todo)
-	router.Patch("/creation/approve", todo)
-	router.Patch("/creation/release", apis.Creation.Release)
-	router.Put("/creation/update_content", apis.Creation.UpdateContent)
-	router.Patch("/creation/update_content", todo)
-	router.Post("/creation/assist", todo)
+	router.Post("/v1/creation", middleware.AuthToken.Auth, apis.Creation.Create)
+	router.Get("/v1/creation", middleware.AuthToken.Auth, apis.Creation.Get)
+	router.Patch("/v1/creation", middleware.AuthToken.Auth, apis.Creation.Update)
+	router.Delete("/v1/creation", middleware.AuthToken.Auth, apis.Creation.Delete)
 
-	router.Post("/publication", apis.Publication.Create)
-	router.Get("/publication", apis.Publication.Get)
-	router.Patch("/publication", apis.Publication.Update)
-	router.Delete("/publication", apis.Publication.Delete)
+	router.Post("/v1/creation/list", middleware.AuthToken.Auth, apis.Creation.List)
+	router.Post("/v1/creation/list_archived", middleware.AuthToken.Auth, apis.Creation.ListArchived)
+	router.Patch("/v1/creation/archive", middleware.AuthToken.Auth, apis.Creation.Archive)
+	router.Patch("/v1/creation/redraft", middleware.AuthToken.Auth, apis.Creation.Redraft)
+	router.Patch("/v1/creation/review", middleware.AuthToken.Auth, todo)  // 暂不实现
+	router.Patch("/v1/creation/approve", middleware.AuthToken.Auth, todo) // 暂不实现
+	router.Patch("/v1/creation/release", middleware.AuthToken.Auth, apis.Creation.Release)
+	router.Put("/v1/creation/update_content", middleware.AuthToken.Auth, apis.Creation.UpdateContent)
+	router.Patch("/v1/creation/update_content", middleware.AuthToken.Auth, todo) // 暂不实现
+	router.Post("/v1/creation/assist", middleware.AuthToken.Auth, todo)          // 暂不实现
 
-	router.Get("/publication/publish_list", apis.Publication.GetPublishList)
-	router.Post("/publication/list_published", apis.Publication.ListPublished)
-	router.Post("/publication/list", apis.Publication.List)
-	router.Post("/publication/list_archived", apis.Publication.ListArchived)
-	router.Patch("/publication/archive", apis.Publication.Archive)
-	router.Patch("/publication/redraft", apis.Publication.Redraft)
-	router.Patch("/publication/publish", apis.Publication.Publish)
-	router.Put("/publication/update_content", apis.Publication.UpdateContent)
-	router.Post("/publication/assist", todo)
+	router.Post("/v1/publication", middleware.AuthToken.Auth, apis.Publication.Create)
+	router.Patch("/v1/publication", middleware.AuthToken.Auth, apis.Publication.Update)
+	router.Delete("/v1/publication", middleware.AuthToken.Auth, apis.Publication.Delete)
 
-	router.Post("/group/list_my", apis.Group.ListMy)
-	router.Post("/group/list_following", todo)
-	router.Post("/group/list_subscribing", todo)
+	router.Get("/v1/publication/job", middleware.AuthToken.Auth, apis.Publication.GetJob)
+	router.Post("/v1/publication/list", middleware.AuthToken.Auth, apis.Publication.List)
+	router.Post("/v1/publication/list_archived", middleware.AuthToken.Auth, apis.Publication.ListArchived)
+	router.Patch("/v1/publication/archive", middleware.AuthToken.Auth, apis.Publication.Archive)
+	router.Patch("/v1/publication/redraft", middleware.AuthToken.Auth, apis.Publication.Redraft)
+	router.Patch("/v1/publication/publish", middleware.AuthToken.Auth, apis.Publication.Publish)
+	router.Put("/v1/publication/update_content", middleware.AuthToken.Auth, apis.Publication.UpdateContent)
+	router.Post("/v1/publication/assist", middleware.AuthToken.Auth, todo) // 暂不实现
 
-	// 以下 API 不需要认证
-	rx := gear.NewRouter()
-	rx.Get("/healthz", apis.Healthz.Get)
-	rx.Get("/languages", apis.Jarvis.ListLanguages)
-	// 搜索公开内容
-	rx.Get("/search", apis.Jarvis.Search)
+	router.Post("/v1/group/list_my", middleware.AuthToken.Auth, apis.Group.ListMy)
+	router.Post("/v1/group/list_following", middleware.AuthToken.Auth, todo)
+	router.Post("/v1/group/list_subscribing", middleware.AuthToken.Auth, todo) // 暂不实现
 
-	return []*gear.Router{router, rx}
+	return []*gear.Router{router}
 }
