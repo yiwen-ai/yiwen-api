@@ -59,3 +59,33 @@ func TestToTEContents(t *testing.T) {
 	require.NoError(t, err)
 	assert.JSONEq(string(data), string(teData))
 }
+
+func TestFromTEContents(t *testing.T) {
+	assert := assert.New(t)
+
+	data, err := os.ReadFile("./content.json")
+	require.NoError(t, err)
+
+	var doc DocumentNode
+	err = json.Unmarshal(data, &doc)
+	require.NoError(t, err)
+
+	teData, err := os.ReadFile("./content.te.zho.json")
+	require.NoError(t, err)
+
+	var te TEContents
+	err = json.Unmarshal(teData, &te)
+	require.NoError(t, err)
+
+	doc.FromTEContents(te)
+	data, err = json.Marshal(doc)
+	require.NoError(t, err)
+	// os.WriteFile("./content.zho.json", data, 0644)
+
+	// Should:
+	// 1. process nested text content in order;
+	// 2. Missing text does not affect processing.
+	zhData, err := os.ReadFile("./content.zho.json")
+	require.NoError(t, err)
+	assert.JSONEq(string(data), string(zhData))
+}

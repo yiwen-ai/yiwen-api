@@ -62,6 +62,34 @@ func (d DocumentNode) ToTEContents() []*TEContent {
 	return *tes
 }
 
+func (d *DocumentNode) FromTEContents(te TEContents) {
+	textMap := make(map[string][]string, len(te))
+	for i := range te {
+		textMap[te[i].ID] = te[i].Texts
+	}
+	d.setTexts(textMap)
+}
+
+func (d *DocumentNode) setTexts(m map[string][]string) {
+	if len(d.Content) == 0 {
+		return
+	}
+	var texts []string
+	if v, ok := d.Attrs["id"]; ok {
+		texts = m[v.ToString()]
+	}
+
+	for i := range d.Content {
+		n := &d.Content[i]
+		if n.Text != nil && len(texts) > 0 {
+			n.Text = &texts[0]
+			texts = texts[1:]
+		} else {
+			n.setTexts(m)
+		}
+	}
+}
+
 func ToTEContents(content []byte) (TEContents, error) {
 	if len(content) == 0 {
 		return nil, errors.New("empty content")

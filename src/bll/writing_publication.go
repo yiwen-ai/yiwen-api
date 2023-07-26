@@ -5,6 +5,7 @@ import (
 	"net/url"
 	"strconv"
 
+	"github.com/fxamacker/cbor/v2"
 	"github.com/teambition/gear"
 	"github.com/yiwen-ai/yiwen-api/src/content"
 	"github.com/yiwen-ai/yiwen-api/src/util"
@@ -96,8 +97,48 @@ func (i *PublicationOutput) ToTEContents() (content.TEContents, error) {
 	return contents, nil
 }
 
-func (i *PublicationOutput) IntoPublicationDraft(gid util.ID, language, model string, input content.TEContents) *PublicationDraft {
-	return nil
+func (i *PublicationOutput) IntoPublicationDraft(gid util.ID, language, model string, input content.TEContents) (*PublicationDraft, error) {
+	draft := &PublicationDraft{
+		GID:      gid,
+		Language: language,
+		Model:    model,
+	}
+	if i.Genre != nil {
+		draft.Genre = *i.Genre
+	}
+	if i.Cover != nil {
+		draft.Cover = *i.Cover
+	}
+
+	for _, te := range input {
+		switch te.ID {
+		case "title":
+			if len(te.Texts) > 0 {
+				draft.Title = te.Texts[0]
+			}
+		case "summary":
+			if len(te.Texts) > 0 {
+				draft.Summary = te.Texts[0]
+			}
+		case "keywords":
+			if len(te.Texts) > 0 {
+				draft.Keywords = te.Texts
+			}
+		}
+	}
+
+	doc := &content.DocumentNode{}
+	if err := cbor.Unmarshal([]byte(*i.Content), doc); err != nil {
+		return nil, gear.ErrInternalServerError.From(err)
+	}
+
+	doc.FromTEContents(input)
+	data, err := cbor.Marshal(doc)
+	if err != nil {
+		return nil, gear.ErrInternalServerError.From(err)
+	}
+	draft.Content = data
+	return draft, nil
 }
 
 func (b *Writing) CreatePublication(ctx context.Context, input *CreatePublication) (*PublicationOutput, error) {

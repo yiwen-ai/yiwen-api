@@ -130,18 +130,6 @@ func (j *Job) Validate() error {
 	return nil
 }
 
-func Int8Ptr(i int8) *int8 {
-	return &i
-}
-
-func Uint16Ptr(i uint16) *uint16 {
-	return &i
-}
-
-func IntPtr(i int) *int {
-	return &i
-}
-
-func StringPtr(str string) *string {
-	return &str
+func Ptr[T any](t T) *T {
+	return &t
 }

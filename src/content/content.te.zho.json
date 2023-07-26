@@ -14,7 +14,7 @@
   {
     "id": "Zu0SlI",
     "texts": [
-      "December 2020"
+      "2020年12月"
     ]
   },
   {
@@ -26,13 +26,13 @@
   {
     "id": "ZcTD0N",
     "texts": [
-      "Standards Track"
+      "标准跟进"
     ]
   },
   {
     "id": "NeFX5i",
     "texts": [
-      "[Page]"
+      "[页]"
     ]
   },
   {
@@ -42,7 +42,7 @@
   {
     "id": "Esp9G6",
     "texts": [
-      "Stream:"
+      "流："
     ]
   },
   {
@@ -52,7 +52,7 @@
   {
     "id": "ykuRdu",
     "texts": [
-      "Internet Engineering Task Force (IETF)"
+      "互联网工程任务组 (IETF)"
     ]
   },
   {
@@ -102,7 +102,7 @@
   {
     "id": "ZyQS8E",
     "texts": [
-      "Obsoletes:"
+      "过时："
     ]
   },
   {
@@ -122,7 +122,7 @@
   {
     "id": "v2UVlm",
     "texts": [
-      "Category:"
+      "类别："
     ]
   },
   {
@@ -132,7 +132,7 @@
   {
     "id": "sjkTIt",
     "texts": [
-      "Standards Track"
+      "标准跟进"
     ]
   },
   {
@@ -142,7 +142,7 @@
   {
     "id": "p44P7k",
     "texts": [
-      "Published:"
+      "发布于："
     ]
   },
   {
@@ -152,7 +152,7 @@
   {
     "id": "PgXtyE",
     "texts": [
-      "December 2020"
+      "2020年12月"
     ]
   },
   {
@@ -182,7 +182,7 @@
   {
     "id": "fDWtAH",
     "texts": [
-      "Authors:"
+      "作者："
     ]
   },
   {
@@ -242,7 +242,7 @@
   {
     "id": "fDN0HK",
     "texts": [
-      "Concise Binary Object Representation (CBOR)"
+      "简明二进制对象表示（CBOR）"
     ]
   },
   {
@@ -252,7 +252,7 @@
   {
     "id": "tACRwp",
     "texts": [
-      "Abstract"
+      "摘要"
     ]
   },
   {
@@ -317,9 +317,7 @@
     "id": "Y1aQ_O",
     "texts": [
       "Information about the current status of this document, any errata, and how to provide feedback on it may be obtained at ",
-      "https://www.rfc-editor.org/info/rfc8949",
-      ".",
-      "¶"
+      "https://www.rfc-editor.org/info/rfc8949"
     ]
   },
   {
@@ -329,20 +327,20 @@
   {
     "id": "U3xaP7",
     "texts": [
-      "Copyright Notice"
+      "版权声明"
     ]
   },
   {
     "id": "U3xaP8",
     "texts": [
-      "Copyright Notice 2",
-      "Copyright Notice 3"
+      "版权声明 2",
+      "版权声明 3"
     ]
   },
   {
     "id": "U3xaP9",
     "texts": [
-      "Copyright Notice 4"
+      "版权声明 4"
     ]
   },
   {
@@ -352,8 +350,7 @@
   {
     "id": "Kc0v44",
     "texts": [
-      "Copyright (c) 2020 IETF Trust and the persons identified as the document authors. All rights reserved.",
-      "¶"
+      "Copyright (c) 2020 IETF Trust and the persons identified as the document authors. All rights reserved."
     ]
   },
   {

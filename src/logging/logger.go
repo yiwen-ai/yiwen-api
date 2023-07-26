@@ -30,7 +30,11 @@ type Log = gearLogging.Log
 
 func Run(fn func() Log) {
 	if log := fn(); len(log) > 0 {
-		Logger.Warning(log)
+		if _, ok := log["error"]; ok {
+			Logger.Warning(log)
+		} else {
+			Logger.Info(log)
+		}
 	}
 }
 

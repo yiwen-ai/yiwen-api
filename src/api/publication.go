@@ -79,42 +79,47 @@ func (a *Publication) Create(ctx *gear.Context) error {
 	go logging.Run(func() logging.Log {
 		defer locker.Release(gctx)
 
+		now := time.Now()
 		teOutput, err := a.blls.Jarvis.Translate(gctx, &bll.TranslatingInput{
 			GID:      *input.ToGID,
 			CID:      src.CID,
 			Language: *input.ToLanguage,
 			Version:  src.Version,
-			Model:    bll.StringPtr(model),
+			Model:    bll.Ptr(model),
 			Content:  &teContents,
 		})
 
+		var draft *bll.PublicationDraft
 		if err == nil {
-			draft := src.IntoPublicationDraft(job.GID, job.Language, model, teOutput.Content)
+			draft, err = src.IntoPublicationDraft(job.GID, job.Language, model, teOutput.Content)
+			if err == nil {
+				_, err = a.blls.Writing.CreatePublication(gctx, &bll.CreatePublication{
+					GID:      src.GID,
+					CID:      src.CID,
+					Language: src.Language,
+					Version:  src.Version,
+					Draft:    draft,
+				})
+			}
+		}
 
-			_, err = a.blls.Writing.CreatePublication(gctx, &bll.CreatePublication{
-				GID:      src.GID,
-				CID:      src.CID,
-				Language: src.Language,
-				Version:  src.Version,
-				Draft:    draft,
-			})
+		log := logging.Log{
+			"action":      "release_creation",
+			"rid":         sess.RID,
+			"uid":         sess.UserID.String(),
+			"gid":         src.GID.String(),
+			"cid":         src.CID.String(),
+			"language":    src.Language,
+			"version":     src.Version,
+			"to_gid":      job.GID.String(),
+			"to_language": job.Language,
+			"elapsed":     time.Since(now) / 1e6,
 		}
 
 		if err != nil {
-			return logging.Log{
-				"action":      "release_creation",
-				"rid":         sess.RID,
-				"uid":         sess.UserID.String(),
-				"gid":         src.GID.String(),
-				"cid":         src.CID.String(),
-				"language":    src.Language,
-				"version":     src.Version,
-				"to_gid":      job.GID.String(),
-				"to_language": job.Language,
-				"error":       err.Error(),
-			}
+			log["error"] = err.Error()
 		}
-		return nil
+		return log
 	})
 
 	return ctx.Send(http.StatusAccepted, bll.SuccessResponse[*bll.PublicationOutput]{
@@ -246,7 +251,7 @@ func (a *Publication) ListArchived(ctx *gear.Context) error {
 		return err
 	}
 
-	input.Status = bll.Int8Ptr(-1)
+	input.Status = bll.Ptr(int8(-1))
 	output, err := a.blls.Writing.ListPublication(ctx, input)
 	if err != nil {
 		return gear.ErrInternalServerError.From(err)
@@ -265,7 +270,7 @@ func (a *Publication) ListPublished(ctx *gear.Context) error {
 		return err
 	}
 
-	input.Status = bll.Int8Ptr(2)
+	input.Status = bll.Ptr(int8(2))
 	output, err := a.blls.Writing.ListPublication(ctx, input)
 	if err != nil {
 		return gear.ErrInternalServerError.From(err)

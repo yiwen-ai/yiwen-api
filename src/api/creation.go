@@ -145,7 +145,7 @@ func (a *Creation) ListArchived(ctx *gear.Context) error {
 		return err
 	}
 
-	input.Status = bll.Int8Ptr(-1)
+	input.Status = bll.Ptr(int8(-1))
 	output, err := a.blls.Writing.ListCreation(ctx, input)
 	if err != nil {
 		return gear.ErrInternalServerError.From(err)
@@ -227,20 +227,23 @@ func (a *Creation) Release(ctx *gear.Context) error {
 	go logging.Run(func() logging.Log {
 		defer locker.Release(gctx)
 
+		now := time.Now()
 		err := a.release(gctx, creation)
-		if err != nil {
-			return logging.Log{
-				"action":   "release_creation",
-				"rid":      sess.RID,
-				"uid":      sess.UserID.String(),
-				"gid":      creation.GID.String(),
-				"cid":      creation.ID.String(),
-				"language": *creation.Language,
-				"version":  *creation.Version,
-				"error":    err.Error(),
-			}
+		log := logging.Log{
+			"action":   "release_creation",
+			"rid":      sess.RID,
+			"uid":      sess.UserID.String(),
+			"gid":      creation.GID.String(),
+			"cid":      creation.ID.String(),
+			"language": *creation.Language,
+			"version":  *creation.Version,
+			"elapsed":  time.Since(now) / 1e6,
 		}
-		return nil
+
+		if err != nil {
+			log["error"] = err.Error()
+		}
+		return log
 	})
 
 	return ctx.Send(http.StatusAccepted, bll.SuccessResponse[*bll.PublicationOutput]{
@@ -405,6 +408,7 @@ func (a *Creation) summarize(gctx context.Context, gid, cid util.ID) (*bll.Creat
 
 	sess := gear.CtxValue[middleware.Session](gctx)
 	go logging.Run(func() logging.Log {
+		now := time.Now()
 		_, err := a.blls.Jarvis.Embedding(gctx, &bll.EmbeddingInput{
 			GID:      gid,
 			CID:      cid,
@@ -412,19 +416,21 @@ func (a *Creation) summarize(gctx context.Context, gid, cid util.ID) (*bll.Creat
 			Version:  *creation.Version,
 			Content:  teContents,
 		})
-		if err != nil {
-			return logging.Log{
-				"action":   "embedding",
-				"rid":      sess.RID,
-				"uid":      sess.UserID.String(),
-				"gid":      gid.String(),
-				"cid":      cid.String(),
-				"language": *creation.Language,
-				"version":  *creation.Version,
-				"error":    err.Error(),
-			}
+		log := logging.Log{
+			"action":   "embedding",
+			"rid":      sess.RID,
+			"uid":      sess.UserID.String(),
+			"gid":      gid.String(),
+			"cid":      cid.String(),
+			"language": *creation.Language,
+			"version":  *creation.Version,
+			"elapsed":  time.Since(now) / 1e6,
 		}
-		return nil
+
+		if err != nil {
+			log["error"] = err.Error()
+		}
+		return log
 	})
 
 	summary, err := a.blls.Jarvis.Summarize(gctx, teContents)
