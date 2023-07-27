@@ -15,6 +15,10 @@ var ZeroID ID
 var JARVIS ID = mustParseID("0000000000000jarvis0") // system user
 var ANON ID = mustParseID("000000000000000anon0")   // anonymous user
 
+func NewID() ID {
+	return ID(xid.New())
+}
+
 func ParseID(s string) (ID, error) {
 	id, err := xid.FromString(s)
 	if err != nil {
@@ -32,6 +36,10 @@ func mustParseID(s string) ID {
 }
 
 type ID xid.ID
+
+func (id ID) Unwrap() xid.ID {
+	return xid.ID(id)
+}
 
 func (id *ID) String() string {
 	if id == nil {
@@ -88,12 +96,24 @@ func (id *ID) UnmarshalText(data []byte) error {
 
 type UUID uuid.UUID
 
+func NewUUID() UUID {
+	id, err := uuid.NewUUID()
+	if err != nil {
+		panic(err)
+	}
+	return UUID(id)
+}
+
 func (id *UUID) String() string {
 	if id == nil {
 		return ""
 	}
 
 	return uuid.UUID(*id).String()
+}
+
+func (id UUID) Unwrap() uuid.UUID {
+	return uuid.UUID(id)
 }
 
 func (id UUID) Base64() string {

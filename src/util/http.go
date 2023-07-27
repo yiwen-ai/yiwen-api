@@ -165,11 +165,10 @@ func RequestCBOR(ctx context.Context, cli *http.Client, method, api string, inpu
 
 	data, err := io.ReadAll(resp.Body)
 	if resp.StatusCode > 206 || err != nil {
+		str, _ := cbor.Diagnose(data)
 		return fmt.Errorf("RequestCBOR %q failed, code: %d, error: %v, body: %s",
-			api, resp.StatusCode, err, string(data))
+			api, resp.StatusCode, err, str)
 	}
-
-	// fmt.Printf("%x\n", data)
 
 	return cbor.Unmarshal(data, output)
 }

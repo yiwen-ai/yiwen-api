@@ -8,6 +8,7 @@ import (
 
 	"github.com/teambition/gear"
 	"github.com/yiwen-ai/yiwen-api/src/conf"
+	"github.com/yiwen-ai/yiwen-api/src/logging"
 	"github.com/yiwen-ai/yiwen-api/src/util"
 )
 
@@ -51,9 +52,12 @@ func (m AuthLevel) Auth(ctx *gear.Context) error {
 		return gear.ErrUnauthorized.From(err)
 	}
 
+	log := logging.FromCtx(ctx)
+	log["uid"] = sess.UserID
 	if l > 1 && !sess.HasToken() {
 		return gear.ErrUnauthorized.WithMsg("invalid token")
 	}
+	log["aud"] = sess.AppID
 
 	ctxHeader := make(http.Header)
 	// inject auth headers into context for base service
