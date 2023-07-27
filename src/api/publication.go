@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/fxamacker/cbor/v2"
 	"github.com/teambition/gear"
 
 	"github.com/yiwen-ai/yiwen-api/src/bll"
@@ -58,6 +59,10 @@ func (a *Publication) Create(ctx *gear.Context) error {
 	if err != nil {
 		return gear.ErrInternalServerError.From(err)
 	}
+	teData, err := cbor.Marshal(teContents)
+	if err != nil {
+		return gear.ErrInternalServerError.From(err)
+	}
 
 	gctx := middleware.WithGlobalCtx(ctx)
 	key := fmt.Sprintf("CP:%s:%s:%s:%d", input.ToGID.String(), input.CID.String(), *input.ToLanguage, input.Version)
@@ -86,7 +91,7 @@ func (a *Publication) Create(ctx *gear.Context) error {
 			Language: *input.ToLanguage,
 			Version:  src.Version,
 			Model:    bll.Ptr(model),
-			Content:  &teContents,
+			Content:  bll.Ptr(util.Bytes(teData)),
 		})
 
 		var draft *bll.PublicationDraft

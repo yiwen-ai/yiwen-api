@@ -33,8 +33,12 @@ func mustParseID(s string) ID {
 
 type ID xid.ID
 
-func (id ID) String() string {
-	return xid.ID(id).String()
+func (id *ID) String() string {
+	if id == nil {
+		return ""
+	}
+
+	return xid.ID(*id).String()
 }
 
 func (id ID) MarshalCBOR() ([]byte, error) {
@@ -84,8 +88,12 @@ func (id *ID) UnmarshalText(data []byte) error {
 
 type UUID uuid.UUID
 
-func (id UUID) String() string {
-	return uuid.UUID(id).String()
+func (id *UUID) String() string {
+	if id == nil {
+		return ""
+	}
+
+	return uuid.UUID(*id).String()
 }
 
 func (id UUID) Base64() string {

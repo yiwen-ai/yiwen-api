@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/fxamacker/cbor/v2"
 	"github.com/teambition/gear"
 
 	"github.com/yiwen-ai/yiwen-api/src/bll"
@@ -30,6 +31,10 @@ func (a *Creation) Create(ctx *gear.Context) error {
 	if err != nil {
 		return gear.ErrBadRequest.From(err)
 	}
+	teData, err := cbor.Marshal(teContents)
+	if err != nil {
+		return gear.ErrBadRequest.From(err)
+	}
 
 	if err := a.checkCreatePermission(ctx, input.GID); err != nil {
 		return err
@@ -38,7 +43,7 @@ func (a *Creation) Create(ctx *gear.Context) error {
 	te, err := a.blls.Jarvis.DetectLang(ctx, &bll.DetectLangInput{
 		GID:      input.GID,
 		Language: input.Language,
-		Content:  teContents,
+		Content:  teData,
 	})
 	if err != nil {
 		return gear.ErrInternalServerError.From(err)
@@ -405,6 +410,10 @@ func (a *Creation) summarize(gctx context.Context, gid, cid util.ID) (*bll.Creat
 	if err != nil {
 		return nil, err
 	}
+	teData, err := cbor.Marshal(teContents)
+	if err != nil {
+		return nil, err
+	}
 
 	sess := gear.CtxValue[middleware.Session](gctx)
 	go logging.Run(func() logging.Log {
@@ -414,7 +423,7 @@ func (a *Creation) summarize(gctx context.Context, gid, cid util.ID) (*bll.Creat
 			CID:      cid,
 			Language: *creation.Language,
 			Version:  *creation.Version,
-			Content:  teContents,
+			Content:  teData,
 		})
 		log := logging.Log{
 			"action":   "embedding",

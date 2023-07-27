@@ -27,7 +27,7 @@ type SearchDocument struct {
 	GID      util.ID    `json:"gid" cbor:"gid"`
 	CID      util.ID    `json:"cid" cbor:"cid"`
 	Language string     `json:"language" cbor:"language"`
-	Version  int        `json:"version" cbor:"version"`
+	Version  uint16     `json:"version" cbor:"version"`
 	Kind     int8       `json:"kind" cbor:"kind"`
 	Title    string     `json:"title" cbor:"title"`
 	Summary  string     `json:"summary" cbor:"summary"`

@@ -97,7 +97,7 @@ func (i *PublicationOutput) ToTEContents() (content.TEContents, error) {
 	return contents, nil
 }
 
-func (i *PublicationOutput) IntoPublicationDraft(gid util.ID, language, model string, input content.TEContents) (*PublicationDraft, error) {
+func (i *PublicationOutput) IntoPublicationDraft(gid util.ID, language, model string, input []byte) (*PublicationDraft, error) {
 	draft := &PublicationDraft{
 		GID:      gid,
 		Language: language,
@@ -110,7 +110,12 @@ func (i *PublicationOutput) IntoPublicationDraft(gid util.ID, language, model st
 		draft.Cover = *i.Cover
 	}
 
-	for _, te := range input {
+	teContents := content.TEContents{}
+	if err := cbor.Unmarshal(input, &teContents); err != nil {
+		return nil, gear.ErrInternalServerError.From(err)
+	}
+
+	for _, te := range teContents {
 		switch te.ID {
 		case "title":
 			if len(te.Texts) > 0 {
@@ -132,7 +137,7 @@ func (i *PublicationOutput) IntoPublicationDraft(gid util.ID, language, model st
 		return nil, gear.ErrInternalServerError.From(err)
 	}
 
-	doc.FromTEContents(input)
+	doc.FromTEContents(teContents)
 	data, err := cbor.Marshal(doc)
 	if err != nil {
 		return nil, gear.ErrInternalServerError.From(err)

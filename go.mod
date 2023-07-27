@@ -5,7 +5,7 @@ go 1.20
 require (
 	github.com/BurntSushi/toml v1.3.2
 	github.com/aliyun/aliyun-oss-go-sdk v2.2.7+incompatible
-	github.com/bsm/redislock v0.9.3
+	github.com/bsm/redislock v0.9.4
 	github.com/fxamacker/cbor/v2 v2.5.0-beta5
 	github.com/go-playground/validator/v10 v10.14.1
 	github.com/google/uuid v1.3.0
