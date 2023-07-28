@@ -16,8 +16,8 @@ type Webscraper struct {
 }
 
 type ScrapingInput struct {
+	GID util.ID `json:"gid" cbor:"gid" query:"gid" validate:"required"`
 	Url string  `json:"url" cbor:"url" query:"url" validate:"required,http_url"`
-	GID util.ID `json:"gid" cbor:"gid" query:"gid"`
 }
 
 func (i *ScrapingInput) Validate() error {
@@ -31,10 +31,10 @@ func (i *ScrapingInput) Validate() error {
 type ScrapingOutput struct {
 	ID      util.ID           `json:"id" cbor:"id"`
 	Url     string            `json:"url" cbor:"url"`
-	Src     string            `json:"src" cbor:"src"`
-	Title   string            `json:"title" cbor:"title"`
-	Meta    map[string]string `json:"meta" cbor:"meta"`
-	Content util.Bytes        `json:"content" cbor:"content"`
+	Src     string            `json:"src,omitempty" cbor:"src,omitempty"`
+	Title   string            `json:"title,omitempty" cbor:"title,omitempty"`
+	Meta    map[string]string `json:"meta,omitempty" cbor:"meta,omitempty"`
+	Content util.Bytes        `json:"content,omitempty" cbor:"content,omitempty"`
 }
 
 func (b *Webscraper) Search(ctx context.Context, targetUrl string) (*ScrapingOutput, error) {
@@ -67,7 +67,7 @@ func (b *Webscraper) Create(ctx context.Context, targetUrl string) (*ScrapingOut
 			return nil, err
 		}
 
-		if len(output.Result.Content) > 0 || i > 10 {
+		if len(output.Result.Content) > 0 || i > 15 {
 			break
 		}
 		time.Sleep(time.Second)

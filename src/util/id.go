@@ -37,10 +37,6 @@ func mustParseID(s string) ID {
 
 type ID xid.ID
 
-func (id ID) Unwrap() xid.ID {
-	return xid.ID(id)
-}
-
 func (id *ID) String() string {
 	if id == nil {
 		return ""
@@ -110,10 +106,6 @@ func (id *UUID) String() string {
 	}
 
 	return uuid.UUID(*id).String()
-}
-
-func (id UUID) Unwrap() uuid.UUID {
-	return uuid.UUID(id)
 }
 
 func (id UUID) Base64() string {

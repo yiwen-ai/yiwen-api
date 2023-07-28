@@ -119,14 +119,16 @@ func (v *AttrValue) UnmarshalCBOR(data []byte) error {
 		v.kind = Vbool
 	case int64:
 		v.kind = Vint64
+	case uint64:
+		v.kind = Vint64
+		v.v = int64(v.v.(uint64))
 	case float64:
 		v.kind = Vfloat64
 	case string:
 		v.kind = Vstring
 	default:
 		v.kind = Vnull
-		v.v = nil
-		return fmt.Errorf("content.AttrValue: unknown type %T", v.v)
+		return fmt.Errorf("content.AttrValue: unknown type %T, %#v", v.v, v.v)
 	}
 
 	return nil
