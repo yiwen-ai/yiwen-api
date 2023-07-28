@@ -150,7 +150,7 @@ func (a *Creation) ListArchived(ctx *gear.Context) error {
 		return err
 	}
 
-	input.Status = bll.Ptr(int8(-1))
+	input.Status = util.Ptr(int8(-1))
 	output, err := a.blls.Writing.ListCreation(ctx, input)
 	if err != nil {
 		return gear.ErrInternalServerError.From(err)
@@ -442,7 +442,11 @@ func (a *Creation) summarize(gctx context.Context, gid, cid util.ID) (*bll.Creat
 		return log
 	})
 
-	summary, err := a.blls.Jarvis.Summarize(gctx, teContents)
+	summary, err := a.blls.Jarvis.Summarize(gctx, &bll.DetectLangInput{
+		GID:      gid,
+		Language: *creation.Language,
+		Content:  *creation.Content,
+	})
 	if err != nil {
 		return nil, err
 	}

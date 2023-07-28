@@ -5,7 +5,6 @@ import (
 	"errors"
 	"time"
 
-	"github.com/yiwen-ai/yiwen-api/src/content"
 	"github.com/yiwen-ai/yiwen-api/src/service"
 	"github.com/yiwen-ai/yiwen-api/src/util"
 )
@@ -45,7 +44,7 @@ func (b *Jarvis) DetectLang(ctx context.Context, input *DetectLangInput) (*TEOut
 	return &output.Result, nil
 }
 
-func (b *Jarvis) Summarize(ctx context.Context, input content.TEContents) (string, error) {
+func (b *Jarvis) Summarize(ctx context.Context, input *DetectLangInput) (string, error) {
 	output := SuccessResponse[string]{}
 	if err := b.svc.Post(ctx, "/v1/summarizing", input, &output); err != nil {
 		return "", err

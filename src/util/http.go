@@ -178,7 +178,7 @@ func RequestCBOR(ctx context.Context, cli *http.Client, method, api string, inpu
 
 func CopyHeader(dst http.Header, src http.Header, names ...string) {
 	for k, vv := range src {
-		if len(names) > 0 && !StringSliceHas(names, strings.ToLower(k)) {
+		if len(names) > 0 && !SliceHas(names, strings.ToLower(k)) {
 			continue
 		}
 

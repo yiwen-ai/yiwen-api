@@ -30,7 +30,7 @@ func (s *Session) HasToken() bool {
 }
 
 func (s *Session) HasScope(scope string) bool {
-	return util.StringSliceHas(s.AppScope, scope)
+	return util.SliceHas(s.AppScope, scope)
 }
 
 type AuthLevel uint8

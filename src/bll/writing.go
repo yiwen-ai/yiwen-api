@@ -15,8 +15,8 @@ type Writing struct {
 
 type SearchInput struct {
 	Q        string   `json:"q" cbor:"q" query:"q" validate:"required"`
-	Language string   `json:"language" cbor:"language" query:"language"`
-	GID      *util.ID `json:"gid" cbor:"gid" query:"gid"`
+	Language *string  `json:"language,omitempty" cbor:"language,omitempty" query:"language"`
+	GID      *util.ID `json:"gid,omitempty" cbor:"gid,omitempty" query:"gid"`
 }
 
 func (i *SearchInput) Validate() error {
@@ -74,8 +74,8 @@ func (b *Writing) Search(ctx context.Context, input *SearchInput) SearchOutput {
 	if input.GID != nil {
 		query.Add("gid", input.GID.String())
 	}
-	if input.Language != "" {
-		query.Add("language", input.Language)
+	if input.Language != nil && *input.Language != "" {
+		query.Add("language", *input.Language)
 	}
 
 	// ignore error
@@ -93,8 +93,8 @@ func (b *Writing) GroupSearch(ctx context.Context, input *SearchInput) SearchOut
 	query := url.Values{}
 	query.Add("q", input.Q)
 	query.Add("gid", input.GID.String())
-	if input.Language != "" {
-		query.Add("language", input.Language)
+	if input.Language != nil && *input.Language != "" {
+		query.Add("language", *input.Language)
 	}
 
 	// ignore error

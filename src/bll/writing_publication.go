@@ -168,7 +168,7 @@ func (i *QueryPublication) Validate() error {
 }
 
 type QueryPublicationJob struct {
-	JobID string `json:"job" cbor:"job" validate:"required"`
+	JobID string `json:"job" cbor:"job" query:"job" validate:"required"`
 	Job   *Job   `json:"-" cbor:"-"`
 }
 

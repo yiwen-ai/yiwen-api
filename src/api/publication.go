@@ -90,8 +90,8 @@ func (a *Publication) Create(ctx *gear.Context) error {
 			CID:      src.CID,
 			Language: *input.ToLanguage,
 			Version:  src.Version,
-			Model:    bll.Ptr(model),
-			Content:  bll.Ptr(util.Bytes(teData)),
+			Model:    util.Ptr(model),
+			Content:  util.Ptr(util.Bytes(teData)),
 		})
 
 		var draft *bll.PublicationDraft
@@ -256,7 +256,7 @@ func (a *Publication) ListArchived(ctx *gear.Context) error {
 		return err
 	}
 
-	input.Status = bll.Ptr(int8(-1))
+	input.Status = util.Ptr(int8(-1))
 	output, err := a.blls.Writing.ListPublication(ctx, input)
 	if err != nil {
 		return gear.ErrInternalServerError.From(err)
@@ -275,7 +275,7 @@ func (a *Publication) ListPublished(ctx *gear.Context) error {
 		return err
 	}
 
-	input.Status = bll.Ptr(int8(2))
+	input.Status = util.Ptr(int8(2))
 	output, err := a.blls.Writing.ListPublication(ctx, input)
 	if err != nil {
 		return gear.ErrInternalServerError.From(err)

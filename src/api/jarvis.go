@@ -47,8 +47,8 @@ func (a *Jarvis) Search(ctx *gear.Context) error {
 			GID:    input.GID,
 		}
 
-		if input.Language != "" {
-			semanticInput.Language = &input.Language
+		if input.Language != nil {
+			semanticInput.Language = input.Language
 		}
 
 		semanticOutput, err := a.blls.Jarvis.EmbeddingSearch(ctx, semanticInput)
@@ -144,8 +144,8 @@ func (a *Jarvis) GroupSearch(ctx *gear.Context) error {
 			GID:    input.GID,
 		}
 
-		if input.Language != "" {
-			semanticInput.Language = &input.Language
+		if input.Language != nil {
+			semanticInput.Language = input.Language
 		}
 
 		semanticOutput, err := a.blls.Jarvis.EmbeddingSearch(ctx, semanticInput)

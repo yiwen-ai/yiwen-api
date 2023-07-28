@@ -129,7 +129,3 @@ func (j *Job) Validate() error {
 
 	return nil
 }
-
-func Ptr[T any](t T) *T {
-	return &t
-}

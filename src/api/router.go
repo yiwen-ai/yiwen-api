@@ -67,7 +67,7 @@ func newRouters(apis *APIs) []*gear.Router {
 	router.Patch("/v1/creation/redraft", middleware.AuthToken.Auth, apis.Creation.Redraft)
 	router.Patch("/v1/creation/review", middleware.AuthToken.Auth, todo)  // 暂不实现
 	router.Patch("/v1/creation/approve", middleware.AuthToken.Auth, todo) // 暂不实现
-	router.Patch("/v1/creation/release", middleware.AuthToken.Auth, apis.Creation.Release)
+	router.Post("/v1/creation/release", middleware.AuthToken.Auth, apis.Creation.Release)
 	router.Put("/v1/creation/update_content", middleware.AuthToken.Auth, apis.Creation.UpdateContent)
 	router.Patch("/v1/creation/update_content", middleware.AuthToken.Auth, todo) // 暂不实现
 	router.Post("/v1/creation/assist", middleware.AuthToken.Auth, todo)          // 暂不实现
