@@ -445,7 +445,7 @@ func (a *Creation) summarize(gctx context.Context, gid, cid util.ID) (*bll.Creat
 	summary, err := a.blls.Jarvis.Summarize(gctx, &bll.DetectLangInput{
 		GID:      gid,
 		Language: *creation.Language,
-		Content:  *creation.Content,
+		Content:  teData,
 	})
 	if err != nil {
 		return nil, err
