@@ -416,15 +416,16 @@ func (a *Creation) summarize(gctx context.Context, gid, cid util.ID) (*bll.Creat
 	}
 
 	sess := gear.CtxValue[middleware.Session](gctx)
+	teInput := &bll.TEInput{
+		GID:      gid,
+		CID:      cid,
+		Language: *creation.Language,
+		Version:  *creation.Version,
+		Content:  util.Ptr(util.Bytes(teData)),
+	}
 	go logging.Run(func() logging.Log {
 		now := time.Now()
-		_, err := a.blls.Jarvis.Embedding(gctx, &bll.EmbeddingInput{
-			GID:      gid,
-			CID:      cid,
-			Language: *creation.Language,
-			Version:  *creation.Version,
-			Content:  teData,
-		})
+		_, err := a.blls.Jarvis.Embedding(gctx, teInput)
 		log := logging.Log{
 			"action":   "embedding",
 			"rid":      sess.RID,
@@ -442,11 +443,7 @@ func (a *Creation) summarize(gctx context.Context, gid, cid util.ID) (*bll.Creat
 		return log
 	})
 
-	summary, err := a.blls.Jarvis.Summarize(gctx, &bll.DetectLangInput{
-		GID:      gid,
-		Language: *creation.Language,
-		Content:  teData,
-	})
+	summary, err := a.blls.Jarvis.Summarize(gctx, teInput)
 	if err != nil {
 		return nil, err
 	}
@@ -455,7 +452,7 @@ func (a *Creation) summarize(gctx context.Context, gid, cid util.ID) (*bll.Creat
 		GID:       gid,
 		ID:        cid,
 		UpdatedAt: *creation.UpdatedAt,
-		Summary:   &summary,
+		Summary:   &summary.Summary,
 	})
 	if err != nil {
 		return nil, err

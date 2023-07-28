@@ -30,6 +30,15 @@ type DetectLangInput struct {
 	Content  util.Bytes `json:"content" cbor:"content"`
 }
 
+type TEInput struct {
+	GID      util.ID     `json:"gid" cbor:"gid"`
+	CID      util.ID     `json:"cid" cbor:"cid"`
+	Language string      `json:"language" cbor:"language"`
+	Version  uint16      `json:"version" cbor:"version"`
+	Model    *string     `json:"model,omitempty" cbor:"model,omitempty"`
+	Content  *util.Bytes `json:"content,omitempty" cbor:"content,omitempty"`
+}
+
 type TEOutput struct {
 	CID      util.ID `json:"cid" cbor:"cid"`
 	Language string  `json:"detected_language" cbor:"detected_language"`
@@ -44,22 +53,49 @@ func (b *Jarvis) DetectLang(ctx context.Context, input *DetectLangInput) (*TEOut
 	return &output.Result, nil
 }
 
-func (b *Jarvis) Summarize(ctx context.Context, input *DetectLangInput) (string, error) {
-	output := SuccessResponse[string]{}
-	if err := b.svc.Post(ctx, "/v1/summarizing", input, &output); err != nil {
-		return "", err
+type SummarizingOutput struct {
+	GID      util.ID `json:"gid" cbor:"gid"`
+	CID      util.ID `json:"cid" cbor:"cid"`
+	Language string  `json:"language" cbor:"language"`
+	Version  uint16  `json:"version" cbor:"version"`
+	Model    string  `json:"model" cbor:"model"`
+	Tokens   uint32  `json:"tokens" cbor:"tokens"`
+	Summary  string  `json:"summary" cbor:"summary"`
+}
+
+func (b *Jarvis) Summarize(ctx context.Context, input *TEInput) (*SummarizingOutput, error) {
+	// output := SuccessResponse[string]{}
+	o0 := SuccessResponse[TEOutput]{}
+	if err := b.svc.Post(ctx, "/v1/summarizing", input, &o0); err != nil {
+		return nil, err
+	}
+
+	getInput := &TEInput{
+		GID:      input.GID,
+		CID:      input.CID,
+		Language: input.Language,
+		Version:  input.Version,
+	}
+	output := SuccessResponse[*SummarizingOutput]{}
+	i := 0
+	for {
+		time.Sleep(time.Second * 3)
+		i += 1
+		err := b.svc.Post(ctx, "/v1/summarizing/get", getInput, &output)
+		if err != nil && !errors.Is(err, util.ErrNotFound) {
+			return nil, err
+		}
+
+		if i > 100 {
+			return nil, errors.New("summarizing timeout")
+		}
+
+		if err == nil {
+			break
+		}
 	}
 
 	return output.Result, nil
-}
-
-type TranslatingInput struct {
-	GID      util.ID     `json:"gid" cbor:"gid"`
-	CID      util.ID     `json:"cid" cbor:"cid"`
-	Language string      `json:"language" cbor:"language"`
-	Version  uint16      `json:"version" cbor:"version"`
-	Model    *string     `json:"model,omitempty" cbor:"model,omitempty"`
-	Content  *util.Bytes `json:"content,omitempty" cbor:"content,omitempty"`
 }
 
 type TranslatingOutput struct {
@@ -72,13 +108,13 @@ type TranslatingOutput struct {
 	Content  util.Bytes `json:"content" cbor:"content"`
 }
 
-func (b *Jarvis) Translate(ctx context.Context, input *TranslatingInput) (*TranslatingOutput, error) {
+func (b *Jarvis) Translate(ctx context.Context, input *TEInput) (*TranslatingOutput, error) {
 	o0 := SuccessResponse[TEOutput]{}
 	if err := b.svc.Post(ctx, "/v1/translating", input, &o0); err != nil {
 		return nil, err
 	}
 
-	getInput := &TranslatingInput{
+	getInput := &TEInput{
 		GID:      input.GID,
 		CID:      input.CID,
 		Language: input.Language,
@@ -94,7 +130,11 @@ func (b *Jarvis) Translate(ctx context.Context, input *TranslatingInput) (*Trans
 			return nil, err
 		}
 
-		if err == nil || i > 20 {
+		if i > 100 {
+			return nil, errors.New("translating timeout")
+		}
+
+		if err == nil {
 			break
 		}
 	}
@@ -102,15 +142,7 @@ func (b *Jarvis) Translate(ctx context.Context, input *TranslatingInput) (*Trans
 	return output.Result, nil
 }
 
-type EmbeddingInput struct {
-	GID      util.ID    `json:"gid" cbor:"gid"`
-	CID      util.ID    `json:"cid" cbor:"cid"`
-	Language string     `json:"language" cbor:"language"`
-	Version  uint16     `json:"version" cbor:"version"`
-	Content  util.Bytes `json:"content,omitempty" cbor:"content,omitempty"`
-}
-
-func (b *Jarvis) Embedding(ctx context.Context, input *EmbeddingInput) (*TEOutput, error) {
+func (b *Jarvis) Embedding(ctx context.Context, input *TEInput) (*TEOutput, error) {
 	output := SuccessResponse[TEOutput]{}
 	if err := b.svc.Post(ctx, "/v1/embedding", input, &output); err != nil {
 		return nil, err
@@ -119,7 +151,7 @@ func (b *Jarvis) Embedding(ctx context.Context, input *EmbeddingInput) (*TEOutpu
 	return &output.Result, nil
 }
 
-func (b *Jarvis) EmbeddingPublic(ctx context.Context, input *EmbeddingInput) (*TEOutput, error) {
+func (b *Jarvis) EmbeddingPublic(ctx context.Context, input *TEInput) (*TEOutput, error) {
 	input.Content = nil
 	output := SuccessResponse[TEOutput]{}
 	if err := b.svc.Post(ctx, "/v1/embedding/public", input, &output); err != nil {

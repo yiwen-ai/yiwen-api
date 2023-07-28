@@ -85,7 +85,7 @@ func (a *Publication) Create(ctx *gear.Context) error {
 		defer locker.Release(gctx)
 
 		now := time.Now()
-		teOutput, err := a.blls.Jarvis.Translate(gctx, &bll.TranslatingInput{
+		teOutput, err := a.blls.Jarvis.Translate(gctx, &bll.TEInput{
 			GID:      *input.ToGID,
 			CID:      src.CID,
 			Language: *input.ToLanguage,
