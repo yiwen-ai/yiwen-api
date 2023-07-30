@@ -73,12 +73,22 @@ func (a *Publication) Create(ctx *gear.Context) error {
 
 	model := input.Model
 	sess := gear.CtxValue[middleware.Session](gctx)
-	job := &bll.Job{
-		GID:       *input.ToGID,
-		CID:       src.CID,
-		Language:  *input.ToLanguage,
-		Version:   src.Version,
-		ExpiresIn: time.Now().Unix() + 120,
+
+	p := &bll.CPPayload{
+		GID:      *input.ToGID,
+		CID:      src.CID,
+		Language: input.ToLanguage,
+		Version:  &src.Version,
+	}
+
+	log, err := a.blls.Logbase.Log(ctx, "publication.create", 0, input.GID, p)
+	if err != nil {
+		return gear.ErrInternalServerError.From(err)
+	}
+
+	auditLog := &bll.UpdateLog{
+		UID: log.UID,
+		ID:  log.ID,
 	}
 
 	go logging.Run(func() logging.Log {
@@ -96,7 +106,9 @@ func (a *Publication) Create(ctx *gear.Context) error {
 
 		var draft *bll.PublicationDraft
 		if err == nil {
-			draft, err = src.IntoPublicationDraft(job.GID, job.Language, model, teOutput.Content)
+			auditLog.Tokens = util.Ptr(teOutput.Tokens)
+
+			draft, err = src.IntoPublicationDraft(p.GID, *p.Language, model, teOutput.Content)
 			if err == nil {
 				_, err = a.blls.Writing.CreatePublication(gctx, &bll.CreatePublication{
 					GID:      src.GID,
@@ -116,19 +128,24 @@ func (a *Publication) Create(ctx *gear.Context) error {
 			"cid":         src.CID.String(),
 			"language":    src.Language,
 			"version":     src.Version,
-			"to_gid":      job.GID.String(),
-			"to_language": job.Language,
+			"to_gid":      p.GID.String(),
+			"to_language": *p.Language,
 			"elapsed":     time.Since(now) / 1e6,
 		}
 
+		auditLog.Status = 1
 		if err != nil {
+			auditLog.Status = -1
+			auditLog.Error = util.Ptr(err.Error())
 			log["error"] = err.Error()
 		}
+
+		go a.blls.Logbase.Update(gctx, auditLog)
 		return log
 	})
 
 	return ctx.Send(http.StatusAccepted, bll.SuccessResponse[*bll.PublicationOutput]{
-		Job:    job.String(),
+		Job:    auditLog.ID.String(),
 		Result: nil,
 	})
 }
@@ -151,27 +168,49 @@ func (a *Publication) Get(ctx *gear.Context) error {
 	return ctx.OkSend(bll.SuccessResponse[*bll.PublicationOutput]{Result: output})
 }
 
-func (a *Publication) GetJob(ctx *gear.Context) error {
+func (a *Publication) GetByJob(ctx *gear.Context) error {
 	input := &bll.QueryPublicationJob{}
 	if err := ctx.ParseURL(input); err != nil {
 		return err
 	}
 
-	if err := a.checkReadPermission(ctx, input.Job.GID); err != nil {
+	sess := gear.CtxValue[middleware.Session](ctx)
+	log, err := a.blls.Logbase.Get(ctx, sess.UserID, input.ID, "")
+	if err != nil {
+		return gear.ErrBadRequest.WithMsgf("invalid job: %s", err.Error())
+	}
+
+	if log.Action != "creation.release" && log.Action != "publication.create" {
+		return gear.ErrBadRequest.WithMsgf("invalid job action: %s", log.Action)
+	}
+
+	if log.Error != nil {
+		return gear.ErrInternalServerError.WithMsgf("job %s error: %s", log.Action, *log.Error)
+	}
+
+	p, err := bll.PayloadFrom[bll.CPPayload](log)
+	if err != nil {
+		return gear.ErrBadRequest.WithMsgf("invalid job: %v", err)
+	}
+	if p.Language == nil || p.Version == nil {
+		return gear.ErrBadRequest.WithMsgf("invalid job payload: %v", p)
+	}
+
+	if err := a.checkReadPermission(ctx, p.GID); err != nil {
 		return err
 	}
 
 	output, err := a.blls.Writing.GetPublication(ctx, &bll.QueryPublication{
-		GID:      input.Job.GID,
-		CID:      input.Job.CID,
-		Language: input.Job.Language,
-		Version:  input.Job.Version,
+		GID:      p.GID,
+		CID:      p.CID,
+		Language: *p.Language,
+		Version:  *p.Version,
 	})
 
 	if err != nil {
 		if errors.Is(err, util.ErrNotFound) {
 			return ctx.Send(http.StatusAccepted, bll.SuccessResponse[*bll.PublicationOutput]{
-				Job:    input.JobID,
+				Job:    input.ID.String(),
 				Result: nil,
 			})
 		}
@@ -180,6 +219,20 @@ func (a *Publication) GetJob(ctx *gear.Context) error {
 	}
 
 	return ctx.OkSend(bll.SuccessResponse[*bll.PublicationOutput]{Result: output})
+}
+
+func (a *Publication) ListJob(ctx *gear.Context) error {
+	sess := gear.CtxValue[middleware.Session](ctx)
+	logs, err := a.blls.Logbase.ListRecently(ctx, &bll.ListRecentlyLogsInput{
+		UID:     sess.UserID,
+		Actions: []string{"creation.release", "publication.create"},
+		Fields:  []string{"gid", "error"},
+	})
+
+	if err != nil {
+		return gear.ErrBadRequest.WithMsgf("list jobs failed: %s", err.Error())
+	}
+	return ctx.OkSend(bll.SuccessResponse[[]*bll.PublicationJob]{Result: bll.PublicationJobsFrom(logs)})
 }
 
 func (a *Publication) Update(ctx *gear.Context) error {
@@ -199,6 +252,16 @@ func (a *Publication) Update(ctx *gear.Context) error {
 
 	output, err := a.blls.Writing.UpdatePublication(ctx, input)
 	if err != nil {
+		return gear.ErrInternalServerError.From(err)
+	}
+
+	if _, err = a.blls.Logbase.Log(ctx, "publication.update", 1, input.GID, &bll.CPPayload{
+		GID:      input.GID,
+		CID:      input.CID,
+		Language: &input.Language,
+		Version:  &input.Version,
+		Status:   output.Status,
+	}); err != nil {
 		return gear.ErrInternalServerError.From(err)
 	}
 
@@ -222,6 +285,16 @@ func (a *Publication) Delete(ctx *gear.Context) error {
 
 	output, err := a.blls.Writing.DeletePublication(ctx, input)
 	if err != nil {
+		return gear.ErrInternalServerError.From(err)
+	}
+
+	if _, err = a.blls.Logbase.Log(ctx, "publication.delete", 1, input.GID, &bll.CPPayload{
+		GID:      input.GID,
+		CID:      input.CID,
+		Language: &input.Language,
+		Version:  &input.Version,
+		Status:   util.Ptr(int8(-2)),
+	}); err != nil {
 		return gear.ErrInternalServerError.From(err)
 	}
 
@@ -323,6 +396,16 @@ func (a *Publication) Archive(ctx *gear.Context) error {
 		return gear.ErrInternalServerError.From(err)
 	}
 
+	if _, err = a.blls.Logbase.Log(ctx, "publication.update", 1, input.GID, &bll.CPPayload{
+		GID:      input.GID,
+		CID:      input.CID,
+		Language: &input.Language,
+		Version:  &input.Version,
+		Status:   util.Ptr(int8(-1)),
+	}); err != nil {
+		return gear.ErrInternalServerError.From(err)
+	}
+
 	return ctx.OkSend(bll.SuccessResponse[*bll.PublicationOutput]{Result: output})
 }
 
@@ -344,6 +427,16 @@ func (a *Publication) Redraft(ctx *gear.Context) error {
 	input.Status = 0
 	output, err := a.blls.Writing.UpdatePublicationStatus(ctx, input)
 	if err != nil {
+		return gear.ErrInternalServerError.From(err)
+	}
+
+	if _, err = a.blls.Logbase.Log(ctx, "publication.update", 1, input.GID, &bll.CPPayload{
+		GID:      input.GID,
+		CID:      input.CID,
+		Language: &input.Language,
+		Version:  &input.Version,
+		Status:   util.Ptr(int8(0)),
+	}); err != nil {
 		return gear.ErrInternalServerError.From(err)
 	}
 
@@ -371,6 +464,24 @@ func (a *Publication) Publish(ctx *gear.Context) error {
 		return gear.ErrInternalServerError.From(err)
 	}
 
+	gctx := middleware.WithGlobalCtx(ctx)
+	go a.blls.Jarvis.EmbeddingPublic(gctx, &bll.TEInput{
+		GID:      input.GID,
+		CID:      input.CID,
+		Language: input.Language,
+		Version:  input.Version,
+	})
+
+	if _, err = a.blls.Logbase.Log(ctx, "publication.publish", 1, input.GID, &bll.CPPayload{
+		GID:      input.GID,
+		CID:      input.CID,
+		Language: &input.Language,
+		Version:  &input.Version,
+		Status:   util.Ptr(int8(2)),
+	}); err != nil {
+		return gear.ErrInternalServerError.From(err)
+	}
+
 	return ctx.OkSend(bll.SuccessResponse[*bll.PublicationOutput]{Result: output})
 }
 
@@ -391,6 +502,16 @@ func (a *Publication) UpdateContent(ctx *gear.Context) error {
 
 	output, err := a.blls.Writing.UpdatePublicationContent(ctx, input)
 	if err != nil {
+		return gear.ErrInternalServerError.From(err)
+	}
+
+	if _, err = a.blls.Logbase.Log(ctx, "publication.update.content", 1, input.GID, &bll.CPPayload{
+		GID:      input.GID,
+		CID:      input.CID,
+		Language: &input.Language,
+		Version:  &input.Version,
+		Status:   output.Status,
+	}); err != nil {
 		return gear.ErrInternalServerError.From(err)
 	}
 

@@ -164,21 +164,20 @@ type QueryPublication struct {
 }
 
 func (i *QueryPublication) Validate() error {
-	return nil
-}
-
-type QueryPublicationJob struct {
-	JobID string `json:"job" cbor:"job" query:"job" validate:"required"`
-	Job   *Job   `json:"-" cbor:"-"`
-}
-
-func (i *QueryPublicationJob) Validate() error {
 	if err := util.Validator.Struct(i); err != nil {
 		return gear.ErrBadRequest.From(err)
 	}
 
-	i.Job = &Job{}
-	if err := i.Job.FromString(i.JobID); err != nil {
+	return nil
+}
+
+type QueryPublicationJob struct {
+	ID     util.ID `json:"job" cbor:"job" query:"job" validate:"required"`
+	Fields string  `json:"fields" cbor:"fields" query:"fields"`
+}
+
+func (i *QueryPublicationJob) Validate() error {
+	if err := util.Validator.Struct(i); err != nil {
 		return gear.ErrBadRequest.From(err)
 	}
 	return nil

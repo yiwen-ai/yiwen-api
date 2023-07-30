@@ -76,7 +76,8 @@ func newRouters(apis *APIs) []*gear.Router {
 	router.Patch("/v1/publication", middleware.AuthToken.Auth, apis.Publication.Update)
 	router.Delete("/v1/publication", middleware.AuthToken.Auth, apis.Publication.Delete)
 
-	router.Get("/v1/publication/job", middleware.AuthToken.Auth, apis.Publication.GetJob)
+	router.Get("/v1/publication/by_job", middleware.AuthToken.Auth, apis.Publication.GetByJob)
+	router.Get("/v1/publication/list_job", middleware.AuthToken.Auth, apis.Publication.ListJob)
 	router.Post("/v1/publication/list", middleware.AuthToken.Auth, apis.Publication.List)
 	router.Post("/v1/publication/list_archived", middleware.AuthToken.Auth, apis.Publication.ListArchived)
 	router.Patch("/v1/publication/archive", middleware.AuthToken.Auth, apis.Publication.Archive)

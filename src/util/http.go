@@ -97,6 +97,7 @@ func RequestJSON(ctx context.Context, cli *http.Client, method, api string, inpu
 		CopyHeader(req.Header, http.Header(*header))
 	}
 
+	rid := req.Header.Get(gear.HeaderXRequestID)
 	resp, err := cli.Do(req)
 	if err != nil {
 		if err.(*url.Error).Unwrap() == context.Canceled {
@@ -113,8 +114,8 @@ func RequestJSON(ctx context.Context, cli *http.Client, method, api string, inpu
 
 	data, err := io.ReadAll(resp.Body)
 	if resp.StatusCode > 206 || err != nil {
-		return fmt.Errorf("RequestJSON %q failed, code: %d, error: %v, body: %s",
-			api, resp.StatusCode, err, string(data))
+		return fmt.Errorf("RequestJSON %q failed, rid: %s, code: %d, error: %v, body: %s",
+			api, rid, resp.StatusCode, err, string(data))
 	}
 
 	return json.Unmarshal(data, output)
@@ -149,6 +150,7 @@ func RequestCBOR(ctx context.Context, cli *http.Client, method, api string, inpu
 		CopyHeader(req.Header, http.Header(*header))
 	}
 
+	rid := req.Header.Get(gear.HeaderXRequestID)
 	resp, err := cli.Do(req)
 	if err != nil {
 		if err.(*url.Error).Unwrap() == context.Canceled {
@@ -169,8 +171,8 @@ func RequestCBOR(ctx context.Context, cli *http.Client, method, api string, inpu
 		if e != nil {
 			str = string(data)
 		}
-		return fmt.Errorf("RequestCBOR %q failed, code: %d, error: %v, body: %s",
-			api, resp.StatusCode, err, str)
+		return fmt.Errorf("RequestCBOR %q failed, rid: %s, code: %d, error: %v, body: %s",
+			api, rid, resp.StatusCode, err, str)
 	}
 
 	return cbor.Unmarshal(data, output)

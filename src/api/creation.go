@@ -55,6 +55,15 @@ func (a *Creation) Create(ctx *gear.Context) error {
 		return gear.ErrInternalServerError.From(err)
 	}
 
+	if _, err = a.blls.Logbase.Log(ctx, "creation.create", 1, input.GID, &bll.CPPayload{
+		GID:      output.GID,
+		CID:      output.ID,
+		Language: output.Language,
+		Version:  output.Version,
+	}); err != nil {
+		return gear.ErrInternalServerError.From(err)
+	}
+
 	return ctx.OkSend(bll.SuccessResponse[*bll.CreationOutput]{Result: output})
 }
 
@@ -96,6 +105,15 @@ func (a *Creation) Update(ctx *gear.Context) error {
 		return gear.ErrInternalServerError.From(err)
 	}
 
+	if _, err = a.blls.Logbase.Log(ctx, "creation.update", 1, input.GID, &bll.CPPayload{
+		GID:      output.GID,
+		CID:      output.ID,
+		Language: output.Language,
+		Version:  output.Version,
+	}); err != nil {
+		return gear.ErrInternalServerError.From(err)
+	}
+
 	return ctx.OkSend(bll.SuccessResponse[*bll.CreationOutput]{Result: output})
 }
 
@@ -116,6 +134,14 @@ func (a *Creation) Delete(ctx *gear.Context) error {
 
 	output, err := a.blls.Writing.DeleteCreation(ctx, input)
 	if err != nil {
+		return gear.ErrInternalServerError.From(err)
+	}
+
+	if _, err = a.blls.Logbase.Log(ctx, "creation.delete", 1, input.GID, &bll.CPPayload{
+		GID:    input.GID,
+		CID:    input.ID,
+		Status: util.Ptr(int8(-2)),
+	}); err != nil {
 		return gear.ErrInternalServerError.From(err)
 	}
 
@@ -176,6 +202,14 @@ func (a *Creation) Archive(ctx *gear.Context) error {
 		return gear.ErrInternalServerError.From(err)
 	}
 
+	if _, err = a.blls.Logbase.Log(ctx, "creation.update", 1, input.GID, &bll.CPPayload{
+		GID:    input.GID,
+		CID:    input.ID,
+		Status: util.Ptr(int8(-1)),
+	}); err != nil {
+		return gear.ErrInternalServerError.From(err)
+	}
+
 	return ctx.OkSend(bll.SuccessResponse[*bll.CreationOutput]{Result: output})
 }
 
@@ -193,6 +227,14 @@ func (a *Creation) Redraft(ctx *gear.Context) error {
 	input.Status = 0
 	output, err := a.blls.Writing.UpdateCreationStatus(ctx, input)
 	if err != nil {
+		return gear.ErrInternalServerError.From(err)
+	}
+
+	if _, err = a.blls.Logbase.Log(ctx, "creation.update", 1, input.GID, &bll.CPPayload{
+		GID:    input.GID,
+		CID:    input.ID,
+		Status: util.Ptr(int8(0)),
+	}); err != nil {
 		return gear.ErrInternalServerError.From(err)
 	}
 
@@ -222,18 +264,28 @@ func (a *Creation) Release(ctx *gear.Context) error {
 	}
 
 	sess := gear.CtxValue[middleware.Session](gctx)
-	job := &bll.Job{
-		GID:       creation.GID,
-		CID:       creation.ID,
-		Language:  *creation.Language,
-		Version:   *creation.Version,
-		ExpiresIn: time.Now().Unix() + 120,
+
+	log, err := a.blls.Logbase.Log(ctx, "creation.release", 0, input.GID, &bll.CPPayload{
+		GID:      creation.GID,
+		CID:      creation.ID,
+		Language: creation.Language,
+		Version:  creation.Version,
+	})
+
+	if err != nil {
+		return gear.ErrInternalServerError.From(err)
 	}
+
+	auditLog := &bll.UpdateLog{
+		UID: log.UID,
+		ID:  log.ID,
+	}
+
 	go logging.Run(func() logging.Log {
 		defer locker.Release(gctx)
 
 		now := time.Now()
-		err := a.release(gctx, creation)
+		err := a.release(gctx, creation, auditLog)
 		log := logging.Log{
 			"action":   "release_creation",
 			"rid":      sess.RID,
@@ -245,19 +297,24 @@ func (a *Creation) Release(ctx *gear.Context) error {
 			"elapsed":  time.Since(now) / 1e6,
 		}
 
+		auditLog.Status = 1
 		if err != nil {
+			auditLog.Status = -1
+			auditLog.Error = util.Ptr(err.Error())
 			log["error"] = err.Error()
 		}
+
+		go a.blls.Logbase.Update(gctx, auditLog)
 		return log
 	})
 
 	return ctx.Send(http.StatusAccepted, bll.SuccessResponse[*bll.PublicationOutput]{
-		Job:    job.String(),
+		Job:    log.ID.String(),
 		Result: nil,
 	})
 }
 
-func (a *Creation) release(gctx context.Context, creation *bll.CreationOutput) error {
+func (a *Creation) release(gctx context.Context, creation *bll.CreationOutput, auditLog *bll.UpdateLog) error {
 	if *creation.Status != 2 {
 		sess := gear.CtxValue[middleware.Session](gctx)
 		if sess.UserID != creation.GID {
@@ -282,7 +339,7 @@ func (a *Creation) release(gctx context.Context, creation *bll.CreationOutput) e
 		}
 
 		if *creation.Status == 1 {
-			cr, err := a.summarize(gctx, creation.GID, creation.ID)
+			cr, err := a.summarize(gctx, creation.GID, creation.ID, auditLog)
 			if err != nil {
 				return err
 			}
@@ -324,6 +381,15 @@ func (a *Creation) UpdateContent(ctx *gear.Context) error {
 
 	output, err := a.blls.Writing.UpdateCreationContent(ctx, input)
 	if err != nil {
+		return gear.ErrInternalServerError.From(err)
+	}
+
+	if _, err = a.blls.Logbase.Log(ctx, "creation.update.content", 1, input.GID, &bll.CPPayload{
+		GID:      input.GID,
+		CID:      input.ID,
+		Language: output.Language,
+		Version:  output.Version,
+	}); err != nil {
 		return gear.ErrInternalServerError.From(err)
 	}
 
@@ -387,7 +453,7 @@ func (a *Creation) checkWritePermission(ctx *gear.Context, gid, cid util.ID) (*b
 }
 
 // summarize and embedding when updating status from 1 to 2
-func (a *Creation) summarize(gctx context.Context, gid, cid util.ID) (*bll.CreationOutput, error) {
+func (a *Creation) summarize(gctx context.Context, gid, cid util.ID, auditLog *bll.UpdateLog) (*bll.CreationOutput, error) {
 	creation, err := a.blls.Writing.GetCreation(gctx, &bll.QueryCreation{
 		GID:    gid,
 		ID:     cid,
@@ -447,6 +513,7 @@ func (a *Creation) summarize(gctx context.Context, gid, cid util.ID) (*bll.Creat
 	if err != nil {
 		return nil, err
 	}
+	auditLog.Tokens = &summary.Tokens
 
 	output, err := a.blls.Writing.UpdateCreation(gctx, &bll.UpdateCreationInput{
 		GID:       gid,

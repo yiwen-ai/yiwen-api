@@ -50,6 +50,7 @@ type Base struct {
 	Userbase   string `json:"userbase" toml:"userbase"`
 	Writing    string `json:"writing" toml:"writing"`
 	Jarvis     string `json:"jarvis" toml:"jarvis"`
+	Logbase    string `json:"logbase" toml:"logbase"`
 	Webscraper string `json:"webscraper" toml:"webscraper"`
 }
 

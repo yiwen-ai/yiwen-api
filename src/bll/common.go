@@ -21,6 +21,7 @@ func init() {
 type Blls struct {
 	Locker     *service.Locker
 	Jarvis     *Jarvis
+	Logbase    *Logbase
 	Userbase   *Userbase
 	Webscraper *Webscraper
 	Writing    *Writing
@@ -32,6 +33,7 @@ func NewBlls(oss *service.OSS, locker *service.Locker) *Blls {
 	return &Blls{
 		Locker:     locker,
 		Jarvis:     &Jarvis{svc: service.APIHost(cfg.Jarvis)},
+		Logbase:    &Logbase{svc: service.APIHost(cfg.Logbase)},
 		Userbase:   &Userbase{svc: service.APIHost(cfg.Userbase)},
 		Webscraper: &Webscraper{svc: service.APIHost(cfg.Webscraper)},
 		Writing:    &Writing{svc: service.APIHost(cfg.Writing), oss: oss},

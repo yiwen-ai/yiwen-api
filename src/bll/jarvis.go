@@ -5,6 +5,7 @@ import (
 	"errors"
 	"time"
 
+	"github.com/yiwen-ai/yiwen-api/src/logging"
 	"github.com/yiwen-ai/yiwen-api/src/service"
 	"github.com/yiwen-ai/yiwen-api/src/util"
 )
@@ -61,6 +62,7 @@ type SummarizingOutput struct {
 	Model    string  `json:"model" cbor:"model"`
 	Tokens   uint32  `json:"tokens" cbor:"tokens"`
 	Summary  string  `json:"summary" cbor:"summary"`
+	Error    string  `json:"error" cbor:"error"`
 }
 
 func (b *Jarvis) Summarize(ctx context.Context, input *TEInput) (*SummarizingOutput, error) {
@@ -95,6 +97,10 @@ func (b *Jarvis) Summarize(ctx context.Context, input *TEInput) (*SummarizingOut
 		}
 	}
 
+	if output.Result.Error != "" {
+		return nil, errors.New(output.Result.Error)
+	}
+
 	return output.Result, nil
 }
 
@@ -106,6 +112,7 @@ type TranslatingOutput struct {
 	Model    string     `json:"model" cbor:"model"`
 	Tokens   uint32     `json:"tokens" cbor:"tokens"`
 	Content  util.Bytes `json:"content" cbor:"content"`
+	Error    string     `json:"error" cbor:"error"`
 }
 
 func (b *Jarvis) Translate(ctx context.Context, input *TEInput) (*TranslatingOutput, error) {
@@ -139,6 +146,10 @@ func (b *Jarvis) Translate(ctx context.Context, input *TEInput) (*TranslatingOut
 		}
 	}
 
+	if output.Result.Error != "" {
+		return nil, errors.New(output.Result.Error)
+	}
+
 	return output.Result, nil
 }
 
@@ -151,14 +162,12 @@ func (b *Jarvis) Embedding(ctx context.Context, input *TEInput) (*TEOutput, erro
 	return &output.Result, nil
 }
 
-func (b *Jarvis) EmbeddingPublic(ctx context.Context, input *TEInput) (*TEOutput, error) {
+func (b *Jarvis) EmbeddingPublic(ctx context.Context, input *TEInput) {
 	input.Content = nil
-	output := SuccessResponse[TEOutput]{}
+	output := SuccessResponse[any]{}
 	if err := b.svc.Post(ctx, "/v1/embedding/public", input, &output); err != nil {
-		return nil, err
+		logging.Warningf("Jarvis.EmbeddingPublic error: %v", err)
 	}
-
-	return &output.Result, nil
 }
 
 type EmbeddingSearchInput struct {
