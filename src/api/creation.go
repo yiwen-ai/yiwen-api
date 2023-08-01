@@ -55,7 +55,7 @@ func (a *Creation) Create(ctx *gear.Context) error {
 		return gear.ErrInternalServerError.From(err)
 	}
 
-	if _, err = a.blls.Logbase.Log(ctx, "creation.create", 1, input.GID, &bll.CPPayload{
+	if _, err = a.blls.Logbase.Log(ctx, "creation.create", 1, input.GID, &bll.Payload{
 		GID:      output.GID,
 		CID:      output.ID,
 		Language: output.Language,
@@ -105,7 +105,7 @@ func (a *Creation) Update(ctx *gear.Context) error {
 		return gear.ErrInternalServerError.From(err)
 	}
 
-	if _, err = a.blls.Logbase.Log(ctx, "creation.update", 1, input.GID, &bll.CPPayload{
+	if _, err = a.blls.Logbase.Log(ctx, "creation.update", 1, input.GID, &bll.Payload{
 		GID:      output.GID,
 		CID:      output.ID,
 		Language: output.Language,
@@ -137,7 +137,7 @@ func (a *Creation) Delete(ctx *gear.Context) error {
 		return gear.ErrInternalServerError.From(err)
 	}
 
-	if _, err = a.blls.Logbase.Log(ctx, "creation.delete", 1, input.GID, &bll.CPPayload{
+	if _, err = a.blls.Logbase.Log(ctx, "creation.delete", 1, input.GID, &bll.Payload{
 		GID:    input.GID,
 		CID:    input.ID,
 		Status: util.Ptr(int8(-2)),
@@ -202,7 +202,7 @@ func (a *Creation) Archive(ctx *gear.Context) error {
 		return gear.ErrInternalServerError.From(err)
 	}
 
-	if _, err = a.blls.Logbase.Log(ctx, "creation.update", 1, input.GID, &bll.CPPayload{
+	if _, err = a.blls.Logbase.Log(ctx, "creation.update", 1, input.GID, &bll.Payload{
 		GID:    input.GID,
 		CID:    input.ID,
 		Status: util.Ptr(int8(-1)),
@@ -230,7 +230,7 @@ func (a *Creation) Redraft(ctx *gear.Context) error {
 		return gear.ErrInternalServerError.From(err)
 	}
 
-	if _, err = a.blls.Logbase.Log(ctx, "creation.update", 1, input.GID, &bll.CPPayload{
+	if _, err = a.blls.Logbase.Log(ctx, "creation.update", 1, input.GID, &bll.Payload{
 		GID:    input.GID,
 		CID:    input.ID,
 		Status: util.Ptr(int8(0)),
@@ -265,7 +265,7 @@ func (a *Creation) Release(ctx *gear.Context) error {
 
 	sess := gear.CtxValue[middleware.Session](gctx)
 
-	log, err := a.blls.Logbase.Log(ctx, "creation.release", 0, input.GID, &bll.CPPayload{
+	log, err := a.blls.Logbase.Log(ctx, "creation.release", 0, input.GID, &bll.Payload{
 		GID:      creation.GID,
 		CID:      creation.ID,
 		Language: creation.Language,
@@ -287,7 +287,7 @@ func (a *Creation) Release(ctx *gear.Context) error {
 		now := time.Now()
 		err := a.release(gctx, creation, auditLog)
 		log := logging.Log{
-			"action":   "release_creation",
+			"action":   "publication.create",
 			"rid":      sess.RID,
 			"uid":      sess.UserID.String(),
 			"gid":      creation.GID.String(),
@@ -297,11 +297,25 @@ func (a *Creation) Release(ctx *gear.Context) error {
 			"elapsed":  time.Since(now) / 1e6,
 		}
 
-		auditLog.Status = 1
 		if err != nil {
 			auditLog.Status = -1
 			auditLog.Error = util.Ptr(err.Error())
 			log["error"] = err.Error()
+		} else {
+			auditLog.Status = 1
+
+			go a.blls.Taskbase.Create(gctx, &bll.CreateTaskInput{
+				UID:       sess.UserID,
+				GID:       creation.GID,
+				Kind:      "publication.review",
+				Threshold: 1,
+				Approvers: []util.ID{util.JARVIS},
+			}, &bll.Payload{
+				GID:      creation.GID,
+				CID:      creation.ID,
+				Language: creation.Language,
+				Version:  creation.Version,
+			})
 		}
 
 		go a.blls.Logbase.Update(gctx, auditLog)
@@ -384,7 +398,7 @@ func (a *Creation) UpdateContent(ctx *gear.Context) error {
 		return gear.ErrInternalServerError.From(err)
 	}
 
-	if _, err = a.blls.Logbase.Log(ctx, "creation.update.content", 1, input.GID, &bll.CPPayload{
+	if _, err = a.blls.Logbase.Log(ctx, "creation.update.content", 1, input.GID, &bll.Payload{
 		GID:      input.GID,
 		CID:      input.ID,
 		Language: output.Language,

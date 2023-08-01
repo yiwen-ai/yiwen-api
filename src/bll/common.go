@@ -2,10 +2,7 @@ package bll
 
 import (
 	"context"
-	"encoding/base64"
-	"time"
 
-	"github.com/fxamacker/cbor/v2"
 	"github.com/teambition/gear"
 
 	"github.com/yiwen-ai/yiwen-api/src/conf"
@@ -22,6 +19,7 @@ type Blls struct {
 	Locker     *service.Locker
 	Jarvis     *Jarvis
 	Logbase    *Logbase
+	Taskbase   *Taskbase
 	Userbase   *Userbase
 	Webscraper *Webscraper
 	Writing    *Writing
@@ -34,6 +32,7 @@ func NewBlls(oss *service.OSS, locker *service.Locker) *Blls {
 		Locker:     locker,
 		Jarvis:     &Jarvis{svc: service.APIHost(cfg.Jarvis)},
 		Logbase:    &Logbase{svc: service.APIHost(cfg.Logbase)},
+		Taskbase:   &Taskbase{svc: service.APIHost(cfg.Taskbase)},
 		Userbase:   &Userbase{svc: service.APIHost(cfg.Userbase)},
 		Webscraper: &Webscraper{svc: service.APIHost(cfg.Webscraper)},
 		Writing:    &Writing{svc: service.APIHost(cfg.Writing), oss: oss},
@@ -100,34 +99,11 @@ func (i *GIDPagination) Validate() error {
 	return nil
 }
 
-type Job struct {
-	GID       util.ID `cbor:"g"`
-	CID       util.ID `cbor:"c"`
-	Language  string  `cbor:"l,omitempty"`
-	Version   uint16  `cbor:"d,omitempty"`
-	ExpiresIn int64   `cbor:"e"`
-}
-
-func (j Job) String() string {
-	data, _ := cbor.Marshal(j)
-	return base64.RawURLEncoding.EncodeToString(data)
-}
-
-func (j *Job) FromString(str string) error {
-	data, err := base64.RawURLEncoding.DecodeString(str)
-	if err == nil {
-		err = cbor.Unmarshal(data, j)
-	}
-	return err
-}
-
-func (j *Job) Validate() error {
-	if j == nil || j.GID == util.ZeroID || j.CID == util.ZeroID {
-		return gear.ErrBadRequest.WithMsg("invalid job")
-	}
-	if j.ExpiresIn < time.Now().Unix() {
-		return gear.ErrBadRequest.WithMsg("job expired")
-	}
-
-	return nil
+type Payload struct {
+	GID      util.ID `json:"gid" cbor:"gid"`
+	CID      util.ID `json:"cid" cbor:"cid"`
+	Version  *uint16 `json:"version,omitempty" cbor:"version,omitempty"`
+	Language *string `json:"language,omitempty" cbor:"language,omitempty"`
+	Status   *int8   `json:"status,omitempty" cbor:"status,omitempty"`
+	Rating   *int8   `json:"rating,omitempty" cbor:"rating,omitempty"`
 }

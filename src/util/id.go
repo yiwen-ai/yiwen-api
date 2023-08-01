@@ -183,3 +183,15 @@ func (r *Bytes) UnmarshalJSON(data []byte) error {
 	}
 	return err
 }
+
+func Unmarshal[T any](b *Bytes) (*T, error) {
+	if b == nil {
+		return nil, errors.New("nil bytes")
+	}
+
+	var v T
+	if err := cbor.Unmarshal([]byte(*b), &v); err != nil {
+		return nil, err
+	}
+	return &v, nil
+}

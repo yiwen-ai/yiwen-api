@@ -19,6 +19,7 @@ userbase = "http://127.0.0.1:8080"
 writing = "http://127.0.0.1:8080"
 jarvis = "http://127.0.0.1:8080"
 logbase = "http://127.0.0.1:8080"
+taskbase = "http://127.0.0.1:8080"
 webscraper = "http://127.0.0.1:8080"
 
 [oss]

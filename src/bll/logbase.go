@@ -28,27 +28,6 @@ type LogOutput struct {
 	Error   *string     `json:"error,omitempty" cbor:"error,omitempty"`
 }
 
-type CPPayload struct {
-	GID      util.ID `json:"gid" cbor:"gid"`
-	CID      util.ID `json:"cid" cbor:"cid"`
-	Version  *uint16 `json:"version,omitempty" cbor:"version,omitempty"`
-	Language *string `json:"language,omitempty" cbor:"language,omitempty"`
-	Status   *int8   `json:"status,omitempty" cbor:"status,omitempty"`
-	Rating   *int8   `json:"rating,omitempty" cbor:"rating,omitempty"`
-}
-
-func PayloadFrom[T any](l *LogOutput) (*T, error) {
-	if l == nil || l.Payload == nil {
-		return nil, errors.New("no payload")
-	}
-
-	var v T
-	if err := cbor.Unmarshal([]byte(*l.Payload), &v); err != nil {
-		return nil, err
-	}
-	return &v, nil
-}
-
 func (b *Logbase) Get(ctx context.Context, uid, id util.ID, fields string) (*LogOutput, error) {
 	output := SuccessResponse[LogOutput]{}
 
