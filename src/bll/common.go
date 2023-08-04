@@ -107,3 +107,16 @@ type Payload struct {
 	Status   *int8   `json:"status,omitempty" cbor:"status,omitempty"`
 	Rating   *int8   `json:"rating,omitempty" cbor:"rating,omitempty"`
 }
+
+type QueryIdCn struct {
+	ID     *util.ID `json:"id,omitempty" cbor:"id,omitempty" query:"id"`
+	CN     *string  `json:"cn,omitempty" cbor:"cn,omitempty" query:"language"`
+	Fields *string  `json:"fields,omitempty" cbor:"fields,omitempty" query:"fields"`
+}
+
+func (i *QueryIdCn) Validate() error {
+	if i.ID == nil && i.CN == nil {
+		return gear.ErrBadRequest.WithMsg("id or cn is required")
+	}
+	return nil
+}

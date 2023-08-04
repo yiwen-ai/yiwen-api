@@ -79,6 +79,7 @@ func newRouters(apis *APIs) []*gear.Router {
 	router.Get("/v1/publication/by_job", middleware.AuthToken.Auth, apis.Publication.GetByJob)
 	router.Get("/v1/publication/list_job", middleware.AuthToken.Auth, apis.Publication.ListJob)
 	router.Post("/v1/publication/list", middleware.AuthToken.Auth, apis.Publication.List)
+	router.Post("/v1/publication/list_by_following", middleware.AuthToken.Auth, apis.Publication.ListByFollowing)
 	router.Post("/v1/publication/list_archived", middleware.AuthToken.Auth, apis.Publication.ListArchived)
 	router.Patch("/v1/publication/archive", middleware.AuthToken.Auth, apis.Publication.Archive)
 	router.Patch("/v1/publication/redraft", middleware.AuthToken.Auth, apis.Publication.Redraft)
@@ -86,8 +87,10 @@ func newRouters(apis *APIs) []*gear.Router {
 	router.Put("/v1/publication/update_content", middleware.AuthToken.Auth, apis.Publication.UpdateContent)
 	router.Post("/v1/publication/assist", middleware.AuthToken.Auth, todo) // 暂不实现
 
+	router.Patch("/v1/group/follow", middleware.AuthToken.Auth, apis.Group.Follow)
+	router.Patch("/v1/group/unfollow", middleware.AuthToken.Auth, apis.Group.UnFollow)
 	router.Post("/v1/group/list_my", middleware.AuthToken.Auth, apis.Group.ListMy)
-	router.Post("/v1/group/list_following", middleware.AuthToken.Auth, todo)
+	router.Post("/v1/group/list_following", middleware.AuthToken.Auth, apis.Group.ListFollowing)
 	router.Post("/v1/group/list_subscribing", middleware.AuthToken.Auth, todo) // 暂不实现
 
 	return []*gear.Router{router}

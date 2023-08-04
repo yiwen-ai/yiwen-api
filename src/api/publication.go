@@ -328,6 +328,41 @@ func (a *Publication) List(ctx *gear.Context) error {
 	return ctx.OkSend(output)
 }
 
+func (a *Publication) ListByFollowing(ctx *gear.Context) error {
+	input := &bll.Pagination{}
+	if err := ctx.ParseBody(input); err != nil {
+		return err
+	}
+
+	sess := gear.CtxValue[middleware.Session](ctx)
+	if sess == nil {
+		return gear.ErrUnauthorized.WithMsg("session is required")
+	}
+
+	gids, err := a.blls.Userbase.FollowingGids(ctx)
+	if err != nil {
+		return gear.ErrInternalServerError.From(err)
+	}
+
+	if len(gids) == 0 {
+		return ctx.OkSend(bll.SuccessResponse[[]*bll.PublicationOutput]{
+			Result: []*bll.PublicationOutput{},
+		})
+	}
+
+	output, err := a.blls.Writing.ListPublicationByGIDs(ctx, &bll.GIDsPagination{
+		GIDs:      gids,
+		PageToken: input.PageToken,
+		PageSize:  input.PageSize,
+		Fields:    input.Fields,
+	})
+	if err != nil {
+		return gear.ErrInternalServerError.From(err)
+	}
+
+	return ctx.OkSend(output)
+}
+
 func (a *Publication) ListArchived(ctx *gear.Context) error {
 	input := &bll.GIDPagination{}
 	if err := ctx.ParseBody(input); err != nil {

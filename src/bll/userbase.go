@@ -20,7 +20,7 @@ func (b *Userbase) UserGroupRole(ctx context.Context, uid, gid util.ID) (int8, e
 	}
 
 	output := SuccessResponse[GroupInfo]{}
-	api := fmt.Sprintf("/v1/user/get_group?gid=%s&fields=cn,status", gid.String())
+	api := fmt.Sprintf("/v1/group/get_by_user?id=%s&fields=cn,status", gid.String())
 	err := b.svc.Get(ctx, api, &output)
 	if err == nil && output.Result.Status > -2 && output.Result.MyRole != nil {
 		role := *output.Result.MyRole
@@ -93,7 +93,7 @@ func (b *Userbase) MyGroups(ctx context.Context) (Groups, error) {
 	}
 
 	output := SuccessResponse[Groups]{}
-	if err := b.svc.Post(ctx, "/v1/user/list_groups", input, &output); err != nil {
+	if err := b.svc.Post(ctx, "/v1/group/list_by_user", input, &output); err != nil {
 		return nil, err
 	}
 
@@ -132,4 +132,41 @@ func (b *Userbase) LoadGroupInfo(ctx context.Context, ids ...util.ID) []GroupInf
 	}
 
 	return output.Result
+}
+
+func (b *Userbase) FollowGroup(ctx context.Context, input *QueryIdCn) (bool, error) {
+	output := SuccessResponse[bool]{}
+	if err := b.svc.Patch(ctx, "/v1/group/follow", input, &output); err != nil {
+		return false, err
+	}
+
+	return output.Result, nil
+}
+
+func (b *Userbase) UnFollowGroup(ctx context.Context, input *QueryIdCn) (bool, error) {
+	output := SuccessResponse[bool]{}
+	if err := b.svc.Patch(ctx, "/v1/group/unfollow", input, &output); err != nil {
+		return false, err
+	}
+
+	return output.Result, nil
+}
+
+func (b *Userbase) ListFollowing(ctx context.Context, input *Pagination) (Groups, error) {
+	output := SuccessResponse[Groups]{}
+	input.Fields = &[]string{"status", "kind", "name", "logo"}
+	if err := b.svc.Post(ctx, "/v1/group/list_following", input, &output); err != nil {
+		return nil, err
+	}
+
+	return output.Result, nil
+}
+
+func (b *Userbase) FollowingGids(ctx context.Context) ([]util.ID, error) {
+	output := SuccessResponse[[]util.ID]{}
+	if err := b.svc.Get(ctx, "/v1/group/following_ids", &output); err != nil {
+		return nil, err
+	}
+
+	return output.Result, nil
 }

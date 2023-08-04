@@ -4,7 +4,7 @@ go 1.20
 
 require (
 	github.com/BurntSushi/toml v1.3.2
-	github.com/aliyun/aliyun-oss-go-sdk v2.2.7+incompatible
+	github.com/aliyun/aliyun-oss-go-sdk v2.2.8+incompatible
 	github.com/bsm/redislock v0.9.4
 	github.com/fxamacker/cbor/v2 v2.5.0-beta5
 	github.com/go-playground/validator/v10 v10.14.1
@@ -33,7 +33,7 @@ require (
 	github.com/teambition/trie-mux v1.5.2 // indirect
 	github.com/x448/float16 v0.8.4 // indirect
 	golang.org/x/crypto v0.11.0 // indirect
-	golang.org/x/net v0.12.0 // indirect
+	golang.org/x/net v0.13.0 // indirect
 	golang.org/x/sys v0.10.0 // indirect
 	golang.org/x/text v0.11.0 // indirect
 	golang.org/x/time v0.3.0 // indirect

@@ -256,6 +256,30 @@ func (b *Writing) ListPublication(ctx context.Context, input *GIDPagination) (*S
 	return &output, nil
 }
 
+type GIDsPagination struct {
+	GIDs      []util.ID   `json:"gids" cbor:"gids"`
+	PageToken *util.Bytes `json:"page_token,omitempty" cbor:"page_token,omitempty"`
+	PageSize  *uint16     `json:"page_size,omitempty" cbor:"page_size,omitempty"`
+	Fields    *[]string   `json:"fields,omitempty" cbor:"fields,omitempty"`
+}
+
+func (i *GIDsPagination) Validate() error {
+	if err := util.Validator.Struct(i); err != nil {
+		return gear.ErrBadRequest.From(err)
+	}
+
+	return nil
+}
+
+func (b *Writing) ListPublicationByGIDs(ctx context.Context, input *GIDsPagination) (*SuccessResponse[[]*PublicationOutput], error) {
+	output := SuccessResponse[[]*PublicationOutput]{}
+	if err := b.svc.Post(ctx, "/v1/publication/list_by_gids", input, &output); err != nil {
+		return nil, err
+	}
+
+	return &output, nil
+}
+
 type QueryAPublication struct {
 	GID util.ID `json:"gid" cbor:"gid" query:"gid" validate:"required"`
 	CID util.ID `json:"cid" cbor:"cid" query:"cid" validate:"required"`
