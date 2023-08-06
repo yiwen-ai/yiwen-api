@@ -2,6 +2,8 @@ package bll
 
 import (
 	"encoding/hex"
+	"encoding/json"
+	"fmt"
 	"testing"
 
 	"github.com/fxamacker/cbor/v2"
@@ -19,4 +21,11 @@ func TestCreateCreationInput(t *testing.T) {
 	err = cbor.Unmarshal(data, &obj)
 	require.NoError(t, err)
 	assert.NoError(obj.Validate())
+
+	str := `{"gid":"0000000000000jarvis0","id":"0000000000000jarvis0","updated_at":123,"status":0}`
+	var input UpdateCreationStatusInput
+	err = json.Unmarshal([]byte(str), &input)
+	fmt.Println(input)
+	require.NoError(t, err)
+	assert.NoError(input.Validate())
 }

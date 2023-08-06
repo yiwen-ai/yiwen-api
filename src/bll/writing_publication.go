@@ -16,7 +16,7 @@ type CreatePublicationInput struct {
 	GID        util.ID  `json:"gid" cbor:"gid" validate:"required"`
 	CID        util.ID  `json:"cid" cbor:"cid" validate:"required"`
 	Language   string   `json:"language" cbor:"language" validate:"required"`
-	Version    uint16   `json:"version" cbor:"version" validate:"required,gte=1,lte=10000"`
+	Version    uint16   `json:"version" cbor:"version" validate:"gte=1,lte=10000"`
 	Model      string   `json:"model" cbor:"model" validate:"omitempty,gte=2,lte=16"`
 	ToGID      *util.ID `json:"to_gid,omitempty" cbor:"to_gid,omitempty"`
 	ToLanguage *string  `json:"to_language,omitempty" cbor:"to_language,omitempty"`
@@ -159,7 +159,7 @@ type QueryPublication struct {
 	GID      util.ID `json:"gid" cbor:"gid" query:"gid" validate:"required"`
 	CID      util.ID `json:"cid" cbor:"cid" query:"cid" validate:"required"`
 	Language string  `json:"language" cbor:"language" validate:"required"`
-	Version  uint16  `json:"version" cbor:"version"  validate:"required,gte=1,lte=10000"`
+	Version  uint16  `json:"version" cbor:"version"  validate:"gte=1,lte=10000"`
 	Fields   string  `json:"fields" cbor:"fields" query:"fields"`
 }
 
@@ -205,7 +205,7 @@ type UpdatePublicationInput struct {
 	GID       util.ID   `json:"gid" cbor:"gid" validate:"required"`
 	CID       util.ID   `json:"cid" cbor:"cid" validate:"required"`
 	Language  string    `json:"language" cbor:"language" validate:"required"`
-	Version   uint16    `json:"version" cbor:"version" validate:"required,gte=1,lte=10000"`
+	Version   uint16    `json:"version" cbor:"version" validate:"gte=1,lte=10000"`
 	UpdatedAt int64     `json:"updated_at" cbor:"updated_at"  validate:"required"`
 	Model     *string   `json:"model,omitempty" cbor:"model,omitempty" validate:"omitempty,gte=2,lte=16"`
 	Title     *string   `json:"title,omitempty" cbor:"title,omitempty" validate:"omitempty,gte=4,lte=256"`
@@ -309,9 +309,9 @@ type UpdatePublicationStatusInput struct {
 	GID       util.ID `json:"gid" cbor:"gid" validate:"required"`
 	CID       util.ID `json:"cid" cbor:"cid" validate:"required"`
 	Language  string  `json:"language" cbor:"language" validate:"required"`
-	Version   uint16  `json:"version" cbor:"version" validate:"required,gte=1,lte=10000"`
+	Version   uint16  `json:"version" cbor:"version" validate:"gte=1,lte=10000"`
 	UpdatedAt int64   `json:"updated_at" cbor:"updated_at" validate:"required"`
-	Status    int8    `json:"status" cbor:"status" validate:"required,gte=-2,lte=2"`
+	Status    int8    `json:"status" cbor:"status" validate:"gte=-2,lte=2"`
 }
 
 func (i *UpdatePublicationStatusInput) Validate() error {
@@ -336,7 +336,7 @@ type UpdatePublicationContentInput struct {
 	GID       util.ID    `json:"gid" cbor:"gid" validate:"required"`
 	CID       util.ID    `json:"cid" cbor:"cid" validate:"required"`
 	Language  string     `json:"language" cbor:"language" validate:"required"`
-	Version   uint16     `json:"version" cbor:"version" validate:"required,gte=1,lte=10000"`
+	Version   uint16     `json:"version" cbor:"version" validate:"gte=1,lte=10000"`
 	UpdatedAt int64      `json:"updated_at" cbor:"updated_at" validate:"required"`
 	Content   util.Bytes `json:"content" cbor:"content" validate:"required"`
 }
