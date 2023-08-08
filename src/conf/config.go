@@ -6,6 +6,7 @@ import (
 	"math/rand"
 	"os"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/BurntSushi/toml"
@@ -29,7 +30,14 @@ func init() {
 		panic(err)
 	}
 	p.Rand = rand.New(rand.NewSource(time.Now().UnixNano()))
-	p.GlobalCtx = gear.ContextWithSignal(context.Background())
+	p.GlobalSignal = gear.ContextWithSignal(context.Background())
+
+	var cancel context.CancelFunc
+	p.GlobalShutdown, cancel = context.WithCancel(context.Background())
+	go func() {
+		<-p.GlobalSignal.Done()
+		time.AfterFunc(time.Duration(p.Server.GracefulShutdown)*time.Second, cancel)
+	}()
 }
 
 type Logger struct {
@@ -66,18 +74,33 @@ type OSS struct {
 
 // ConfigTpl ...
 type ConfigTpl struct {
-	Rand      *rand.Rand
-	GlobalCtx context.Context
-	Env       string `json:"env" toml:"env"`
-	Logger    Logger `json:"log" toml:"log"`
-	Server    Server `json:"server" toml:"server"`
-	Redis     Redis  `json:"redis" toml:"redis"`
-	Base      Base   `json:"base" toml:"base"`
-	OSS       OSS    `json:"oss" toml:"oss"`
+	Rand           *rand.Rand
+	GlobalSignal   context.Context
+	GlobalShutdown context.Context
+	Env            string `json:"env" toml:"env"`
+	Logger         Logger `json:"log" toml:"log"`
+	Server         Server `json:"server" toml:"server"`
+	Redis          Redis  `json:"redis" toml:"redis"`
+	Base           Base   `json:"base" toml:"base"`
+	OSS            OSS    `json:"oss" toml:"oss"`
+
+	globalJobs int64 // global async jobs counter for graceful shutdown
 }
 
 func (c *ConfigTpl) Validate() error {
 	return nil
+}
+
+func (c *ConfigTpl) ObtainJob() {
+	atomic.AddInt64(&c.globalJobs, 1)
+}
+
+func (c *ConfigTpl) ReleaseJob() {
+	atomic.AddInt64(&c.globalJobs, -1)
+}
+
+func (c *ConfigTpl) JobsIdle() bool {
+	return atomic.LoadInt64(&c.globalJobs) <= 0
 }
 
 func readConfig(v interface{}, path ...string) {

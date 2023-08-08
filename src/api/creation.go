@@ -11,6 +11,7 @@ import (
 	"github.com/teambition/gear"
 
 	"github.com/yiwen-ai/yiwen-api/src/bll"
+	"github.com/yiwen-ai/yiwen-api/src/conf"
 	"github.com/yiwen-ai/yiwen-api/src/content"
 	"github.com/yiwen-ai/yiwen-api/src/logging"
 	"github.com/yiwen-ai/yiwen-api/src/middleware"
@@ -282,6 +283,8 @@ func (a *Creation) Release(ctx *gear.Context) error {
 	}
 
 	go logging.Run(func() logging.Log {
+		conf.Config.ObtainJob()
+		defer conf.Config.ReleaseJob()
 		defer locker.Release(gctx)
 
 		now := time.Now()

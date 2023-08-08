@@ -76,7 +76,7 @@ func (m AuthLevel) Auth(ctx *gear.Context) error {
 }
 
 func WithGlobalCtx(ctx *gear.Context) context.Context {
-	gctx := conf.Config.GlobalCtx
+	gctx := conf.Config.GlobalShutdown
 
 	if sess := gear.CtxValue[Session](ctx); sess != nil {
 		gctx = gear.CtxWith[Session](gctx, sess)
