@@ -23,8 +23,6 @@ func init() {
 	userAgent = fmt.Sprintf("Go/%v yiwen-api", runtime.Version())
 }
 
-type ContextHTTPHeader http.Header
-
 var userAgent string
 
 var externalTr = &http.Transport{
@@ -68,16 +66,21 @@ var HTTPClient = &http.Client{
 
 var ErrNotFound = gear.ErrNotFound
 
+type ContextHTTPHeader http.Header
+
 func RequestJSON(ctx context.Context, cli *http.Client, method, api string, input, output any) error {
 	if ctx.Err() != nil {
 		return nil
 	}
 
+	var err error
 	var body io.Reader
 	if input != nil {
-		data, err := json.Marshal(input)
-		if err != nil {
-			return err
+		data, ok := input.([]byte)
+		if !ok {
+			if data, err = json.Marshal(input); err != nil {
+				return err
+			}
 		}
 		body = bytes.NewReader(data)
 	}
@@ -126,11 +129,14 @@ func RequestCBOR(ctx context.Context, cli *http.Client, method, api string, inpu
 		return nil
 	}
 
+	var err error
 	var body io.Reader
 	if input != nil {
-		data, err := cbor.Marshal(input)
-		if err != nil {
-			return err
+		data, ok := input.([]byte)
+		if !ok {
+			if data, err = cbor.Marshal(input); err != nil {
+				return err
+			}
 		}
 		body = bytes.NewReader(data)
 	}

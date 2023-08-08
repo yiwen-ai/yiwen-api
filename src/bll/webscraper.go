@@ -75,3 +75,12 @@ func (b *Webscraper) Create(ctx context.Context, targetUrl string) (*ScrapingOut
 
 	return &output.Result, nil
 }
+
+func (b *Webscraper) Convert(ctx context.Context, file []byte, mtype string) (*util.Bytes, error) {
+	output := SuccessResponse[util.Bytes]{}
+	if err := b.svc.Post(ctx, "/v1/converting", file, &output); err != nil {
+		return nil, err
+	}
+
+	return &output.Result, nil
+}

@@ -55,6 +55,7 @@ func newRouters(apis *APIs) []*gear.Router {
 	router.Get("/v1/search/by_original_url", middleware.AuthToken.Auth, apis.Jarvis.OriginalSearch)
 
 	router.Get("/v1/scraping", middleware.AuthToken.Auth, apis.Scraping.Create)
+	router.Post("/v1/converting", middleware.AuthToken.Auth, apis.Scraping.Convert)
 
 	router.Post("/v1/creation", middleware.AuthToken.Auth, apis.Creation.Create)
 	router.Get("/v1/creation", middleware.AuthToken.Auth, apis.Creation.Get)

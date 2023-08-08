@@ -19,7 +19,7 @@ func NewApp() *gear.App {
 	app := gear.New()
 
 	app.Set(gear.SetTrustedProxy, true)
-	app.Set(gear.SetBodyParser, &bodyParser{gear.DefaultBodyParser(2 << 19)}) // 1mb
+	app.Set(gear.SetBodyParser, &bodyParser{gear.DefaultBodyParser(2 << 18)}) // 512kb
 	// ignore TLS handshake error
 	app.Set(gear.SetLogger, log.New(gear.DefaultFilterWriter(), "", 0))
 	app.Set(gear.SetCompress, compressible.WithThreshold(256))

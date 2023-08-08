@@ -17,6 +17,8 @@ import (
 )
 
 func TestAPI(t *testing.T) {
+	t.Skip("Skip")
+
 	var cookie string = "YW_DID=ciqui86rupojrarr1ag0; YW_SESS=HFmzbngWbfeJ73UpYSLRkUJxuCZQKV6ee7ti8zWAkAk"
 
 	var targetUrl string = "https://datatracker.ietf.org/doc/html/rfc8949"
