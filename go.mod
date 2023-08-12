@@ -15,14 +15,12 @@ require (
 	github.com/rs/xid v1.5.0
 	github.com/saintfish/chardet v0.0.0-20230101081208-5e3ef4b5456d
 	github.com/stretchr/testify v1.8.4
-	github.com/teambition/compressible-go v1.0.1
-	github.com/teambition/gear v1.27.2
+	github.com/teambition/gear v1.27.3
 	go.uber.org/dig v1.17.0
 	golang.org/x/text v0.12.0
 )
 
 require (
-	github.com/GitbookIO/mimedb v0.0.0-20180329142916-39fdfdb4def4 // indirect
 	github.com/cespare/xxhash/v2 v2.2.0 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/dgryski/go-rendezvous v0.0.0-20200823014737-9f7001d12a5f // indirect

@@ -71,5 +71,5 @@ func (a *Scraping) Convert(ctx *gear.Context) error {
 	if err != nil {
 		return gear.ErrInternalServerError.From(err)
 	}
-	return ctx.OkSend(bll.SuccessResponse[*util.Bytes]{Result: output})
+	return ctx.OkSend(bll.SuccessResponse[bll.ScrapingOutput]{Result: *output})
 }
