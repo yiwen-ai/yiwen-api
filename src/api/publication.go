@@ -82,7 +82,7 @@ func (a *Publication) Create(ctx *gear.Context) error {
 		Version:  &src.Version,
 	}
 
-	log, err := a.blls.Logbase.Log(ctx, "publication.create", 0, input.GID, payload)
+	log, err := a.blls.Logbase.Log(ctx, bll.LogActionPublicationCreate, 0, input.GID, payload)
 	if err != nil {
 		return gear.ErrInternalServerError.From(err)
 	}
@@ -149,6 +149,7 @@ func (a *Publication) Create(ctx *gear.Context) error {
 				Kind:      "publication.review",
 				Threshold: 2,
 				Approvers: []util.ID{util.JARVIS},
+				Assignees: []util.ID{},
 			}, payload)
 		}
 
@@ -267,7 +268,7 @@ func (a *Publication) Update(ctx *gear.Context) error {
 		return gear.ErrInternalServerError.From(err)
 	}
 
-	if _, err = a.blls.Logbase.Log(ctx, "publication.update", 1, input.GID, &bll.Payload{
+	if _, err = a.blls.Logbase.Log(ctx, bll.LogActionPublicationUpdate, 1, input.GID, &bll.Payload{
 		GID:      input.GID,
 		CID:      input.CID,
 		Language: &input.Language,
@@ -300,7 +301,7 @@ func (a *Publication) Delete(ctx *gear.Context) error {
 		return gear.ErrInternalServerError.From(err)
 	}
 
-	if _, err = a.blls.Logbase.Log(ctx, "publication.delete", 1, input.GID, &bll.Payload{
+	if _, err = a.blls.Logbase.Log(ctx, bll.LogActionPublicationDelete, 1, input.GID, &bll.Payload{
 		GID:      input.GID,
 		CID:      input.CID,
 		Language: &input.Language,
@@ -443,7 +444,7 @@ func (a *Publication) Archive(ctx *gear.Context) error {
 		return gear.ErrInternalServerError.From(err)
 	}
 
-	if _, err = a.blls.Logbase.Log(ctx, "publication.update", 1, input.GID, &bll.Payload{
+	if _, err = a.blls.Logbase.Log(ctx, bll.LogActionPublicationUpdate, 1, input.GID, &bll.Payload{
 		GID:      input.GID,
 		CID:      input.CID,
 		Language: &input.Language,
@@ -477,7 +478,7 @@ func (a *Publication) Redraft(ctx *gear.Context) error {
 		return gear.ErrInternalServerError.From(err)
 	}
 
-	if _, err = a.blls.Logbase.Log(ctx, "publication.update", 1, input.GID, &bll.Payload{
+	if _, err = a.blls.Logbase.Log(ctx, bll.LogActionPublicationUpdate, 1, input.GID, &bll.Payload{
 		GID:      input.GID,
 		CID:      input.CID,
 		Language: &input.Language,
@@ -519,7 +520,7 @@ func (a *Publication) Publish(ctx *gear.Context) error {
 		Version:  input.Version,
 	})
 
-	if _, err = a.blls.Logbase.Log(ctx, "publication.publish", 1, input.GID, &bll.Payload{
+	if _, err = a.blls.Logbase.Log(ctx, bll.LogActionPublicationPublish, 1, input.GID, &bll.Payload{
 		GID:      input.GID,
 		CID:      input.CID,
 		Language: &input.Language,
@@ -552,7 +553,7 @@ func (a *Publication) UpdateContent(ctx *gear.Context) error {
 		return gear.ErrInternalServerError.From(err)
 	}
 
-	if _, err = a.blls.Logbase.Log(ctx, "publication.update.content", 1, input.GID, &bll.Payload{
+	if _, err = a.blls.Logbase.Log(ctx, bll.LogActionPublicationUpdateContent, 1, input.GID, &bll.Payload{
 		GID:      input.GID,
 		CID:      input.CID,
 		Language: &input.Language,

@@ -12,6 +12,47 @@ import (
 	"github.com/yiwen-ai/yiwen-api/src/util"
 )
 
+const (
+	LogActionSysCreateUser            = "sys.create.user"
+	LogActionSysUpdateUser            = "sys.update.user"
+	LogActionSysUpdateGroup           = "sys.update.group"
+	LogActionSysUpdateCreation        = "sys.update.creation"
+	LogActionUserLogin                = "user.login"
+	LogActionUserAuthz                = "user.authz"
+	LogActionUserUpdate               = "user.update"
+	LogActionUserUpdateCN             = "user.update.cn"
+	LogActionUserLogout               = "user.logout"
+	LogActionUserCollect              = "user.collect"
+	LogActionUserFollow               = "user.follow"
+	LogActionUserSubscribe            = "user.subscribe"
+	LogActionUserSponsor              = "user.sponsor"
+	LogActionGroupCreate              = "group.create"
+	LogActionGroupUpdate              = "group.update"
+	LogActionGroupUpdateCN            = "group.update.cn"
+	LogActionGroupTransfer            = "group.transfer"
+	LogActionGroupDelete              = "group.delete"
+	LogActionGroupCreateUser          = "group.create.user"
+	LogActionGroupUpdateUser          = "group.update.user"
+	LogActionGroupAddMember           = "group.add.member"
+	LogActionGroupUpdateMember        = "group.update.member"
+	LogActionGroupRemoveMember        = "group.remove.member"
+	LogActionCreationCreate           = "creation.create"
+	LogActionCreationCreateConverting = "creation.create.converting"
+	LogActionCreationCreateScraping   = "creation.create.scraping"
+	LogActionCreationUpdate           = "creation.update"
+	LogActionCreationUpdateContent    = "creation.update.content"
+	LogActionCreationRelease          = "creation.release"
+	LogActionCreationDelete           = "creation.delete"
+	LogActionCreationAssist           = "creation.assist"
+	LogActionCreationTransfer         = "creation.transfer"
+	LogActionPublicationCreate        = "publication.create"
+	LogActionPublicationUpdate        = "publication.update"
+	LogActionPublicationUpdateContent = "publication.update.content"
+	LogActionPublicationPublish       = "publication.publish"
+	LogActionPublicationDelete        = "publication.delete"
+	LogActionPublicationAssist        = "publication.assist"
+)
+
 type Logbase struct {
 	svc service.APIHost
 }
