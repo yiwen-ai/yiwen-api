@@ -158,8 +158,8 @@ func (b *Writing) CreatePublication(ctx context.Context, input *CreatePublicatio
 type QueryPublication struct {
 	GID      util.ID `json:"gid" cbor:"gid" query:"gid" validate:"required"`
 	CID      util.ID `json:"cid" cbor:"cid" query:"cid" validate:"required"`
-	Language string  `json:"language" cbor:"language" validate:"required"`
-	Version  uint16  `json:"version" cbor:"version"  validate:"gte=1,lte=10000"`
+	Language string  `json:"language" cbor:"language" query:"language" validate:"required"`
+	Version  uint16  `json:"version" cbor:"version" query:"version" validate:"gte=1,lte=10000"`
 	Fields   string  `json:"fields" cbor:"fields" query:"fields"`
 }
 

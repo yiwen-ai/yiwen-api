@@ -110,7 +110,7 @@ type Payload struct {
 
 type QueryIdCn struct {
 	ID     *util.ID `json:"id,omitempty" cbor:"id,omitempty" query:"id"`
-	CN     *string  `json:"cn,omitempty" cbor:"cn,omitempty" query:"language"`
+	CN     *string  `json:"cn,omitempty" cbor:"cn,omitempty" query:"cn"`
 	Fields *string  `json:"fields,omitempty" cbor:"fields,omitempty" query:"fields"`
 }
 
