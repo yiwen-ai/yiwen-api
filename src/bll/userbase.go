@@ -110,6 +110,7 @@ func (b *Userbase) LoadUserInfo(ctx context.Context, ids ...util.ID) []UserInfo 
 		return []UserInfo{}
 	}
 
+	ids = util.RemoveDuplicates(ids)
 	err := b.svc.Post(ctx, "/v1/user/batch_get_info", IDs{ids}, &output)
 	if err != nil {
 		logging.Warningf("Userbase.LoadUserInfo error: %v", err)
@@ -125,6 +126,7 @@ func (b *Userbase) LoadGroupInfo(ctx context.Context, ids ...util.ID) []GroupInf
 		return []GroupInfo{}
 	}
 
+	ids = util.RemoveDuplicates(ids)
 	err := b.svc.Post(ctx, "/v1/group/batch_get_info", IDs{ids}, &output)
 	if err != nil {
 		logging.Warningf("Userbase.LoadGroupInfo error: %v", err)

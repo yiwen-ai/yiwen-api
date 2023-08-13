@@ -98,6 +98,9 @@ func (a *Jarvis) Search(ctx *gear.Context) error {
 	})
 
 	wg.Wait()
+
+	logging.SetTo(ctx, "semanticResults", len(output.Hits))
+	logging.SetTo(ctx, "literalResults", len(literalOutput.Hits))
 	output.Hits = append(output.Hits, literalOutput.Hits...)
 	output.Languages = literalOutput.Languages
 	(&output).LoadGroups(func(ids ...util.ID) []bll.GroupInfo {
