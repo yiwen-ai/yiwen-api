@@ -178,7 +178,15 @@ func (a *Publication) Get(ctx *gear.Context) error {
 		return gear.ErrBadRequest.From(err)
 	}
 
-	return ctx.OkSend(bll.SuccessResponse[*bll.PublicationOutput]{Result: output})
+	result := bll.PublicationOutputs{*output}
+	result.LoadCreators(func(ids ...util.ID) []bll.UserInfo {
+		return a.blls.Userbase.LoadUserInfo(ctx, ids...)
+	})
+	result.LoadGroups(func(ids ...util.ID) []bll.GroupInfo {
+		return a.blls.Userbase.LoadGroupInfo(ctx, ids...)
+	})
+
+	return ctx.OkSend(bll.SuccessResponse[*bll.PublicationOutput]{Result: &result[0]})
 }
 
 func (a *Publication) GetByJob(ctx *gear.Context) error {
@@ -231,7 +239,15 @@ func (a *Publication) GetByJob(ctx *gear.Context) error {
 		return gear.ErrInternalServerError.From(err)
 	}
 
-	return ctx.OkSend(bll.SuccessResponse[*bll.PublicationOutput]{Result: output})
+	result := bll.PublicationOutputs{*output}
+	result.LoadCreators(func(ids ...util.ID) []bll.UserInfo {
+		return a.blls.Userbase.LoadUserInfo(ctx, ids...)
+	})
+	result.LoadGroups(func(ids ...util.ID) []bll.GroupInfo {
+		return a.blls.Userbase.LoadGroupInfo(ctx, ids...)
+	})
+
+	return ctx.OkSend(bll.SuccessResponse[*bll.PublicationOutput]{Result: &result[0]})
 }
 
 func (a *Publication) ListJob(ctx *gear.Context) error {
@@ -329,6 +345,13 @@ func (a *Publication) List(ctx *gear.Context) error {
 		return gear.ErrInternalServerError.From(err)
 	}
 
+	output.Result.LoadCreators(func(ids ...util.ID) []bll.UserInfo {
+		return a.blls.Userbase.LoadUserInfo(ctx, ids...)
+	})
+	output.Result.LoadGroups(func(ids ...util.ID) []bll.GroupInfo {
+		return a.blls.Userbase.LoadGroupInfo(ctx, ids...)
+	})
+
 	return ctx.OkSend(output)
 }
 
@@ -364,6 +387,13 @@ func (a *Publication) ListByFollowing(ctx *gear.Context) error {
 		return gear.ErrInternalServerError.From(err)
 	}
 
+	output.Result.LoadCreators(func(ids ...util.ID) []bll.UserInfo {
+		return a.blls.Userbase.LoadUserInfo(ctx, ids...)
+	})
+	output.Result.LoadGroups(func(ids ...util.ID) []bll.GroupInfo {
+		return a.blls.Userbase.LoadGroupInfo(ctx, ids...)
+	})
+
 	return ctx.OkSend(output)
 }
 
@@ -383,6 +413,13 @@ func (a *Publication) ListArchived(ctx *gear.Context) error {
 		return gear.ErrInternalServerError.From(err)
 	}
 
+	output.Result.LoadCreators(func(ids ...util.ID) []bll.UserInfo {
+		return a.blls.Userbase.LoadUserInfo(ctx, ids...)
+	})
+	output.Result.LoadGroups(func(ids ...util.ID) []bll.GroupInfo {
+		return a.blls.Userbase.LoadGroupInfo(ctx, ids...)
+	})
+
 	return ctx.OkSend(output)
 }
 
@@ -392,15 +429,18 @@ func (a *Publication) ListPublished(ctx *gear.Context) error {
 		return err
 	}
 
-	if err := a.checkReadPermission(ctx, input.GID); err != nil {
-		return err
-	}
-
 	input.Status = util.Ptr(int8(2))
 	output, err := a.blls.Writing.ListPublication(ctx, input)
 	if err != nil {
 		return gear.ErrInternalServerError.From(err)
 	}
+
+	output.Result.LoadCreators(func(ids ...util.ID) []bll.UserInfo {
+		return a.blls.Userbase.LoadUserInfo(ctx, ids...)
+	})
+	output.Result.LoadGroups(func(ids ...util.ID) []bll.GroupInfo {
+		return a.blls.Userbase.LoadGroupInfo(ctx, ids...)
+	})
 
 	return ctx.OkSend(output)
 }
@@ -419,6 +459,13 @@ func (a *Publication) GetPublishList(ctx *gear.Context) error {
 	if err != nil {
 		return gear.ErrInternalServerError.From(err)
 	}
+
+	output.Result.LoadCreators(func(ids ...util.ID) []bll.UserInfo {
+		return a.blls.Userbase.LoadUserInfo(ctx, ids...)
+	})
+	output.Result.LoadGroups(func(ids ...util.ID) []bll.GroupInfo {
+		return a.blls.Userbase.LoadGroupInfo(ctx, ids...)
+	})
 
 	return ctx.OkSend(output)
 }

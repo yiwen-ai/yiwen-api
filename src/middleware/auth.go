@@ -44,15 +44,31 @@ const (
 func (m AuthLevel) Auth(ctx *gear.Context) error {
 	l := uint8(m)
 	sess, err := extractAuth(ctx)
+	log := logging.FromCtx(ctx)
 	if err != nil {
 		if l == 0 {
+			sess := &Session{}
+			sess.UserID = util.ANON
+			log["uid"] = sess.UserID
+
+			ctx.Req.Header.Set("x-auth-user", sess.UserID.String())
+			ctxHeader := make(http.Header)
+			// inject auth headers into context for base service
+			util.CopyHeader(ctxHeader, ctx.Req.Header,
+				"x-real-ip",
+				"x-request-id",
+				"x-auth-user",
+			)
+
+			cctx := gear.CtxWith[Session](ctx.Context(), sess)
+			cheader := util.ContextHTTPHeader(ctxHeader)
+			ctx.WithContext(gear.CtxWith[util.ContextHTTPHeader](cctx, &cheader))
 			return nil
 		}
 
 		return gear.ErrUnauthorized.From(err)
 	}
 
-	log := logging.FromCtx(ctx)
 	log["uid"] = sess.UserID
 	if l > 1 && !sess.HasToken() {
 		return gear.ErrUnauthorized.WithMsg("invalid token")

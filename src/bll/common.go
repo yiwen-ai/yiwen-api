@@ -65,6 +65,7 @@ type GroupInfo struct {
 	CN     string  `json:"cn" cbor:"cn"`
 	Name   string  `json:"name" cbor:"name"`
 	Logo   string  `json:"logo" cbor:"logo"`
+	Slogan string  `json:"slogan" cbor:"slogan"`
 	Status int8    `json:"status" cbor:"status"`
 	MyRole *int8   `json:"_role,omitempty" cbor:"_role,omitempty"`
 }

@@ -12,11 +12,10 @@ type Group struct {
 }
 
 func (a *Group) ListMy(ctx *gear.Context) error {
-	output, err := a.blls.Userbase.MyGroups(ctx)
+	groups, err := a.blls.Userbase.MyGroups(ctx)
 	if err != nil {
 		return gear.ErrInternalServerError.From(err)
 	}
-	groups := bll.Groups(output)
 	(&groups).LoadUsers(func(ids ...util.ID) []bll.UserInfo {
 		return a.blls.Userbase.LoadUserInfo(ctx, ids...)
 	})
@@ -59,4 +58,48 @@ func (a *Group) ListFollowing(ctx *gear.Context) error {
 		return gear.ErrInternalServerError.From(err)
 	}
 	return ctx.OkSend(bll.SuccessResponse[bll.Groups]{Result: output})
+}
+
+func (a *Group) GetInfo(ctx *gear.Context) error {
+	input := &bll.QueryIdCn{}
+	err := ctx.ParseURL(input)
+	if err != nil {
+		return err
+	}
+
+	res, err := a.blls.Userbase.GroupInfo(ctx, input)
+	if err != nil {
+		return gear.ErrInternalServerError.From(err)
+	}
+
+	return ctx.OkSend(bll.SuccessResponse[*bll.GroupInfo]{Result: res})
+}
+
+type GroupStatisticOutput struct {
+	Publications uint `json:"publications" cbor:"publications"`
+	Members      uint `json:"members" cbor:"members"`
+}
+
+func (a *Group) GetStatistic(ctx *gear.Context) error {
+	input := &bll.QueryIdCn{}
+	err := ctx.ParseURL(input)
+	if err != nil {
+		return err
+	}
+
+	if input.ID == nil {
+		return gear.ErrBadRequest.WithMsgf("missing group id")
+	}
+
+	res := &GroupStatisticOutput{}
+
+	res.Publications, err = a.blls.Writing.CountPublicationPublish(ctx, &bll.GIDPagination{
+		GID: *input.ID,
+	})
+
+	if err != nil {
+		return gear.ErrInternalServerError.From(err)
+	}
+
+	return ctx.OkSend(bll.SuccessResponse[*GroupStatisticOutput]{Result: res})
 }

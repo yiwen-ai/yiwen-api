@@ -52,6 +52,64 @@ type CreationOutput struct {
 	Summary     *string     `json:"summary,omitempty" cbor:"summary,omitempty"`
 	Content     *util.Bytes `json:"content,omitempty" cbor:"content,omitempty"`
 	License     *string     `json:"license,omitempty" cbor:"license,omitempty"`
+	CreatorInfo *UserInfo   `json:"creator_info,omitempty" cbor:"creator_info,omitempty"`
+	GroupInfo   *GroupInfo  `json:"group_info,omitempty" cbor:"group_info,omitempty"`
+}
+
+type CreationOutputs []CreationOutput
+
+func (list *CreationOutputs) LoadCreators(loader func(ids ...util.ID) []UserInfo) {
+	if len(*list) == 0 {
+		return
+	}
+
+	ids := make([]util.ID, 0, len(*list))
+	for _, v := range *list {
+		if v.Creator != nil {
+			ids = append(ids, *v.Creator)
+		}
+	}
+
+	users := loader(ids...)
+	if len(users) == 0 {
+		return
+	}
+
+	infoMap := make(map[util.ID]*UserInfo, len(users))
+	for i := range users {
+		infoMap[*users[i].ID] = &users[i]
+		infoMap[*users[i].ID].ID = nil
+	}
+
+	for i := range *list {
+		(*list)[i].CreatorInfo = infoMap[*(*list)[i].Creator]
+		(*list)[i].Creator = nil
+	}
+}
+
+func (list *CreationOutputs) LoadGroups(loader func(ids ...util.ID) []GroupInfo) {
+	if len(*list) == 0 {
+		return
+	}
+
+	ids := make([]util.ID, 0, len(*list))
+	for _, v := range *list {
+		ids = append(ids, v.GID)
+	}
+
+	groups := loader(ids...)
+	if len(groups) == 0 {
+		return
+	}
+
+	infoMap := make(map[util.ID]*GroupInfo, len(groups))
+	for i := range groups {
+		infoMap[groups[i].ID] = &groups[i]
+	}
+
+	for i := range *list {
+		(*list)[i].GroupInfo = infoMap[(*list)[i].GID]
+	}
 }
 
 func (b *Writing) CreateCreation(ctx context.Context, input *CreateCreationInput) (*CreationOutput, error) {
@@ -133,8 +191,8 @@ func (b *Writing) DeleteCreation(ctx context.Context, input *QueryCreation) (boo
 	return output.Result, nil
 }
 
-func (b *Writing) ListCreation(ctx context.Context, input *GIDPagination) (*SuccessResponse[[]*CreationOutput], error) {
-	output := SuccessResponse[[]*CreationOutput]{}
+func (b *Writing) ListCreation(ctx context.Context, input *GIDPagination) (*SuccessResponse[CreationOutputs], error) {
+	output := SuccessResponse[CreationOutputs]{}
 	if err := b.svc.Post(ctx, "/v1/creation/list", input, &output); err != nil {
 		return nil, err
 	}

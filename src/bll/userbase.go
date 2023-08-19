@@ -3,6 +3,7 @@ package bll
 import (
 	"context"
 	"fmt"
+	"net/url"
 
 	"github.com/teambition/gear"
 	"github.com/yiwen-ai/yiwen-api/src/logging"
@@ -171,4 +172,24 @@ func (b *Userbase) FollowingGids(ctx context.Context) ([]util.ID, error) {
 	}
 
 	return output.Result, nil
+}
+
+func (b *Userbase) GroupInfo(ctx context.Context, input *QueryIdCn) (*GroupInfo, error) {
+	output := SuccessResponse[GroupInfo]{}
+
+	query := url.Values{}
+	if input.ID != nil {
+		query.Add("id", input.ID.String())
+	}
+	if input.CN != nil {
+		query.Add("cn", *input.CN)
+	}
+	query.Add("fields", "cn,name,logo,status,slogan")
+
+	err := b.svc.Get(ctx, "/v1/group?"+query.Encode(), &output)
+	if err != nil {
+		return nil, err
+	}
+
+	return &output.Result, nil
 }

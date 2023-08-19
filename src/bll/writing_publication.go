@@ -70,6 +70,64 @@ type PublicationOutput struct {
 	Summary     *string     `json:"summary,omitempty" cbor:"summary,omitempty"`
 	Content     *util.Bytes `json:"content,omitempty" cbor:"content,omitempty"`
 	License     *string     `json:"license,omitempty" cbor:"license,omitempty"`
+	CreatorInfo *UserInfo   `json:"creator_info,omitempty" cbor:"creator_info,omitempty"`
+	GroupInfo   *GroupInfo  `json:"group_info,omitempty" cbor:"group_info,omitempty"`
+}
+
+type PublicationOutputs []PublicationOutput
+
+func (list *PublicationOutputs) LoadCreators(loader func(ids ...util.ID) []UserInfo) {
+	if len(*list) == 0 {
+		return
+	}
+
+	ids := make([]util.ID, 0, len(*list))
+	for _, v := range *list {
+		if v.Creator != nil {
+			ids = append(ids, *v.Creator)
+		}
+	}
+
+	users := loader(ids...)
+	if len(users) == 0 {
+		return
+	}
+
+	infoMap := make(map[util.ID]*UserInfo, len(users))
+	for i := range users {
+		infoMap[*users[i].ID] = &users[i]
+		infoMap[*users[i].ID].ID = nil
+	}
+
+	for i := range *list {
+		(*list)[i].CreatorInfo = infoMap[*(*list)[i].Creator]
+		(*list)[i].Creator = nil
+	}
+}
+
+func (list *PublicationOutputs) LoadGroups(loader func(ids ...util.ID) []GroupInfo) {
+	if len(*list) == 0 {
+		return
+	}
+
+	ids := make([]util.ID, 0, len(*list))
+	for _, v := range *list {
+		ids = append(ids, v.GID)
+	}
+
+	groups := loader(ids...)
+	if len(groups) == 0 {
+		return
+	}
+
+	infoMap := make(map[util.ID]*GroupInfo, len(groups))
+	for i := range groups {
+		infoMap[groups[i].ID] = &groups[i]
+	}
+
+	for i := range *list {
+		(*list)[i].GroupInfo = infoMap[(*list)[i].GID]
+	}
 }
 
 func (i *PublicationOutput) ToTEContents() (content.TEContents, error) {
@@ -247,13 +305,22 @@ func (b *Writing) DeletePublication(ctx context.Context, input *QueryPublication
 	return output.Result, nil
 }
 
-func (b *Writing) ListPublication(ctx context.Context, input *GIDPagination) (*SuccessResponse[[]*PublicationOutput], error) {
-	output := SuccessResponse[[]*PublicationOutput]{}
+func (b *Writing) ListPublication(ctx context.Context, input *GIDPagination) (*SuccessResponse[PublicationOutputs], error) {
+	output := SuccessResponse[PublicationOutputs]{}
 	if err := b.svc.Post(ctx, "/v1/publication/list", input, &output); err != nil {
 		return nil, err
 	}
 
 	return &output, nil
+}
+
+func (b *Writing) CountPublicationPublish(ctx context.Context, input *GIDPagination) (uint, error) {
+	output := SuccessResponse[uint]{}
+	if err := b.svc.Post(ctx, "/v1/publication/count_publish", input, &output); err != nil {
+		return 0, err
+	}
+
+	return output.Result, nil
 }
 
 type GIDsPagination struct {
@@ -271,8 +338,8 @@ func (i *GIDsPagination) Validate() error {
 	return nil
 }
 
-func (b *Writing) ListPublicationByGIDs(ctx context.Context, input *GIDsPagination) (*SuccessResponse[[]*PublicationOutput], error) {
-	output := SuccessResponse[[]*PublicationOutput]{}
+func (b *Writing) ListPublicationByGIDs(ctx context.Context, input *GIDsPagination) (*SuccessResponse[PublicationOutputs], error) {
+	output := SuccessResponse[PublicationOutputs]{}
 	if err := b.svc.Post(ctx, "/v1/publication/list_by_gids", input, &output); err != nil {
 		return nil, err
 	}
@@ -293,8 +360,8 @@ func (i *QueryAPublication) Validate() error {
 	return nil
 }
 
-func (b *Writing) GetPublicationList(ctx context.Context, input *QueryAPublication) (*SuccessResponse[[]*PublicationOutput], error) {
-	output := SuccessResponse[[]*PublicationOutput]{}
+func (b *Writing) GetPublicationList(ctx context.Context, input *QueryAPublication) (*SuccessResponse[PublicationOutputs], error) {
+	output := SuccessResponse[PublicationOutputs]{}
 	query := url.Values{}
 	query.Add("gid", input.GID.String())
 	query.Add("cid", input.CID.String())

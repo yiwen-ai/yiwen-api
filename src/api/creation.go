@@ -83,7 +83,15 @@ func (a *Creation) Get(ctx *gear.Context) error {
 		return gear.ErrInternalServerError.From(err)
 	}
 
-	return ctx.OkSend(bll.SuccessResponse[*bll.CreationOutput]{Result: output})
+	result := bll.CreationOutputs{*output}
+	result.LoadCreators(func(ids ...util.ID) []bll.UserInfo {
+		return a.blls.Userbase.LoadUserInfo(ctx, ids...)
+	})
+	result.LoadGroups(func(ids ...util.ID) []bll.GroupInfo {
+		return a.blls.Userbase.LoadGroupInfo(ctx, ids...)
+	})
+
+	return ctx.OkSend(bll.SuccessResponse[*bll.CreationOutput]{Result: &result[0]})
 }
 
 func (a *Creation) Update(ctx *gear.Context) error {
@@ -164,6 +172,13 @@ func (a *Creation) List(ctx *gear.Context) error {
 		return gear.ErrInternalServerError.From(err)
 	}
 
+	output.Result.LoadCreators(func(ids ...util.ID) []bll.UserInfo {
+		return a.blls.Userbase.LoadUserInfo(ctx, ids...)
+	})
+	output.Result.LoadGroups(func(ids ...util.ID) []bll.GroupInfo {
+		return a.blls.Userbase.LoadGroupInfo(ctx, ids...)
+	})
+
 	return ctx.OkSend(output)
 }
 
@@ -182,6 +197,12 @@ func (a *Creation) ListArchived(ctx *gear.Context) error {
 	if err != nil {
 		return gear.ErrInternalServerError.From(err)
 	}
+	output.Result.LoadCreators(func(ids ...util.ID) []bll.UserInfo {
+		return a.blls.Userbase.LoadUserInfo(ctx, ids...)
+	})
+	output.Result.LoadGroups(func(ids ...util.ID) []bll.GroupInfo {
+		return a.blls.Userbase.LoadGroupInfo(ctx, ids...)
+	})
 
 	return ctx.OkSend(output)
 }

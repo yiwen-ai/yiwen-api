@@ -49,6 +49,8 @@ func newRouters(apis *APIs) []*gear.Router {
 	router.Get("/v1/publication", middleware.AuthAllowAnon.Auth, apis.Publication.Get)
 	router.Get("/v1/publication/publish", middleware.AuthAllowAnon.Auth, apis.Publication.GetPublishList)
 	router.Post("/v1/publication/list_published", middleware.AuthAllowAnon.Auth, apis.Publication.ListPublished)
+	router.Get("/v1/group/info", middleware.AuthAllowAnon.Auth, apis.Group.GetInfo)
+	router.Get("/v1/group/statistic", middleware.AuthAllowAnon.Auth, apis.Group.GetStatistic)
 
 	router.Get("/v1/search", middleware.AuthToken.Auth, apis.Jarvis.Search)
 	router.Get("/v1/search/in_group", middleware.AuthToken.Auth, apis.Jarvis.GroupSearch)
