@@ -42,10 +42,9 @@ type PublicationDraft struct {
 	GID      util.ID    `json:"gid" cbor:"gid"`
 	Language string     `json:"language" cbor:"language"`
 	Title    string     `json:"title" cbor:"title"`
-	Model    string     `json:"model,omitempty" cbor:"model,omitempty"`
-	Genre    []string   `json:"genre,omitempty" cbor:"genre,omitempty"`
-	Cover    string     `json:"cover,omitempty" cbor:"cover,omitempty"`
-	Keywords []string   `json:"keywords,omitempty" cbor:"keywords,omitempty"`
+	Model    string     `json:"model" cbor:"model"`
+	Cover    string     `json:"cover" cbor:"cover"`
+	Keywords []string   `json:"keywords" cbor:"keywords"`
 	Summary  string     `json:"summary" cbor:"summary"`
 	Content  util.Bytes `json:"content" cbor:"content"`
 }
@@ -160,9 +159,6 @@ func (i *PublicationOutput) IntoPublicationDraft(gid util.ID, language, model st
 		GID:      gid,
 		Language: language,
 		Model:    model,
-	}
-	if i.Genre != nil {
-		draft.Genre = *i.Genre
 	}
 	if i.Cover != nil {
 		draft.Cover = *i.Cover
