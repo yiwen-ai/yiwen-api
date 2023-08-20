@@ -159,6 +159,7 @@ func (i *PublicationOutput) IntoPublicationDraft(gid util.ID, language, model st
 		GID:      gid,
 		Language: language,
 		Model:    model,
+		Keywords: []string{},
 	}
 	if i.Cover != nil {
 		draft.Cover = *i.Cover
