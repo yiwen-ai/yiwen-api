@@ -50,27 +50,28 @@ type PublicationDraft struct {
 }
 
 type PublicationOutput struct {
-	GID         util.ID     `json:"gid" cbor:"gid"`
-	CID         util.ID     `json:"cid" cbor:"cid"`
-	Language    string      `json:"language" cbor:"language"`
-	Version     uint16      `json:"version" cbor:"version"`
-	Rating      *int8       `json:"rating,omitempty" cbor:"rating,omitempty"`
-	Status      *int8       `json:"status,omitempty" cbor:"status,omitempty"`
-	Creator     *util.ID    `json:"creator,omitempty" cbor:"creator,omitempty"`
-	CreatedAt   *int64      `json:"created_at,omitempty" cbor:"created_at,omitempty"`
-	UpdatedAt   *int64      `json:"updated_at,omitempty" cbor:"updated_at,omitempty"`
-	Model       *string     `json:"model,omitempty" cbor:"model,omitempty"`
-	OriginalUrl *string     `json:"original_url,omitempty" cbor:"original_url,omitempty"`
-	Genre       *[]string   `json:"genre,omitempty" cbor:"genre,omitempty"`
-	Title       *string     `json:"title,omitempty" cbor:"title,omitempty"`
-	Cover       *string     `json:"cover,omitempty" cbor:"cover,omitempty"`
-	Keywords    *[]string   `json:"keywords,omitempty" cbor:"keywords,omitempty"`
-	Authors     *[]string   `json:"authors,omitempty" cbor:"authors,omitempty"`
-	Summary     *string     `json:"summary,omitempty" cbor:"summary,omitempty"`
-	Content     *util.Bytes `json:"content,omitempty" cbor:"content,omitempty"`
-	License     *string     `json:"license,omitempty" cbor:"license,omitempty"`
-	CreatorInfo *UserInfo   `json:"creator_info,omitempty" cbor:"creator_info,omitempty"`
-	GroupInfo   *GroupInfo  `json:"group_info,omitempty" cbor:"group_info,omitempty"`
+	GID          util.ID     `json:"gid" cbor:"gid"`
+	CID          util.ID     `json:"cid" cbor:"cid"`
+	Language     string      `json:"language" cbor:"language"`
+	Version      uint16      `json:"version" cbor:"version"`
+	Rating       *int8       `json:"rating,omitempty" cbor:"rating,omitempty"`
+	Status       *int8       `json:"status,omitempty" cbor:"status,omitempty"`
+	Creator      *util.ID    `json:"creator,omitempty" cbor:"creator,omitempty"`
+	CreatedAt    *int64      `json:"created_at,omitempty" cbor:"created_at,omitempty"`
+	UpdatedAt    *int64      `json:"updated_at,omitempty" cbor:"updated_at,omitempty"`
+	Model        *string     `json:"model,omitempty" cbor:"model,omitempty"`
+	OriginalUrl  *string     `json:"original_url,omitempty" cbor:"original_url,omitempty"`
+	FromLanguage *string     `json:"from_language,omitempty" cbor:"from_language,omitempty"`
+	Genre        *[]string   `json:"genre,omitempty" cbor:"genre,omitempty"`
+	Title        *string     `json:"title,omitempty" cbor:"title,omitempty"`
+	Cover        *string     `json:"cover,omitempty" cbor:"cover,omitempty"`
+	Keywords     *[]string   `json:"keywords,omitempty" cbor:"keywords,omitempty"`
+	Authors      *[]string   `json:"authors,omitempty" cbor:"authors,omitempty"`
+	Summary      *string     `json:"summary,omitempty" cbor:"summary,omitempty"`
+	Content      *util.Bytes `json:"content,omitempty" cbor:"content,omitempty"`
+	License      *string     `json:"license,omitempty" cbor:"license,omitempty"`
+	CreatorInfo  *UserInfo   `json:"creator_info,omitempty" cbor:"creator_info,omitempty"`
+	GroupInfo    *GroupInfo  `json:"group_info,omitempty" cbor:"group_info,omitempty"`
 }
 
 type PublicationOutputs []PublicationOutput
