@@ -134,11 +134,11 @@ func (i *PublicationOutput) ToTEContents() (content.TEContents, error) {
 	if i.Title == nil || i.Summary == nil || i.Content == nil {
 		return nil, gear.ErrInternalServerError.WithMsg("empty title or summary or content")
 	}
-	contents, err := content.ToTEContents(*i.Content)
+	doc, err := content.ParseDocumentNode(*i.Content)
 	if err != nil {
 		return nil, gear.ErrInternalServerError.From(err)
 	}
-
+	contents := doc.ToTEContents()
 	contents = append(contents, &content.TEContent{
 		ID:    "title",
 		Texts: []string{*i.Title},

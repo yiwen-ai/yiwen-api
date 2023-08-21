@@ -21,6 +21,7 @@ func (a *Jarvis) ListLanguages(ctx *gear.Context) error {
 	if err != nil {
 		return gear.ErrInternalServerError.From(err)
 	}
+
 	return ctx.OkSend(bll.SuccessResponse[[][]string]{Result: output})
 }
 

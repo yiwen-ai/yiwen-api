@@ -2,8 +2,12 @@ package content
 
 import (
 	"errors"
+	"unicode/utf8"
 
 	"github.com/fxamacker/cbor/v2"
+	"github.com/jaevor/go-nanoid"
+
+	"github.com/yiwen-ai/yiwen-api/src/util"
 )
 
 type PartialNode struct {
@@ -81,16 +85,28 @@ func (d *DocumentNode) setTexts(m map[string][]string) {
 
 	for i := range d.Content {
 		n := &d.Content[i]
-		if n.Text != nil && len(texts) > 0 {
-			n.Text = &texts[0]
-			texts = texts[1:]
+		if n.Text != nil {
+			if len(texts) > 0 {
+				n.Text = &texts[0]
+				texts = texts[1:]
+			} else if utf8.RuneCount([]byte(*n.Text)) > 1 {
+				n.Text = util.Ptr(" ")
+			}
 		} else {
 			n.setTexts(m)
 		}
 	}
+
+	// should not happen
+	for i := range texts {
+		d.Content = append(d.Content, DocumentNode{
+			Type: "text",
+			Text: util.Ptr(texts[i]),
+		})
+	}
 }
 
-func ToTEContents(content []byte) (TEContents, error) {
+func ParseDocumentNode(content []byte) (*DocumentNode, error) {
 	if len(content) == 0 {
 		return nil, errors.New("empty content")
 	}
@@ -99,10 +115,62 @@ func ToTEContents(content []byte) (TEContents, error) {
 	if err := cbor.Unmarshal(content, doc); err != nil {
 		return nil, err
 	}
+	amender := NewDocumentNodeAmender()
+	amender.AmendNode(doc)
 
-	contents := doc.ToTEContents()
-	if len(contents) == 0 {
-		return nil, errors.New("empty content")
+	return doc, nil
+}
+
+type DocumentNodeAmender struct {
+	ids        map[string]struct{}
+	generateID func() string
+}
+
+func NewDocumentNodeAmender() *DocumentNodeAmender {
+	generateID, err := nanoid.Standard(6)
+	if err != nil {
+		panic(err)
 	}
-	return contents, nil
+
+	return &DocumentNodeAmender{ids: make(map[string]struct{}), generateID: generateID}
+}
+
+func (a *DocumentNodeAmender) HasId(id string) bool {
+	_, ok := a.ids[id]
+	return ok
+}
+
+// ensure id is unique
+func (a *DocumentNodeAmender) amendId(id string) string {
+	if id == "" {
+		id = a.generateID()
+	}
+
+	for a.HasId(id) {
+		id = a.generateID()
+	}
+
+	a.ids[id] = struct{}{}
+	return id
+}
+
+var uidTypes = []string{"blockquote", "codeBlock", "detailsSummary", "detailsContent", "heading", "listItem", "paragraph", "tableHeader", "tableCell"}
+
+// https://prosemirror.net/docs/ref/#model.Document_Structure
+func (a *DocumentNodeAmender) AmendNode(node *DocumentNode) {
+	// attrs: Attrs
+	if util.SliceHas(uidTypes, node.Type) {
+		if node.Attrs == nil {
+			node.Attrs = map[string]AttrValue{"id": String(a.amendId(""))}
+		} else {
+			node.Attrs["id"] = String(a.amendId(node.Attrs["id"].ToString()))
+		}
+	}
+
+	// content: Node[]
+	if len(node.Content) > 0 {
+		for i := range node.Content {
+			a.AmendNode(&node.Content[i])
+		}
+	}
 }

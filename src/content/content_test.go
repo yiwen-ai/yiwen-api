@@ -2,6 +2,7 @@ package content
 
 import (
 	"encoding/json"
+	"fmt"
 	"os"
 	"reflect"
 	"testing"
@@ -9,6 +10,7 @@ import (
 	"github.com/fxamacker/cbor/v2"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"github.com/yiwen-ai/yiwen-api/src/util"
 )
 
 func TestDocumentNode(t *testing.T) {
@@ -88,4 +90,59 @@ func TestFromTEContents(t *testing.T) {
 	zhData, err := os.ReadFile("./content.zho.json")
 	require.NoError(t, err)
 	assert.JSONEq(string(data), string(zhData))
+}
+
+func TestDocumentNodeAmender(t *testing.T) {
+	assert := assert.New(t)
+	amender := NewDocumentNodeAmender()
+	obj := DocumentNode{
+		Type: "doc",
+		Content: []DocumentNode{
+			{
+				Type: "heading",
+				Attrs: map[string]AttrValue{
+					"id":    String("abcdef"),
+					"level": Int64(1),
+				},
+				Content: []DocumentNode{
+					{
+						Type: "text",
+						Text: util.Ptr("Hello"),
+					},
+				},
+			},
+			{
+				Type: "heading",
+				Attrs: map[string]AttrValue{
+					"id":    String("abcdef"),
+					"level": Int64(1),
+				},
+				Content: []DocumentNode{
+					{
+						Type: "text",
+						Text: util.Ptr("world"),
+					},
+				},
+			},
+			{
+				Type: "paragraph",
+				Content: []DocumentNode{
+					{
+						Type: "text",
+						Text: util.Ptr("some text"),
+					},
+				},
+			},
+		},
+	}
+
+	assert.Equal(obj.Content[0].Attrs["id"].ToAny(), obj.Content[1].Attrs["id"].ToAny())
+	assert.Nil(obj.Content[2].Attrs["id"].ToAny())
+	amender.AmendNode(&obj)
+	assert.NotEqual(obj.Content[0].Attrs["id"].ToAny(), obj.Content[1].Attrs["id"].ToAny())
+	assert.NotNil(obj.Content[2].Attrs["id"].ToAny())
+
+	data, err := json.Marshal(obj)
+	fmt.Println(string(data))
+	assert.Nil(err)
 }

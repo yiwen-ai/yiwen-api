@@ -28,10 +28,19 @@ func (a *Creation) Create(ctx *gear.Context) error {
 		return err
 	}
 
-	teContents, err := content.ToTEContents([]byte(input.Content))
+	doc, err := content.ParseDocumentNode(input.Content)
 	if err != nil {
 		return gear.ErrBadRequest.From(err)
 	}
+	teContents := doc.ToTEContents()
+	if len(teContents) == 0 {
+		return gear.ErrBadRequest.WithMsg("invalid content")
+	}
+	input.Content, err = cbor.Marshal(doc)
+	if err != nil {
+		return gear.ErrBadRequest.From(err)
+	}
+
 	teData, err := cbor.Marshal(teContents)
 	if err != nil {
 		return gear.ErrBadRequest.From(err)
@@ -409,6 +418,19 @@ func (a *Creation) UpdateContent(ctx *gear.Context) error {
 		return err
 	}
 
+	doc, err := content.ParseDocumentNode(input.Content)
+	if err != nil {
+		return gear.ErrBadRequest.From(err)
+	}
+	teContents := doc.ToTEContents()
+	if len(teContents) == 0 {
+		return gear.ErrBadRequest.WithMsg("invalid content")
+	}
+	input.Content, err = cbor.Marshal(doc)
+	if err != nil {
+		return gear.ErrBadRequest.From(err)
+	}
+
 	creation, err := a.checkWritePermission(ctx, input.GID, input.ID)
 	if err != nil {
 		return err
@@ -511,11 +533,11 @@ func (a *Creation) summarize(gctx context.Context, gid, cid util.ID, auditLog *b
 		return nil, errors.New("cannot summarize creation content, status is not 1")
 	}
 
-	teContents, err := content.ToTEContents([]byte(*creation.Content))
+	doc, err := content.ParseDocumentNode(*creation.Content)
 	if err != nil {
 		return nil, err
 	}
-	teData, err := cbor.Marshal(teContents)
+	teData, err := cbor.Marshal(doc.ToTEContents())
 	if err != nil {
 		return nil, err
 	}

@@ -11,6 +11,7 @@ import (
 
 	"github.com/yiwen-ai/yiwen-api/src/bll"
 	"github.com/yiwen-ai/yiwen-api/src/conf"
+	"github.com/yiwen-ai/yiwen-api/src/content"
 	"github.com/yiwen-ai/yiwen-api/src/logging"
 	"github.com/yiwen-ai/yiwen-api/src/middleware"
 	"github.com/yiwen-ai/yiwen-api/src/util"
@@ -460,13 +461,6 @@ func (a *Publication) GetPublishList(ctx *gear.Context) error {
 		return gear.ErrInternalServerError.From(err)
 	}
 
-	output.Result.LoadCreators(func(ids ...util.ID) []bll.UserInfo {
-		return a.blls.Userbase.LoadUserInfo(ctx, ids...)
-	})
-	output.Result.LoadGroups(func(ids ...util.ID) []bll.GroupInfo {
-		return a.blls.Userbase.LoadGroupInfo(ctx, ids...)
-	})
-
 	return ctx.OkSend(output)
 }
 
@@ -584,6 +578,19 @@ func (a *Publication) UpdateContent(ctx *gear.Context) error {
 	input := &bll.UpdatePublicationContentInput{}
 	if err := ctx.ParseBody(input); err != nil {
 		return err
+	}
+
+	doc, err := content.ParseDocumentNode(input.Content)
+	if err != nil {
+		return gear.ErrBadRequest.From(err)
+	}
+	teContents := doc.ToTEContents()
+	if len(teContents) == 0 {
+		return gear.ErrBadRequest.WithMsg("invalid content")
+	}
+	input.Content, err = cbor.Marshal(doc)
+	if err != nil {
+		return gear.ErrBadRequest.From(err)
 	}
 
 	publication, err := a.checkWritePermission(ctx, input.GID, input.CID, input.Language, input.Version)
