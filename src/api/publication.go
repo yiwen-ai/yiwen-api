@@ -263,7 +263,7 @@ func (a *Publication) ListJob(ctx *gear.Context) error {
 	if err != nil {
 		return gear.ErrBadRequest.WithMsgf("list jobs failed: %s", err.Error())
 	}
-	return ctx.OkSend(bll.SuccessResponse[[]*bll.PublicationJob]{Result: bll.PublicationJobsFrom(logs)})
+	return ctx.OkSend(bll.SuccessResponse[[]*bll.PublicationJob]{Result: bll.PublicationJobsFrom(logs.Result)})
 }
 
 func (a *Publication) Update(ctx *gear.Context) error {
@@ -619,6 +619,34 @@ func (a *Publication) UpdateContent(ctx *gear.Context) error {
 	}
 
 	return ctx.OkSend(bll.SuccessResponse[*bll.PublicationOutput]{Result: output})
+}
+
+func (a *Publication) Collect(ctx *gear.Context) error {
+	input := &bll.CreateCollectionInput{}
+	if err := ctx.ParseBody(input); err != nil {
+		return err
+	}
+
+	if _, err := a.tryReadOne(ctx, input.GID, input.CID, input.Language, input.Version); err != nil {
+		return err
+	}
+
+	output, err := a.blls.Writing.CreateCollection(ctx, input)
+	if err != nil {
+		return gear.ErrInternalServerError.From(err)
+	}
+
+	sess := gear.CtxValue[middleware.Session](ctx)
+	if _, err = a.blls.Logbase.Log(ctx, bll.LogActionUserCollect, 1, sess.UserID, &bll.Payload{
+		GID:      input.GID,
+		CID:      input.CID,
+		Language: &input.Language,
+		Version:  &input.Version,
+	}); err != nil {
+		return gear.ErrInternalServerError.From(err)
+	}
+
+	return ctx.OkSend(bll.SuccessResponse[*bll.CollectionOutput]{Result: output})
 }
 
 func (a *Publication) checkReadPermission(ctx *gear.Context, gid util.ID) error {

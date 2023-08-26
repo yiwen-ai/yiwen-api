@@ -4,36 +4,11 @@ import (
 	"github.com/teambition/gear"
 
 	"github.com/yiwen-ai/yiwen-api/src/bll"
-	"github.com/yiwen-ai/yiwen-api/src/middleware"
 	"github.com/yiwen-ai/yiwen-api/src/util"
 )
 
 type Collection struct {
 	blls *bll.Blls
-}
-
-func (a *Collection) Create(ctx *gear.Context) error {
-	input := &bll.CreateCollectionInput{}
-	if err := ctx.ParseBody(input); err != nil {
-		return err
-	}
-
-	sess := gear.CtxValue[middleware.Session](ctx)
-	output, err := a.blls.Writing.CreateCollection(ctx, input)
-	if err != nil {
-		return gear.ErrInternalServerError.From(err)
-	}
-
-	if _, err = a.blls.Logbase.Log(ctx, bll.LogActionUserCollect, 1, sess.UserID, &bll.Payload{
-		GID:      input.GID,
-		CID:      input.CID,
-		Language: &input.Language,
-		Version:  &input.Version,
-	}); err != nil {
-		return gear.ErrInternalServerError.From(err)
-	}
-
-	return ctx.OkSend(bll.SuccessResponse[*bll.CollectionOutput]{Result: output})
 }
 
 func (a *Collection) Update(ctx *gear.Context) error {

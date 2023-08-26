@@ -142,7 +142,7 @@ func (i *QueryCollectionByCid) Validate() error {
 func (b *Writing) GetCollectionByCid(ctx context.Context, input *QueryCollectionByCid) (*SuccessResponse[CollectionOutputs], error) {
 	output := SuccessResponse[CollectionOutputs]{}
 	query := url.Values{}
-	query.Add("id", input.CID.String())
+	query.Add("cid", input.CID.String())
 	if input.Fields != "" {
 		query.Add("fields", input.Fields)
 	}

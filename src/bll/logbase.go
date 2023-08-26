@@ -151,14 +151,14 @@ type ListRecentlyLogsInput struct {
 	Fields  []string `json:"fields" cbor:"fields"`
 }
 
-func (b *Logbase) ListRecently(ctx context.Context, input *ListRecentlyLogsInput) ([]*LogOutput, error) {
+func (b *Logbase) ListRecently(ctx context.Context, input *ListRecentlyLogsInput) (*SuccessResponse[[]*LogOutput], error) {
 	output := SuccessResponse[[]*LogOutput]{}
 
 	if err := b.svc.Post(ctx, "/v1/log/list_recently", input, &output); err != nil {
 		return nil, err
 	}
 
-	return output.Result, nil
+	return &output, nil
 }
 
 type PublicationJob struct {

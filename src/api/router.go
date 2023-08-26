@@ -20,6 +20,7 @@ type APIs struct {
 	Creation    *Creation
 	Group       *Group
 	Jarvis      *Jarvis
+	Log         *Log
 	Publication *Publication
 	Scraping    *Scraping
 }
@@ -31,6 +32,7 @@ func newAPIs(blls *bll.Blls) *APIs {
 		Creation:    &Creation{blls},
 		Group:       &Group{blls},
 		Jarvis:      &Jarvis{blls},
+		Log:         &Log{blls},
 		Publication: &Publication{blls},
 		Scraping:    &Scraping{blls},
 	}
@@ -54,6 +56,7 @@ func newRouters(apis *APIs) []*gear.Router {
 	router.Get("/v1/group/info", middleware.AuthAllowAnon.Auth, apis.Group.GetInfo)
 	router.Get("/v1/group/statistic", middleware.AuthAllowAnon.Auth, apis.Group.GetStatistic)
 
+	// 需要 access_token
 	router.Get("/v1/search", middleware.AuthToken.Auth, apis.Jarvis.Search)
 	router.Get("/v1/search/in_group", middleware.AuthToken.Auth, apis.Jarvis.GroupSearch)
 	router.Get("/v1/search/by_original_url", middleware.AuthToken.Auth, apis.Jarvis.OriginalSearch)
@@ -91,8 +94,8 @@ func newRouters(apis *APIs) []*gear.Router {
 	router.Patch("/v1/publication/publish", middleware.AuthToken.Auth, apis.Publication.Publish)
 	router.Put("/v1/publication/update_content", middleware.AuthToken.Auth, apis.Publication.UpdateContent)
 	router.Post("/v1/publication/assist", middleware.AuthToken.Auth, todo) // 暂不实现
+	router.Post("/v1/publication/collect", middleware.AuthToken.Auth, apis.Publication.Collect)
 
-	router.Post("/v1/collection", middleware.AuthToken.Auth, apis.Collection.Create)
 	router.Patch("/v1/collection", middleware.AuthToken.Auth, apis.Collection.Update)
 	router.Delete("/v1/collection", middleware.AuthToken.Auth, apis.Collection.Delete)
 	router.Get("/v1/collection/by_cid", middleware.AuthToken.Auth, apis.Collection.GetByCid)
@@ -103,6 +106,8 @@ func newRouters(apis *APIs) []*gear.Router {
 	router.Post("/v1/group/list_my", middleware.AuthToken.Auth, apis.Group.ListMy)
 	router.Post("/v1/group/list_following", middleware.AuthToken.Auth, apis.Group.ListFollowing)
 	router.Post("/v1/group/list_subscribing", middleware.AuthToken.Auth, todo) // 暂不实现
+
+	router.Get("/v1/log/list_recently", middleware.AuthToken.Auth, apis.Log.ListRecently)
 
 	return []*gear.Router{router}
 }
