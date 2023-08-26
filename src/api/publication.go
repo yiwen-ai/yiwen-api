@@ -135,6 +135,7 @@ func (a *Publication) Create(ctx *gear.Context) error {
 			"to_gid":      payload.GID.String(),
 			"to_language": *payload.Language,
 			"elapsed":     time.Since(now) / 1e6,
+			"tokens":      auditLog.Tokens,
 		}
 
 		if err != nil {

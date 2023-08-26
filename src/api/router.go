@@ -16,6 +16,7 @@ func init() {
 // APIs ..
 type APIs struct {
 	Healthz     *Healthz
+	Collection  *Collection
 	Creation    *Creation
 	Group       *Group
 	Jarvis      *Jarvis
@@ -26,6 +27,7 @@ type APIs struct {
 func newAPIs(blls *bll.Blls) *APIs {
 	return &APIs{
 		Healthz:     &Healthz{blls},
+		Collection:  &Collection{blls},
 		Creation:    &Creation{blls},
 		Group:       &Group{blls},
 		Jarvis:      &Jarvis{blls},
@@ -89,6 +91,12 @@ func newRouters(apis *APIs) []*gear.Router {
 	router.Patch("/v1/publication/publish", middleware.AuthToken.Auth, apis.Publication.Publish)
 	router.Put("/v1/publication/update_content", middleware.AuthToken.Auth, apis.Publication.UpdateContent)
 	router.Post("/v1/publication/assist", middleware.AuthToken.Auth, todo) // 暂不实现
+
+	router.Post("/v1/collection", middleware.AuthToken.Auth, apis.Collection.Create)
+	router.Patch("/v1/collection", middleware.AuthToken.Auth, apis.Collection.Update)
+	router.Delete("/v1/collection", middleware.AuthToken.Auth, apis.Collection.Delete)
+	router.Get("/v1/collection/by_cid", middleware.AuthToken.Auth, apis.Collection.GetByCid)
+	router.Post("/v1/collection/list", middleware.AuthToken.Auth, apis.Collection.List)
 
 	router.Patch("/v1/group/follow", middleware.AuthToken.Auth, apis.Group.Follow)
 	router.Patch("/v1/group/unfollow", middleware.AuthToken.Auth, apis.Group.UnFollow)

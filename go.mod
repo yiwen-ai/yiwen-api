@@ -1,15 +1,16 @@
 module github.com/yiwen-ai/yiwen-api
 
-go 1.20
+go 1.21
 
 require (
 	github.com/BurntSushi/toml v1.3.2
-	github.com/aliyun/aliyun-oss-go-sdk v2.2.8+incompatible
+	github.com/aliyun/aliyun-oss-go-sdk v2.2.9+incompatible
 	github.com/bsm/redislock v0.9.4
 	github.com/fxamacker/cbor/v2 v2.5.0
 	github.com/gabriel-vasile/mimetype v1.4.2
 	github.com/go-playground/validator/v10 v10.15.1
-	github.com/google/uuid v1.3.0
+	github.com/google/uuid v1.3.1
+	github.com/jaevor/go-nanoid v1.3.0
 	github.com/klauspost/compress v1.16.7
 	github.com/redis/go-redis/v9 v9.1.0
 	github.com/rs/xid v1.5.0
@@ -28,7 +29,6 @@ require (
 	github.com/go-http-utils/negotiator v1.0.0 // indirect
 	github.com/go-playground/locales v0.14.1 // indirect
 	github.com/go-playground/universal-translator v0.18.1 // indirect
-	github.com/jaevor/go-nanoid v1.3.0 // indirect
 	github.com/leodido/go-urn v1.2.4 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/teambition/trie-mux v1.5.2 // indirect

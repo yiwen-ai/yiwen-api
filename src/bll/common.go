@@ -73,6 +73,7 @@ type GroupInfo struct {
 type Pagination struct {
 	PageToken *util.Bytes `json:"page_token,omitempty" cbor:"page_token,omitempty"`
 	PageSize  *uint16     `json:"page_size,omitempty" cbor:"page_size,omitempty" validate:"omitempty,gte=5,lte=100"`
+	Status    *int8       `json:"status,omitempty" cbor:"status,omitempty"`
 	Fields    *[]string   `json:"fields,omitempty" cbor:"fields,omitempty"`
 }
 
