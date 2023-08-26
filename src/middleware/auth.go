@@ -43,6 +43,10 @@ const (
 
 func (m AuthLevel) Auth(ctx *gear.Context) error {
 	l := uint8(m)
+	if c, _ := ctx.Req.Cookie("lang"); c != nil && len(c.Value) == 3 {
+		ctx.Req.Header.Set("x-language", c.Value)
+	}
+
 	sess, err := extractAuth(ctx)
 	log := logging.FromCtx(ctx)
 	if err != nil {
@@ -58,6 +62,7 @@ func (m AuthLevel) Auth(ctx *gear.Context) error {
 				"x-real-ip",
 				"x-request-id",
 				"x-auth-user",
+				"x-language",
 			)
 
 			cctx := gear.CtxWith[Session](ctx.Context(), sess)
@@ -83,6 +88,7 @@ func (m AuthLevel) Auth(ctx *gear.Context) error {
 		"x-auth-user",
 		"x-auth-user-rating",
 		"x-auth-app",
+		"x-language",
 	)
 
 	cctx := gear.CtxWith[Session](ctx.Context(), sess)

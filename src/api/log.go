@@ -14,7 +14,9 @@ type Log struct {
 func (a *Log) ListRecently(ctx *gear.Context) error {
 	sess := gear.CtxValue[middleware.Session](ctx)
 	output, err := a.blls.Logbase.ListRecently(ctx, &bll.ListRecentlyLogsInput{
-		UID: sess.UserID,
+		UID:     sess.UserID,
+		Actions: []string{},
+		Fields:  []string{},
 	})
 	if err != nil {
 		return gear.ErrInternalServerError.From(err)
