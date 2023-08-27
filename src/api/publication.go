@@ -271,7 +271,7 @@ func (a *Publication) GetByJob(ctx *gear.Context) error {
 		return gear.ErrBadRequest.WithMsgf("invalid job payload: %v", p)
 	}
 
-	if err := a.checkReadPermission(ctx, p.GID); err != nil {
+	if _, err := a.checkReadPermission(ctx, p.GID); err != nil {
 		return err
 	}
 
@@ -390,7 +390,7 @@ func (a *Publication) List(ctx *gear.Context) error {
 		return err
 	}
 
-	if err := a.checkReadPermission(ctx, input.GID); err != nil {
+	if _, err := a.checkReadPermission(ctx, input.GID); err != nil {
 		return err
 	}
 
@@ -457,7 +457,7 @@ func (a *Publication) ListArchived(ctx *gear.Context) error {
 		return err
 	}
 
-	if err := a.checkReadPermission(ctx, input.GID); err != nil {
+	if _, err := a.checkReadPermission(ctx, input.GID); err != nil {
 		return err
 	}
 
@@ -504,12 +504,18 @@ func (a *Publication) GetPublishList(ctx *gear.Context) error {
 	if err := ctx.ParseURL(input); err != nil {
 		return err
 	}
+	role, _ := a.checkReadPermission(ctx, input.GID)
+	status := int8(2)
 
-	if err := a.checkReadPermission(ctx, input.GID); err != nil {
+	if role >= 0 {
+		status = 0
+	} else if role == -1 {
+		status = 1
+	} else {
 		input.GID = util.ANON
 	}
 
-	output, err := a.blls.Writing.GetPublicationList(ctx, input)
+	output, err := a.blls.Writing.GetPublicationList(ctx, status, input)
 	if err != nil {
 		return gear.ErrInternalServerError.From(err)
 	}
@@ -701,17 +707,17 @@ func (a *Publication) Collect(ctx *gear.Context) error {
 	return ctx.OkSend(bll.SuccessResponse[*bll.CollectionOutput]{Result: output})
 }
 
-func (a *Publication) checkReadPermission(ctx *gear.Context, gid util.ID) error {
+func (a *Publication) checkReadPermission(ctx *gear.Context, gid util.ID) (int8, error) {
 	sess := gear.CtxValue[middleware.Session](ctx)
 	role, err := a.blls.Userbase.UserGroupRole(ctx, sess.UserID, gid)
 	if err != nil {
-		return gear.ErrInternalServerError.From(err)
+		return -2, gear.ErrInternalServerError.From(err)
 	}
 	if role < -1 {
-		return gear.ErrForbidden.WithMsg("no permission")
+		return role, gear.ErrForbidden.WithMsg("no permission")
 	}
 
-	return nil
+	return role, nil
 }
 
 func (a *Publication) checkCreatePermission(ctx *gear.Context, gid util.ID) error {

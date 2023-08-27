@@ -358,11 +358,12 @@ func (i *QueryAPublication) Validate() error {
 	return nil
 }
 
-func (b *Writing) GetPublicationList(ctx context.Context, input *QueryAPublication) (*SuccessResponse[PublicationOutputs], error) {
+func (b *Writing) GetPublicationList(ctx context.Context, from_status int8, input *QueryAPublication) (*SuccessResponse[PublicationOutputs], error) {
 	output := SuccessResponse[PublicationOutputs]{}
 	query := url.Values{}
 	query.Add("gid", input.GID.String())
 	query.Add("cid", input.CID.String())
+	query.Add("status", strconv.Itoa(int(from_status)))
 	if err := b.svc.Get(ctx, "/v1/publication/publish?"+query.Encode(), &output); err != nil {
 		return nil, err
 	}
