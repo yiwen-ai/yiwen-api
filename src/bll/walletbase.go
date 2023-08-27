@@ -28,8 +28,8 @@ func Pricing(model string) float64 {
 	return pricing[model]
 }
 
-func CostWEN(model string, tokens uint32) int64 {
-	f := pricing[model] * float64(tokens) / 1000
+func CostWEN(price float64, tokens uint32) int64 {
+	f := price * float64(tokens) / 1000
 	c := int64(f)
 	if f > float64(c) {
 		c += 1
@@ -106,7 +106,7 @@ func (b *Walletbase) Expend(ctx context.Context, uid util.ID, input *ExpendPaylo
 
 	ex := ExpendInput{
 		UID:         uid,
-		Amount:      CostWEN(input.Model, input.Tokens),
+		Amount:      CostWEN(input.Price, input.Tokens),
 		Description: "Create Publication",
 		Payload:     data,
 	}

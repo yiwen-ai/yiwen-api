@@ -144,6 +144,7 @@ func (a *Publication) Create(ctx *gear.Context) error {
 				CID:      src.CID,
 				Language: *input.ToLanguage,
 				Version:  src.Version,
+				Model:    input.Model,
 				Price:    bll.Pricing(input.Model),
 				Tokens:   teOutput.Tokens,
 			}
