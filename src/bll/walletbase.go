@@ -121,7 +121,7 @@ func (b *Walletbase) Expend(ctx context.Context, uid util.ID, input *ExpendPaylo
 
 type TransactionPK struct {
 	UID util.ID `json:"uid" cbor:"uid" query:"uid" validate:"required"`
-	ID  util.ID `json:"id" cbor:"uid" query:"id" validate:"required"`
+	ID  util.ID `json:"id" cbor:"id" query:"id" validate:"required"`
 }
 
 type TransactionOutput struct {
