@@ -43,8 +43,17 @@ const (
 
 func (m AuthLevel) Auth(ctx *gear.Context) error {
 	l := uint8(m)
-	if c, _ := ctx.Req.Cookie("lang"); c != nil && len(c.Value) == 3 {
-		ctx.Req.Header.Set("x-language", c.Value)
+
+	// extract language from cookie or accept-language
+	if ctx.Req.Header.Get("x-language") == "" {
+		if c, _ := ctx.Req.Cookie("lang"); c != nil {
+			ctx.Req.Header.Set("x-language", c.Value)
+		} else if locale := ctx.AcceptLanguage(); locale != "" {
+			if i := strings.IndexAny(locale, "-_"); i > 0 {
+				locale = locale[:i]
+			}
+			ctx.Req.Header.Set("x-language", locale)
+		}
 	}
 
 	sess, err := extractAuth(ctx)

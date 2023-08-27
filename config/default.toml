@@ -21,6 +21,7 @@ jarvis = "http://127.0.0.1:8080"
 logbase = "http://127.0.0.1:8080"
 taskbase = "http://127.0.0.1:8080"
 webscraper = "http://127.0.0.1:8080"
+walletbase = "http://127.0.0.1:8080"
 
 [oss]
 bucket = "yiwenai"

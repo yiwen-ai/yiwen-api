@@ -26,7 +26,13 @@ func (a *Publication) Create(ctx *gear.Context) error {
 	if err := ctx.ParseBody(input); err != nil {
 		return err
 	}
-	input.Model = bll.DefaultModel
+	if input.Model == "" {
+		input.Model = bll.DefaultModel
+	}
+
+	if !bll.SupportModel(input.Model) {
+		return gear.ErrBadRequest.WithMsg("invalid model %q", input.Model)
+	}
 
 	if input.ToGID == nil {
 		return gear.ErrBadRequest.WithMsg("to_gid is required")
@@ -36,6 +42,10 @@ func (a *Publication) Create(ctx *gear.Context) error {
 		return gear.ErrBadRequest.WithMsg("to_language is required")
 	}
 
+	if *input.ToLanguage == input.Language {
+		return gear.ErrBadRequest.WithMsg("to_language is same as language")
+	}
+
 	if err := a.checkCreatePermission(ctx, *input.ToGID); err != nil {
 		return gear.ErrForbidden.From(err)
 	}
@@ -43,6 +53,26 @@ func (a *Publication) Create(ctx *gear.Context) error {
 	_, err := a.tryReadOne(ctx, input.GID, input.CID, input.Language, input.Version)
 	if err != nil {
 		return gear.ErrForbidden.From(err)
+	}
+
+	sess := gear.CtxValue[middleware.Session](ctx)
+	wallet, err := a.blls.Walletbase.Get(ctx, sess.UserID)
+	if err != nil {
+		return gear.ErrInternalServerError.From(err)
+	}
+	if b := wallet.Balance(); float64(b) < bll.Pricing(input.Model) {
+		return gear.ErrPaymentRequired.WithMsgf("insufficient balance %d", b)
+	}
+
+	_, err = a.blls.Writing.GetPublication(ctx, &bll.QueryPublication{
+		GID:      input.GID,
+		CID:      input.CID,
+		Language: *input.ToLanguage,
+		Version:  input.Version,
+		Fields:   "status,creator,updated_at",
+	})
+	if err == nil {
+		return gear.ErrConflict.WithMsg("%s publication already exists", *input.ToLanguage)
 	}
 
 	src, err := a.blls.Writing.GetPublication(ctx, &bll.QueryPublication{
@@ -73,9 +103,6 @@ func (a *Publication) Create(ctx *gear.Context) error {
 		return gear.ErrLocked.From(err)
 	}
 
-	model := input.Model
-	sess := gear.CtxValue[middleware.Session](gctx)
-
 	payload := &bll.Payload{
 		GID:      *input.ToGID,
 		CID:      src.CID,
@@ -104,7 +131,7 @@ func (a *Publication) Create(ctx *gear.Context) error {
 			CID:      src.CID,
 			Language: *input.ToLanguage,
 			Version:  src.Version,
-			Model:    util.Ptr(model),
+			Model:    util.Ptr(input.Model),
 			Content:  util.Ptr(util.Bytes(teData)),
 		})
 
@@ -112,15 +139,40 @@ func (a *Publication) Create(ctx *gear.Context) error {
 		if err == nil {
 			auditLog.Tokens = util.Ptr(teOutput.Tokens)
 
-			draft, err = src.IntoPublicationDraft(payload.GID, *payload.Language, model, teOutput.Content)
+			exp := bll.ExpendPayload{
+				GID:      *input.ToGID,
+				CID:      src.CID,
+				Language: *input.ToLanguage,
+				Version:  src.Version,
+				Price:    bll.Pricing(input.Model),
+				Tokens:   teOutput.Tokens,
+			}
+
+			wallet, err = a.blls.Walletbase.Expend(gctx, sess.UserID, &exp)
 			if err == nil {
-				_, err = a.blls.Writing.CreatePublication(gctx, &bll.CreatePublication{
-					GID:      src.GID,
-					CID:      src.CID,
-					Language: src.Language,
-					Version:  src.Version,
-					Draft:    draft,
-				})
+				txn := &bll.TransactionPK{
+					UID: sess.UserID,
+					ID:  wallet.Txn,
+				}
+
+				draft, err = src.IntoPublicationDraft(payload.GID, *payload.Language, input.Model, teOutput.Content)
+				if err == nil {
+					_, err = a.blls.Writing.CreatePublication(gctx, &bll.CreatePublication{
+						GID:      src.GID,
+						CID:      src.CID,
+						Language: src.Language,
+						Version:  src.Version,
+						Draft:    draft,
+					})
+
+					if err == nil {
+						err = a.blls.Walletbase.CommitExpending(gctx, txn)
+					}
+				}
+
+				if err != nil {
+					_ = a.blls.Walletbase.CancelExpending(gctx, txn)
+				}
 			}
 		}
 

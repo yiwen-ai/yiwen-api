@@ -21,6 +21,7 @@ type Blls struct {
 	Logbase    *Logbase
 	Taskbase   *Taskbase
 	Userbase   *Userbase
+	Walletbase *Walletbase
 	Webscraper *Webscraper
 	Writing    *Writing
 }
@@ -34,6 +35,7 @@ func NewBlls(oss *service.OSS, locker *service.Locker) *Blls {
 		Logbase:    &Logbase{svc: service.APIHost(cfg.Logbase)},
 		Taskbase:   &Taskbase{svc: service.APIHost(cfg.Taskbase)},
 		Userbase:   &Userbase{svc: service.APIHost(cfg.Userbase)},
+		Walletbase: &Walletbase{svc: service.APIHost(cfg.Walletbase)},
 		Webscraper: &Webscraper{svc: service.APIHost(cfg.Webscraper)},
 		Writing:    &Writing{svc: service.APIHost(cfg.Writing), oss: oss},
 	}

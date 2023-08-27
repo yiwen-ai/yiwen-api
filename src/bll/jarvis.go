@@ -10,8 +10,6 @@ import (
 	"github.com/yiwen-ai/yiwen-api/src/util"
 )
 
-const DefaultModel = "gpt3.5"
-
 type Jarvis struct {
 	svc service.APIHost
 }
