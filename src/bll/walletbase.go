@@ -62,13 +62,6 @@ type ExpendPayload struct {
 	Tokens   uint32  `json:"tokens" cbor:"tokens"`
 }
 
-type ExpendLogPayload struct {
-	Payer    util.ID  `json:"payer" cbor:"payer"`
-	Payee    *util.ID `json:"payee,omitempty" cbor:"payee,omitempty"`
-	SubPayee *util.ID `json:"sub_payee,omitempty" cbor:"sub_payee,omitempty"`
-	Amount   int64    `json:"amount" cbor:"amount"`
-}
-
 type WalletOutput struct {
 	Sequence uint64  `json:"sequence" cbor:"sequence"`
 	Award    int64   `json:"award" cbor:"award"`

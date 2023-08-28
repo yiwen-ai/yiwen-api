@@ -103,15 +103,6 @@ func (i *GIDPagination) Validate() error {
 	return nil
 }
 
-type Payload struct {
-	GID      util.ID `json:"gid" cbor:"gid"`
-	CID      util.ID `json:"cid" cbor:"cid"`
-	Version  *uint16 `json:"version,omitempty" cbor:"version,omitempty"`
-	Language *string `json:"language,omitempty" cbor:"language,omitempty"`
-	Status   *int8   `json:"status,omitempty" cbor:"status,omitempty"`
-	Rating   *int8   `json:"rating,omitempty" cbor:"rating,omitempty"`
-}
-
 type QueryIdCn struct {
 	ID     *util.ID `json:"id,omitempty" cbor:"id,omitempty" query:"id"`
 	CN     *string  `json:"cn,omitempty" cbor:"cn,omitempty" query:"cn"`

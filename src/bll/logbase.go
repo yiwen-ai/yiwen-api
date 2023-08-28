@@ -96,6 +96,15 @@ type CreateLogInput struct {
 	Tokens  uint32     `json:"tokens" cbor:"tokens"`
 }
 
+type LogPayload struct {
+	GID      util.ID `json:"gid" cbor:"gid"`
+	CID      util.ID `json:"cid" cbor:"cid"`
+	Version  *uint16 `json:"version,omitempty" cbor:"version,omitempty"`
+	Language *string `json:"language,omitempty" cbor:"language,omitempty"`
+	Status   *int8   `json:"status,omitempty" cbor:"status,omitempty"`
+	Rating   *int8   `json:"rating,omitempty" cbor:"rating,omitempty"`
+}
+
 func (b *Logbase) Log(ctx *gear.Context, action string, status int8, gid util.ID, payload any) (*LogOutput, error) {
 	sess := gear.CtxValue[middleware.Session](ctx)
 	if sess == nil {
@@ -103,11 +112,12 @@ func (b *Logbase) Log(ctx *gear.Context, action string, status int8, gid util.ID
 	}
 
 	input := CreateLogInput{
-		UID:    sess.UserID,
-		GID:    gid,
-		Action: action,
-		Status: status,
-		IP:     ctx.IP().String(),
+		UID:     sess.UserID,
+		GID:     gid,
+		Action:  action,
+		Status:  status,
+		Payload: util.Bytes{0xa0}, // {}
+		IP:      ctx.IP().String(),
 	}
 
 	if payload != nil {

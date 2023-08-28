@@ -71,6 +71,9 @@ func (a *Group) GetInfo(ctx *gear.Context) error {
 	if err != nil {
 		return gear.ErrInternalServerError.From(err)
 	}
+	if res.MyRole == nil {
+		res.MyRole = util.Ptr(int8(-2))
+	}
 
 	return ctx.OkSend(bll.SuccessResponse[*bll.GroupInfo]{Result: res})
 }

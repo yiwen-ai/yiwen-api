@@ -103,7 +103,7 @@ func (a *Publication) Create(ctx *gear.Context) error {
 		return gear.ErrLocked.From(err)
 	}
 
-	payload := &bll.Payload{
+	payload := &bll.LogPayload{
 		GID:      *input.ToGID,
 		CID:      src.CID,
 		Language: input.ToLanguage,
@@ -264,7 +264,7 @@ func (a *Publication) GetByJob(ctx *gear.Context) error {
 		return gear.ErrInternalServerError.WithMsgf("job %s error: %s", log.Action, *log.Error)
 	}
 
-	p, err := util.Unmarshal[bll.Payload](log.Payload)
+	p, err := util.Unmarshal[bll.LogPayload](log.Payload)
 	if err != nil {
 		return gear.ErrBadRequest.WithMsgf("invalid job: %v", err)
 	}
@@ -339,7 +339,7 @@ func (a *Publication) Update(ctx *gear.Context) error {
 		return gear.ErrInternalServerError.From(err)
 	}
 
-	if _, err = a.blls.Logbase.Log(ctx, bll.LogActionPublicationUpdate, 1, input.GID, &bll.Payload{
+	if _, err = a.blls.Logbase.Log(ctx, bll.LogActionPublicationUpdate, 1, input.GID, &bll.LogPayload{
 		GID:      input.GID,
 		CID:      input.CID,
 		Language: &input.Language,
@@ -372,7 +372,7 @@ func (a *Publication) Delete(ctx *gear.Context) error {
 		return gear.ErrInternalServerError.From(err)
 	}
 
-	if _, err = a.blls.Logbase.Log(ctx, bll.LogActionPublicationDelete, 1, input.GID, &bll.Payload{
+	if _, err = a.blls.Logbase.Log(ctx, bll.LogActionPublicationDelete, 1, input.GID, &bll.LogPayload{
 		GID:      input.GID,
 		CID:      input.CID,
 		Language: &input.Language,
@@ -545,7 +545,7 @@ func (a *Publication) Archive(ctx *gear.Context) error {
 		return gear.ErrInternalServerError.From(err)
 	}
 
-	if _, err = a.blls.Logbase.Log(ctx, bll.LogActionPublicationUpdate, 1, input.GID, &bll.Payload{
+	if _, err = a.blls.Logbase.Log(ctx, bll.LogActionPublicationUpdate, 1, input.GID, &bll.LogPayload{
 		GID:      input.GID,
 		CID:      input.CID,
 		Language: &input.Language,
@@ -579,7 +579,7 @@ func (a *Publication) Redraft(ctx *gear.Context) error {
 		return gear.ErrInternalServerError.From(err)
 	}
 
-	if _, err = a.blls.Logbase.Log(ctx, bll.LogActionPublicationUpdate, 1, input.GID, &bll.Payload{
+	if _, err = a.blls.Logbase.Log(ctx, bll.LogActionPublicationUpdate, 1, input.GID, &bll.LogPayload{
 		GID:      input.GID,
 		CID:      input.CID,
 		Language: &input.Language,
@@ -621,7 +621,7 @@ func (a *Publication) Publish(ctx *gear.Context) error {
 		Version:  input.Version,
 	})
 
-	if _, err = a.blls.Logbase.Log(ctx, bll.LogActionPublicationPublish, 1, input.GID, &bll.Payload{
+	if _, err = a.blls.Logbase.Log(ctx, bll.LogActionPublicationPublish, 1, input.GID, &bll.LogPayload{
 		GID:      input.GID,
 		CID:      input.CID,
 		Language: &input.Language,
@@ -667,7 +667,7 @@ func (a *Publication) UpdateContent(ctx *gear.Context) error {
 		return gear.ErrInternalServerError.From(err)
 	}
 
-	if _, err = a.blls.Logbase.Log(ctx, bll.LogActionPublicationUpdateContent, 1, input.GID, &bll.Payload{
+	if _, err = a.blls.Logbase.Log(ctx, bll.LogActionPublicationUpdateContent, 1, input.GID, &bll.LogPayload{
 		GID:      input.GID,
 		CID:      input.CID,
 		Language: &input.Language,
@@ -696,7 +696,7 @@ func (a *Publication) Collect(ctx *gear.Context) error {
 	}
 
 	sess := gear.CtxValue[middleware.Session](ctx)
-	if _, err = a.blls.Logbase.Log(ctx, bll.LogActionUserCollect, 1, sess.UserID, &bll.Payload{
+	if _, err = a.blls.Logbase.Log(ctx, bll.LogActionUserCollect, 1, sess.UserID, &bll.LogPayload{
 		GID:      input.GID,
 		CID:      input.CID,
 		Language: &input.Language,
