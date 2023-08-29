@@ -1,6 +1,7 @@
 package api
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
@@ -21,18 +22,85 @@ type Publication struct {
 	blls *bll.Blls
 }
 
+type EstimateOutput struct {
+	Balance int64                `json:"balance" cbor:"balance"`
+	Tokens  uint32               `json:"tokens" cbor:"tokens"`
+	Models  map[string]ModelCost `json:"models" cbor:"models"`
+}
+
+type ModelCost struct {
+	ID    string  `json:"id" cbor:"id"`
+	Name  string  `json:"name" cbor:"name"`
+	Price float64 `json:"price" cbor:"price"`
+	Cost  int64   `json:"cost" cbor:"cost"`
+}
+
+func (a *Publication) Estimate(ctx *gear.Context) error {
+	input := &bll.CreatePublicationInput{}
+	if err := ctx.ParseBody(input); err != nil {
+		return err
+	}
+
+	_, err := a.tryReadOne(ctx, input.GID, input.CID, input.Language, input.Version)
+	if err != nil {
+		return gear.ErrForbidden.From(err)
+	}
+
+	sess := gear.CtxValue[middleware.Session](ctx)
+	wallet, err := a.blls.Walletbase.Get(ctx, sess.UserID)
+	if err != nil {
+		return gear.ErrInternalServerError.From(err)
+	}
+
+	src, err := a.blls.Writing.GetPublication(ctx, &bll.QueryPublication{
+		GID:      input.GID,
+		CID:      input.CID,
+		Language: input.Language,
+		Version:  input.Version,
+		Fields:   "",
+	})
+
+	if err != nil {
+		return gear.ErrInternalServerError.From(err)
+	}
+
+	teContents, err := src.ToTEContents()
+	if err != nil {
+		return gear.ErrInternalServerError.From(err)
+	}
+
+	teTokens, _ := json.Marshal(teContents)
+	if err != nil {
+		return gear.ErrInternalServerError.From(err)
+	}
+
+	tokens := a.blls.Tiktokens(string(teTokens))
+	output := &EstimateOutput{
+		Balance: wallet.Balance(),
+		Tokens:  tokens,
+		Models:  make(map[string]ModelCost, len(bll.AIModels)),
+	}
+
+	for _, md := range bll.AIModels {
+		output.Models[md.ID] = ModelCost{
+			ID:    md.ID,
+			Name:  md.Name,
+			Price: md.Price,
+			Cost:  int64(md.CostWEN(tokens) * 2),
+		}
+	}
+
+	return ctx.OkSend(bll.SuccessResponse[*EstimateOutput]{Result: output})
+}
+
 func (a *Publication) Create(ctx *gear.Context) error {
 	input := &bll.CreatePublicationInput{}
 	if err := ctx.ParseBody(input); err != nil {
 		return err
 	}
-	if input.Model == "" {
-		input.Model = bll.DefaultModel
-	}
 
-	if !bll.SupportModel(input.Model) {
-		return gear.ErrBadRequest.WithMsg("invalid model %q", input.Model)
-	}
+	model := bll.GetAIModel(input.Model)
+	input.Model = model.ID
 
 	if input.ToGID == nil {
 		return gear.ErrBadRequest.WithMsg("to_gid is required")
@@ -60,8 +128,9 @@ func (a *Publication) Create(ctx *gear.Context) error {
 	if err != nil {
 		return gear.ErrInternalServerError.From(err)
 	}
-	if b := wallet.Balance(); float64(b) < bll.Pricing(input.Model) {
-		return gear.ErrPaymentRequired.WithMsgf("insufficient balance %d", b)
+
+	if wallet.Balance() < 1 {
+		return gear.ErrPaymentRequired.WithMsgf("insufficient balance")
 	}
 
 	_, err = a.blls.Writing.GetPublication(ctx, &bll.QueryPublication{
@@ -94,6 +163,16 @@ func (a *Publication) Create(ctx *gear.Context) error {
 	teData, err := cbor.Marshal(teContents)
 	if err != nil {
 		return gear.ErrInternalServerError.From(err)
+	}
+	teTokens, _ := json.Marshal(teContents)
+	if err != nil {
+		return gear.ErrInternalServerError.From(err)
+	}
+
+	tokens := a.blls.Tiktokens(string(teTokens))
+	cost := int64(float64(model.CostWEN(tokens)) * 1.8)
+	if b := wallet.Balance(); b < cost {
+		return gear.ErrPaymentRequired.WithMsgf("insufficient balance, expected %d, got %d", cost, b)
 	}
 
 	gctx := middleware.WithGlobalCtx(ctx)
@@ -144,8 +223,8 @@ func (a *Publication) Create(ctx *gear.Context) error {
 				CID:      src.CID,
 				Language: *input.ToLanguage,
 				Version:  src.Version,
-				Model:    input.Model,
-				Price:    bll.Pricing(input.Model),
+				Model:    model.ID,
+				Price:    model.Price,
 				Tokens:   teOutput.Tokens,
 			}
 

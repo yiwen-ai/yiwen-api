@@ -25,6 +25,10 @@ func (a *Jarvis) ListLanguages(ctx *gear.Context) error {
 	return ctx.OkSend(bll.SuccessResponse[[][]string]{Result: output})
 }
 
+func (a *Jarvis) ListModels(ctx *gear.Context) error {
+	return ctx.OkSend(bll.SuccessResponse[[]bll.AIModel]{Result: bll.AIModels})
+}
+
 func (a *Jarvis) Search(ctx *gear.Context) error {
 	input := &bll.SearchInput{}
 	if err := ctx.ParseURL(input); err != nil {

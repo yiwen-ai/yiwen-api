@@ -49,6 +49,7 @@ func newRouters(apis *APIs) []*gear.Router {
 
 	// 允许匿名访问
 	router.Get("/languages", middleware.AuthAllowAnon.Auth, apis.Jarvis.ListLanguages)
+	router.Get("/models", middleware.AuthAllowAnon.Auth, apis.Jarvis.ListModels)
 	router.Get("/search", middleware.AuthAllowAnon.Auth, apis.Jarvis.Search)
 	router.Get("/v1/publication", middleware.AuthAllowAnon.Auth, apis.Publication.Get)
 	router.Get("/v1/publication/publish", middleware.AuthAllowAnon.Auth, apis.Publication.GetPublishList)
@@ -81,6 +82,7 @@ func newRouters(apis *APIs) []*gear.Router {
 	router.Post("/v1/creation/assist", middleware.AuthToken.Auth, todo)          // 暂不实现
 
 	router.Post("/v1/publication", middleware.AuthToken.Auth, apis.Publication.Create)
+	router.Post("/v1/publication/estimate", middleware.AuthToken.Auth, apis.Publication.Estimate)
 	router.Patch("/v1/publication", middleware.AuthToken.Auth, apis.Publication.Update)
 	router.Delete("/v1/publication", middleware.AuthToken.Auth, apis.Publication.Delete)
 

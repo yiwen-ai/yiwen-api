@@ -3,33 +3,40 @@ package bll
 import (
 	"context"
 	"math"
+	"strings"
 
 	"github.com/fxamacker/cbor/v2"
 	"github.com/yiwen-ai/yiwen-api/src/service"
 	"github.com/yiwen-ai/yiwen-api/src/util"
 )
 
-const DefaultModel = "gpt3.5"
-
-// https://openai.com/pricing
-var pricing = map[string]float64{
+var AIModels = []AIModel{
 	// 4K context,	i: $0.0015/1K tokens; o: $0.002/1K tokens; 0.157 WEN/1K tokens
-	DefaultModel: 1.0, // 1 wen/1K tokens
+	{ID: "gpt-3.5", Name: "GPT-3.5", Price: 1.0}, // 1 wen/1K tokens
 	// 8K context,	i: $0.03/1K tokens; o: $0.06/1K tokens; 4.7 WEN/1K tokens
-	"gpt4": 10.0, // 10 wen/1K tokens
+	{ID: "gpt-4", Name: "GPT-4", Price: 10.0}, // 10 wen/1K tokens
 }
 
-func SupportModel(model string) bool {
-	_, ok := pricing[model]
-	return ok
+var DefaultModel = AIModels[0]
+
+type AIModel struct {
+	ID    string  `json:"id" cbor:"id"`
+	Name  string  `json:"name" cbor:"name"`
+	Price float64 `json:"price" cbor:"price"`
 }
 
-func Pricing(model string) float64 {
-	return pricing[model]
+func GetAIModel(name string) AIModel {
+	for i := range AIModels {
+		if AIModels[i].ID == strings.ToLower(name) {
+			return AIModels[i]
+		}
+	}
+
+	return AIModels[0]
 }
 
-func CostWEN(price float64, tokens uint32) int64 {
-	f := price * float64(tokens) / 1000
+func (m *AIModel) CostWEN(tokens uint32) int64 {
+	f := m.Price * float64(tokens) / 1000
 	c := int64(f)
 	if f > float64(c) {
 		c += 1
@@ -96,10 +103,13 @@ func (b *Walletbase) Expend(ctx context.Context, uid util.ID, input *ExpendPaylo
 	if err != nil {
 		return nil, err
 	}
+	m := GetAIModel(input.Model)
+	input.Model = m.ID
+	input.Price = m.Price
 
 	ex := ExpendInput{
 		UID:         uid,
-		Amount:      CostWEN(input.Price, input.Tokens),
+		Amount:      m.CostWEN(input.Tokens),
 		Description: "Create Publication",
 		Payload:     data,
 	}

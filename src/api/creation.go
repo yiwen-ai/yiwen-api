@@ -277,8 +277,8 @@ func (a *Creation) Release(ctx *gear.Context) error {
 	if err := ctx.ParseBody(input); err != nil {
 		return err
 	}
-	input.Model = bll.DefaultModel
 
+	input.Model = bll.AIModels[0].ID
 	creation, err := a.checkWritePermission(ctx, input.GID, input.CID)
 	if err != nil {
 		return err

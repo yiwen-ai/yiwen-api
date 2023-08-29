@@ -9,19 +9,19 @@ import (
 func TestModel(t *testing.T) {
 	assert := assert.New(t)
 
-	assert.Equal(true, SupportModel(DefaultModel))
-	assert.Equal(true, SupportModel("gpt4"))
-	assert.Equal(false, SupportModel("davinci"))
+	g35 := GetAIModel("GPT-3.5")
+	g4 := GetAIModel("gpt-4")
 
-	assert.Equal(float64(1.0), Pricing(DefaultModel))
-	assert.Equal(float64(10.0), Pricing("gpt4"))
-	assert.Equal(float64(0), Pricing("davinci"))
+	assert.Equal(g35, GetAIModel("davinci"))
 
-	assert.Equal(int64(1), CostWEN(Pricing(DefaultModel), 100))
-	assert.Equal(int64(2), CostWEN(Pricing(DefaultModel), 1600))
-	assert.Equal(int64(3), CostWEN(Pricing(DefaultModel), 2100))
-	assert.Equal(int64(3), CostWEN(Pricing(DefaultModel), 2597))
-	assert.Equal(int64(1), CostWEN(Pricing("gpt4"), 100))
-	assert.Equal(int64(15), CostWEN(Pricing("gpt4"), 1500))
-	assert.Equal(int64(26), CostWEN(Pricing("gpt4"), 2597))
+	assert.Equal(float64(1.0), g35.Price)
+	assert.Equal(float64(10.0), g4.Price)
+
+	assert.Equal(int64(1), g35.CostWEN(100))
+	assert.Equal(int64(2), g35.CostWEN(1600))
+	assert.Equal(int64(3), g35.CostWEN(2100))
+	assert.Equal(int64(3), g35.CostWEN(2597))
+	assert.Equal(int64(1), g4.CostWEN(100))
+	assert.Equal(int64(15), g4.CostWEN(1500))
+	assert.Equal(int64(26), g4.CostWEN(2597))
 }

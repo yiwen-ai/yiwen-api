@@ -4,6 +4,7 @@
 package util
 
 import (
+	"encoding/hex"
 	"encoding/json"
 	"strconv"
 	"testing"
@@ -22,6 +23,21 @@ func TestID(t *testing.T) {
 		var id ID
 		assert.NoError(cbor.Unmarshal(data, &id))
 		assert.Equal(JARVIS, id)
+
+		obj := struct {
+			id *ID
+		}{}
+
+		data, err = cbor.Marshal(obj)
+		assert.NoError(err)
+		assert.Equal(`a0`, hex.EncodeToString(data))
+		assert.NoError(cbor.Unmarshal(data, &obj))
+
+		obj2 := struct {
+			id ID
+		}{}
+		assert.NoError(cbor.Unmarshal(data, &obj2))
+		assert.Equal(ID{}, obj2.id)
 	})
 
 	t.Run("JSON", func(t *testing.T) {

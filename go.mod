@@ -25,11 +25,13 @@ require (
 	github.com/cespare/xxhash/v2 v2.2.0 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/dgryski/go-rendezvous v0.0.0-20200823014737-9f7001d12a5f // indirect
+	github.com/dlclark/regexp2 v1.10.0 // indirect
 	github.com/go-http-utils/cookie v1.3.1 // indirect
 	github.com/go-http-utils/negotiator v1.0.0 // indirect
 	github.com/go-playground/locales v0.14.1 // indirect
 	github.com/go-playground/universal-translator v0.18.1 // indirect
 	github.com/leodido/go-urn v1.2.4 // indirect
+	github.com/pkoukk/tiktoken-go v0.1.5 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/teambition/trie-mux v1.5.2 // indirect
 	github.com/x448/float16 v0.8.4 // indirect
