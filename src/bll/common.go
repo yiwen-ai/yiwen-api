@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/pkoukk/tiktoken-go"
+	"github.com/pkoukk/tiktoken-go-loader"
 	"github.com/teambition/gear"
 
 	"github.com/yiwen-ai/yiwen-api/src/conf"
@@ -13,6 +14,7 @@ import (
 
 func init() {
 	util.DigProvide(NewBlls)
+	tiktoken.SetBpeLoader(tiktoken_loader.NewOfflineLoader())
 }
 
 // Blls ...

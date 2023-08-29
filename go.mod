@@ -12,6 +12,8 @@ require (
 	github.com/google/uuid v1.3.1
 	github.com/jaevor/go-nanoid v1.3.0
 	github.com/klauspost/compress v1.16.7
+	github.com/pkoukk/tiktoken-go v0.1.5
+	github.com/pkoukk/tiktoken-go-loader v0.0.1
 	github.com/redis/go-redis/v9 v9.1.0
 	github.com/rs/xid v1.5.0
 	github.com/saintfish/chardet v0.0.0-20230101081208-5e3ef4b5456d
@@ -31,7 +33,6 @@ require (
 	github.com/go-playground/locales v0.14.1 // indirect
 	github.com/go-playground/universal-translator v0.18.1 // indirect
 	github.com/leodido/go-urn v1.2.4 // indirect
-	github.com/pkoukk/tiktoken-go v0.1.5 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/teambition/trie-mux v1.5.2 // indirect
 	github.com/x448/float16 v0.8.4 // indirect
