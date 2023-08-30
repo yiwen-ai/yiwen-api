@@ -63,7 +63,7 @@ type SuccessResponse[T any] struct {
 	TotalSize     int        `json:"total_size,omitempty" cbor:"total_size,omitempty"`
 	NextPageToken util.Bytes `json:"next_page_token,omitempty" cbor:"next_page_token,omitempty"`
 	Job           string     `json:"job,omitempty" cbor:"job,omitempty"`
-	Progress      int8       `json:"progress,omitempty" cbor:"progress,omitempty"`
+	Progress      *int8      `json:"progress,omitempty" cbor:"progress,omitempty"`
 	Result        T          `json:"result" cbor:"result"`
 }
 

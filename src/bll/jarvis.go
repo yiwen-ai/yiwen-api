@@ -81,7 +81,7 @@ func (b *Jarvis) Summarize(ctx context.Context, input *TEInput) (*SummarizingOut
 	i := 0
 	for {
 		i += 1
-		if i > 200 {
+		if i > 400 {
 			return nil, errors.New("summarizing timeout")
 		}
 
@@ -140,7 +140,7 @@ func (b *Jarvis) Translate(ctx context.Context, input *TEInput) (*TranslatingOut
 	i := 0
 	for {
 		i += 1
-		if i > 200 {
+		if i > 400 {
 			return nil, errors.New("translating timeout")
 		}
 

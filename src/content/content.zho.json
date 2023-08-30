@@ -583,11 +583,11 @@
         },
         {
           "type": "text",
-          "text": "."
+          "text": ""
         },
         {
           "type": "text",
-          "text": "¶",
+          "text": "",
           "marks": [
             {
               "type": "link",
@@ -686,7 +686,7 @@
         },
         {
           "type": "text",
-          "text": "¶",
+          "text": "",
           "marks": [
             {
               "type": "link",

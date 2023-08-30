@@ -74,7 +74,7 @@ func (a *Publication) Estimate(ctx *gear.Context) error {
 		return gear.ErrInternalServerError.From(err)
 	}
 
-	tokens := a.blls.Tiktokens(string(teTokens))
+	tokens := a.blls.Tiktokens(string(teTokens)) * 2
 	output := &EstimateOutput{
 		Balance: wallet.Balance(),
 		Tokens:  tokens,
@@ -86,7 +86,7 @@ func (a *Publication) Estimate(ctx *gear.Context) error {
 			ID:    md.ID,
 			Name:  md.Name,
 			Price: md.Price,
-			Cost:  int64(float64(md.CostWEN(tokens)) * 2.5),
+			Cost:  md.CostWEN(tokens),
 		}
 	}
 
@@ -169,10 +169,10 @@ func (a *Publication) Create(ctx *gear.Context) error {
 		return gear.ErrInternalServerError.From(err)
 	}
 
-	tokens := a.blls.Tiktokens(string(teTokens))
-	cost := int64(float64(model.CostWEN(tokens)) * 1.8)
-	if b := wallet.Balance(); b < cost {
-		return gear.ErrPaymentRequired.WithMsgf("insufficient balance, expected %d, got %d", cost, b)
+	estimate_tokens := uint32(float64(a.blls.Tiktokens(string(teTokens))) * 1.5)
+	estimate_cost := model.CostWEN(estimate_tokens)
+	if b := wallet.Balance(); b < estimate_cost {
+		return gear.ErrPaymentRequired.WithMsgf("insufficient balance, expected %d, got %d", estimate_cost, b)
 	}
 
 	gctx := middleware.WithGlobalCtx(ctx)
@@ -382,7 +382,7 @@ func (a *Publication) GetByJob(ctx *gear.Context) error {
 	if progress < 100 {
 		return ctx.Send(http.StatusAccepted, bll.SuccessResponse[*bll.PublicationOutput]{
 			Job:      input.ID.String(),
-			Progress: progress,
+			Progress: util.Ptr(progress),
 			Result:   nil,
 		})
 	}
@@ -398,7 +398,7 @@ func (a *Publication) GetByJob(ctx *gear.Context) error {
 		if errors.Is(err, util.ErrNotFound) {
 			return ctx.Send(http.StatusAccepted, bll.SuccessResponse[*bll.PublicationOutput]{
 				Job:      input.ID.String(),
-				Progress: 99,
+				Progress: util.Ptr(int8(99)),
 				Result:   nil,
 			})
 		}

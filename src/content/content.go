@@ -91,6 +91,8 @@ func (d *DocumentNode) setTexts(m map[string][]string) {
 				texts = texts[1:]
 			} else if utf8.RuneCount([]byte(*n.Text)) > 1 {
 				n.Text = util.Ptr(" ")
+			} else {
+				n.Text = util.Ptr("")
 			}
 		} else {
 			n.setTexts(m)
