@@ -289,7 +289,7 @@ func (a *Creation) Release(ctx *gear.Context) error {
 
 	gctx := middleware.WithGlobalCtx(ctx)
 	key := fmt.Sprintf("RC:%s:%s", input.GID.String(), input.CID.String())
-	locker, err := a.blls.Locker.Lock(gctx, key, 120*time.Second)
+	locker, err := a.blls.Locker.Lock(gctx, key, 600*time.Second)
 	if err != nil {
 		return gear.ErrLocked.From(err)
 	}

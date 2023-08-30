@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/pkoukk/tiktoken-go"
-	"github.com/pkoukk/tiktoken-go-loader"
+	tiktoken_loader "github.com/pkoukk/tiktoken-go-loader"
 	"github.com/teambition/gear"
 
 	"github.com/yiwen-ai/yiwen-api/src/conf"
@@ -63,6 +63,7 @@ type SuccessResponse[T any] struct {
 	TotalSize     int        `json:"total_size,omitempty" cbor:"total_size,omitempty"`
 	NextPageToken util.Bytes `json:"next_page_token,omitempty" cbor:"next_page_token,omitempty"`
 	Job           string     `json:"job,omitempty" cbor:"job,omitempty"`
+	Progress      int8       `json:"progress,omitempty" cbor:"progress,omitempty"`
 	Result        T          `json:"result" cbor:"result"`
 }
 

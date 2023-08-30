@@ -86,7 +86,7 @@ func (a *Publication) Estimate(ctx *gear.Context) error {
 			ID:    md.ID,
 			Name:  md.Name,
 			Price: md.Price,
-			Cost:  int64(md.CostWEN(tokens) * 2),
+			Cost:  int64(float64(md.CostWEN(tokens)) * 2.5),
 		}
 	}
 
@@ -177,7 +177,7 @@ func (a *Publication) Create(ctx *gear.Context) error {
 
 	gctx := middleware.WithGlobalCtx(ctx)
 	key := fmt.Sprintf("CP:%s:%s:%s:%d", input.ToGID.String(), input.CID.String(), *input.ToLanguage, input.Version)
-	locker, err := a.blls.Locker.Lock(gctx, key, 120*time.Second)
+	locker, err := a.blls.Locker.Lock(gctx, key, 600*time.Second)
 	if err != nil {
 		return gear.ErrLocked.From(err)
 	}
@@ -276,6 +276,7 @@ func (a *Publication) Create(ctx *gear.Context) error {
 			log["error"] = err.Error()
 		} else {
 			auditLog.Status = 1
+			log["cost"] = model.CostWEN(*auditLog.Tokens)
 
 			go a.blls.Taskbase.Create(gctx, &bll.CreateTaskInput{
 				UID:       sess.UserID,
@@ -355,18 +356,50 @@ func (a *Publication) GetByJob(ctx *gear.Context) error {
 		return err
 	}
 
-	output, err := a.blls.Writing.GetPublication(ctx, &bll.QueryPublication{
+	teInput := &bll.TEInput{
 		GID:      p.GID,
 		CID:      p.CID,
 		Language: *p.Language,
 		Version:  *p.Version,
+	}
+
+	progress := int8(0)
+	if log.Action == "creation.release" {
+		res, err := a.blls.Jarvis.GetSummary(ctx, teInput)
+		if err != nil {
+			return gear.ErrInternalServerError.From(err)
+		}
+
+		progress = res.Progress
+	} else {
+		res, err := a.blls.Jarvis.GetTranslation(ctx, teInput)
+		if err != nil {
+			return gear.ErrInternalServerError.From(err)
+		}
+		progress = res.Progress
+	}
+
+	if progress < 100 {
+		return ctx.Send(http.StatusAccepted, bll.SuccessResponse[*bll.PublicationOutput]{
+			Job:      input.ID.String(),
+			Progress: progress,
+			Result:   nil,
+		})
+	}
+
+	output, err := a.blls.Writing.GetPublication(ctx, &bll.QueryPublication{
+		GID:      teInput.GID,
+		CID:      teInput.CID,
+		Language: teInput.Language,
+		Version:  teInput.Version,
 	})
 
 	if err != nil {
 		if errors.Is(err, util.ErrNotFound) {
 			return ctx.Send(http.StatusAccepted, bll.SuccessResponse[*bll.PublicationOutput]{
-				Job:    input.ID.String(),
-				Result: nil,
+				Job:      input.ID.String(),
+				Progress: 99,
+				Result:   nil,
 			})
 		}
 
