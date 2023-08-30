@@ -2,7 +2,6 @@ package content
 
 import (
 	"errors"
-	"unicode/utf8"
 
 	"github.com/fxamacker/cbor/v2"
 	"github.com/jaevor/go-nanoid"
@@ -85,17 +84,26 @@ func (d *DocumentNode) setTexts(m map[string][]string) {
 
 	for i := range d.Content {
 		n := &d.Content[i]
-		if n.Text != nil {
-			if len(texts) > 0 {
+		if n.Type == "text" {
+			if n.Text != nil && len(texts) > 0 {
 				n.Text = &texts[0]
 				texts = texts[1:]
-			} else if utf8.RuneCount([]byte(*n.Text)) > 1 {
-				n.Text = util.Ptr(" ")
 			} else {
-				n.Text = util.Ptr("")
+				n.Text = nil
 			}
 		} else {
 			n.setTexts(m)
+		}
+	}
+
+	arr := d.Content[:]
+	d.Content = d.Content[:0]
+	for i := 0; i < len(arr); i++ {
+		n := &arr[i]
+		if n.Type == "text" && (n.Text == nil || *n.Text == "") {
+			continue
+		} else {
+			d.Content = append(d.Content, *n)
 		}
 	}
 
