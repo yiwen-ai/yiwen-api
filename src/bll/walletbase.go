@@ -12,9 +12,9 @@ import (
 
 var AIModels = []AIModel{
 	// 4K context,	i: $0.0015/1K tokens; o: $0.002/1K tokens; 0.157 WEN/1K tokens
-	{ID: "gpt-3.5", Name: "GPT-3.5", Price: 0.6}, // 0.6 wen/1K tokens
+	{ID: "gpt-3.5", Name: "GPT-3.5", Price: 1}, // 0.6 wen/1K tokens
 	// 8K context,	i: $0.03/1K tokens; o: $0.06/1K tokens; 4.7 WEN/1K tokens
-	{ID: "gpt-4", Name: "GPT-4", Price: 8.0}, // 10 wen/1K tokens
+	{ID: "gpt-4", Name: "GPT-4", Price: 10}, // 10 wen/1K tokens
 }
 
 var DefaultModel = AIModels[0]
