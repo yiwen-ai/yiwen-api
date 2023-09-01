@@ -1,10 +1,12 @@
 package content
 
 import (
+	"encoding/json"
 	"errors"
 
 	"github.com/fxamacker/cbor/v2"
 	"github.com/jaevor/go-nanoid"
+	"github.com/teambition/gear"
 
 	"github.com/yiwen-ai/yiwen-api/src/util"
 )
@@ -183,4 +185,25 @@ func (a *DocumentNodeAmender) AmendNode(node *DocumentNode) {
 			a.AmendNode(&node.Content[i])
 		}
 	}
+}
+
+func EstimateTranslatingString(content *util.Bytes) (string, error) {
+	if content == nil {
+		return "", gear.ErrInternalServerError.WithMsg("empty content")
+	}
+
+	doc, err := ParseDocumentNode(*content)
+	if err != nil {
+		return "", gear.ErrInternalServerError.From(err)
+	}
+	contents := doc.ToTEContents()
+	for i := range contents {
+		contents[i].ID = ""
+	}
+
+	teTokens, err := json.Marshal(contents)
+	if err != nil {
+		return "", gear.ErrInternalServerError.From(err)
+	}
+	return string(teTokens), nil
 }

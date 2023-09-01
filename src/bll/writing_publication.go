@@ -2,7 +2,6 @@ package bll
 
 import (
 	"context"
-	"encoding/json"
 	"net/url"
 	"strconv"
 
@@ -154,26 +153,6 @@ func (i *PublicationOutput) ToTEContents() (content.TEContents, error) {
 		})
 	}
 	return contents, nil
-}
-
-func (i *PublicationOutput) ToEstimateToken() (string, error) {
-	if i.Content == nil {
-		return "", gear.ErrInternalServerError.WithMsg("empty content")
-	}
-	doc, err := content.ParseDocumentNode(*i.Content)
-	if err != nil {
-		return "", gear.ErrInternalServerError.From(err)
-	}
-	contents := doc.ToTEContents()
-	for i := range contents {
-		contents[i].ID = ""
-	}
-
-	teTokens, err := json.Marshal(contents)
-	if err != nil {
-		return "", gear.ErrInternalServerError.From(err)
-	}
-	return string(teTokens), nil
 }
 
 func (i *PublicationOutput) IntoPublicationDraft(gid util.ID, language, model string, input []byte) (*PublicationDraft, error) {

@@ -1,7 +1,6 @@
 package api
 
 import (
-	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
@@ -64,12 +63,17 @@ func (a *Publication) Estimate(ctx *gear.Context) error {
 		return gear.ErrInternalServerError.From(err)
 	}
 
-	teTokens, err := src.ToEstimateToken()
+	toLang := input.Language
+	if input.ToLanguage != nil {
+		toLang = *input.ToLanguage
+	}
+
+	trans, err := content.EstimateTranslatingString(src.Content)
 	if err != nil {
 		return gear.ErrInternalServerError.From(err)
 	}
 
-	tokens := a.blls.Tiktokens(teTokens) * 2
+	tokens := util.EstimateTranslatingTokens(trans, input.Language, toLang)
 	output := &EstimateOutput{
 		Balance: wallet.Balance(),
 		Tokens:  tokens,
@@ -151,6 +155,22 @@ func (a *Publication) Create(ctx *gear.Context) error {
 		return gear.ErrInternalServerError.From(err)
 	}
 
+	trans, err := content.EstimateTranslatingString(src.Content)
+	if err != nil {
+		return gear.ErrInternalServerError.From(err)
+	}
+
+	if tokens := util.Tiktokens(trans); tokens > util.MAX_TOKENS {
+		return gear.ErrUnprocessableEntity.WithMsgf("too many tokens: %d, expected <= %d",
+			tokens, util.MAX_TOKENS)
+	}
+
+	tokens := uint32(float32(util.EstimateTranslatingTokens(trans, input.Language, *input.ToLanguage)) * 0.9)
+	estimate_cost := model.CostWEN(tokens)
+	if b := wallet.Balance(); b < estimate_cost {
+		return gear.ErrPaymentRequired.WithMsgf("insufficient balance, expected %d, got %d", estimate_cost, b)
+	}
+
 	teContents, err := src.ToTEContents()
 	if err != nil {
 		return gear.ErrInternalServerError.From(err)
@@ -158,16 +178,6 @@ func (a *Publication) Create(ctx *gear.Context) error {
 	teData, err := cbor.Marshal(teContents)
 	if err != nil {
 		return gear.ErrInternalServerError.From(err)
-	}
-	teTokens, _ := json.Marshal(teContents)
-	if err != nil {
-		return gear.ErrInternalServerError.From(err)
-	}
-
-	estimate_tokens := uint32(float64(a.blls.Tiktokens(string(teTokens))) * 1.5)
-	estimate_cost := model.CostWEN(estimate_tokens)
-	if b := wallet.Balance(); b < estimate_cost {
-		return gear.ErrPaymentRequired.WithMsgf("insufficient balance, expected %d, got %d", estimate_cost, b)
 	}
 
 	gctx := middleware.WithGlobalCtx(ctx)
@@ -186,6 +196,7 @@ func (a *Publication) Create(ctx *gear.Context) error {
 
 	log, err := a.blls.Logbase.Log(ctx, bll.LogActionPublicationCreate, 0, input.GID, payload)
 	if err != nil {
+		locker.Release(gctx)
 		return gear.ErrInternalServerError.From(err)
 	}
 

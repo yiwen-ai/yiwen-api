@@ -3,8 +3,6 @@ package bll
 import (
 	"context"
 
-	"github.com/pkoukk/tiktoken-go"
-	tiktoken_loader "github.com/pkoukk/tiktoken-go-loader"
 	"github.com/teambition/gear"
 
 	"github.com/yiwen-ai/yiwen-api/src/conf"
@@ -14,12 +12,10 @@ import (
 
 func init() {
 	util.DigProvide(NewBlls)
-	tiktoken.SetBpeLoader(tiktoken_loader.NewOfflineLoader())
 }
 
 // Blls ...
 type Blls struct {
-	tk         *tiktoken.Tiktoken
 	Locker     *service.Locker
 	Jarvis     *Jarvis
 	Logbase    *Logbase
@@ -33,12 +29,7 @@ type Blls struct {
 // NewBlls ...
 func NewBlls(oss *service.OSS, locker *service.Locker) *Blls {
 	cfg := conf.Config.Base
-	tk, err := tiktoken.GetEncoding("cl100k_base")
-	if err != nil {
-		panic(err)
-	}
 	return &Blls{
-		tk:         tk,
 		Locker:     locker,
 		Jarvis:     &Jarvis{svc: service.APIHost(cfg.Jarvis)},
 		Logbase:    &Logbase{svc: service.APIHost(cfg.Logbase)},
@@ -52,10 +43,6 @@ func NewBlls(oss *service.OSS, locker *service.Locker) *Blls {
 
 func (b *Blls) Stats(ctx context.Context) (res map[string]any, err error) {
 	return b.Userbase.svc.Stats(ctx)
-}
-
-func (b *Blls) Tiktokens(input string) uint32 {
-	return uint32(len(b.tk.Encode(input, nil, nil)))
 }
 
 type SuccessResponse[T any] struct {

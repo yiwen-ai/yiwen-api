@@ -272,6 +272,28 @@ func (a *Creation) Redraft(ctx *gear.Context) error {
 	return ctx.OkSend(bll.SuccessResponse[*bll.CreationOutput]{Result: output})
 }
 
+func (a *Creation) checkTokens(ctx *gear.Context, gid, cid util.ID) error {
+	src, err := a.blls.Writing.GetCreation(ctx, &bll.QueryCreation{
+		GID:    gid,
+		ID:     cid,
+		Fields: "content",
+	})
+
+	if err != nil {
+		return gear.ErrInternalServerError.From(err)
+	}
+
+	trans, err := content.EstimateTranslatingString(src.Content)
+	if err != nil {
+		return gear.ErrInternalServerError.From(err)
+	}
+	if tokens := util.Tiktokens(trans); tokens > util.MAX_TOKENS {
+		return gear.ErrUnprocessableEntity.WithMsgf("too many tokens: %d, expected <= %d",
+			tokens, util.MAX_TOKENS)
+	}
+	return nil
+}
+
 func (a *Creation) Release(ctx *gear.Context) error {
 	input := &bll.CreatePublicationInput{}
 	if err := ctx.ParseBody(input); err != nil {
@@ -294,6 +316,11 @@ func (a *Creation) Release(ctx *gear.Context) error {
 		return gear.ErrLocked.From(err)
 	}
 
+	if err = a.checkTokens(ctx, input.GID, input.CID); err != nil {
+		locker.Release(gctx)
+		return err
+	}
+
 	sess := gear.CtxValue[middleware.Session](gctx)
 
 	log, err := a.blls.Logbase.Log(ctx, bll.LogActionCreationRelease, 0, input.GID, &bll.LogPayload{
@@ -304,6 +331,7 @@ func (a *Creation) Release(ctx *gear.Context) error {
 	})
 
 	if err != nil {
+		locker.Release(gctx)
 		return gear.ErrInternalServerError.From(err)
 	}
 
