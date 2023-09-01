@@ -1,13 +1,16 @@
 package api
 
 import (
+	"context"
 	"log"
+	"net/http"
 	"strings"
 	"time"
 
 	"github.com/fxamacker/cbor/v2"
 	"github.com/teambition/gear"
 
+	"github.com/yiwen-ai/yiwen-api/src/bll"
 	"github.com/yiwen-ai/yiwen-api/src/conf"
 	"github.com/yiwen-ai/yiwen-api/src/logging"
 	"github.com/yiwen-ai/yiwen-api/src/util"
@@ -27,10 +30,27 @@ func NewApp() *gear.App {
 	app.Set(gear.SetEnv, conf.Config.Env)
 
 	app.UseHandler(logging.AccessLogger)
-	err := util.DigInvoke(func(routers []*gear.Router) error {
+	err := util.DigInvoke(func(blls *bll.Blls, routers []*gear.Router) error {
 		for _, router := range routers {
 			app.UseHandler(router)
 		}
+
+		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer cancel()
+
+		headers := http.Header{}
+		headers.Set("x-auth-user", util.JARVIS.String())
+		headers.Set("x-auth-app", util.JARVIS.String())
+		ctxHeader := util.ContextHTTPHeader(headers)
+		ctx = gear.CtxWith[util.ContextHTTPHeader](ctx, &ctxHeader)
+		if err := blls.Jarvis.InitApp(ctx, app); err != nil {
+			return err
+		}
+
+		if err := blls.Writing.InitApp(ctx, app); err != nil {
+			return err
+		}
+
 		return nil
 	})
 

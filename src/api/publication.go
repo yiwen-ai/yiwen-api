@@ -528,6 +528,20 @@ func (a *Publication) List(ctx *gear.Context) error {
 	return ctx.OkSend(output)
 }
 
+func (a *Publication) Recommendations(ctx *gear.Context) error {
+	sess := gear.CtxValue[middleware.Session](ctx)
+	res := make([]*bll.PublicationOutput, 0, len(a.blls.Writing.Recommendations))
+	for _, rr := range a.blls.Writing.Recommendations {
+		if r := rr.PreferVersion(sess.Lang); r != nil {
+			res = append(res, r)
+		}
+	}
+
+	return ctx.OkSend(bll.SuccessResponse[[]*bll.PublicationOutput]{
+		Result: res,
+	})
+}
+
 func (a *Publication) ListByFollowing(ctx *gear.Context) error {
 	input := &bll.Pagination{}
 	if err := ctx.ParseBody(input); err != nil {
@@ -619,7 +633,7 @@ func (a *Publication) ListPublished(ctx *gear.Context) error {
 }
 
 func (a *Publication) GetPublishList(ctx *gear.Context) error {
-	input := &bll.QueryAPublication{}
+	input := &bll.QueryAllPublish{}
 	if err := ctx.ParseURL(input); err != nil {
 		return err
 	}

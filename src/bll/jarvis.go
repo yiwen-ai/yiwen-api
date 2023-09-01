@@ -5,6 +5,7 @@ import (
 	"errors"
 	"time"
 
+	"github.com/teambition/gear"
 	"github.com/yiwen-ai/yiwen-api/src/logging"
 	"github.com/yiwen-ai/yiwen-api/src/service"
 	"github.com/yiwen-ai/yiwen-api/src/util"
@@ -12,6 +13,16 @@ import (
 
 type Jarvis struct {
 	svc service.APIHost
+}
+
+func (b *Jarvis) InitApp(ctx context.Context, app *gear.App) error {
+	output, err := b.ListLanguages(context.Background())
+	if err != nil {
+		return err
+	}
+
+	app.Set(util.LanguagesKey, util.Languages(output))
+	return nil
 }
 
 func (b *Jarvis) ListLanguages(ctx context.Context) ([][]string, error) {

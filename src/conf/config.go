@@ -11,6 +11,7 @@ import (
 
 	"github.com/BurntSushi/toml"
 	"github.com/teambition/gear"
+	"github.com/yiwen-ai/yiwen-api/src/util"
 )
 
 // Config ...
@@ -73,17 +74,23 @@ type OSS struct {
 	UrlBase         string `json:"url_base" toml:"url_base"`
 }
 
+type Recommendation struct {
+	GID util.ID `json:"gid" toml:"gid"`
+	CID util.ID `json:"cid" toml:"cid"`
+}
+
 // ConfigTpl ...
 type ConfigTpl struct {
-	Rand           *rand.Rand
-	GlobalSignal   context.Context
-	GlobalShutdown context.Context
-	Env            string `json:"env" toml:"env"`
-	Logger         Logger `json:"log" toml:"log"`
-	Server         Server `json:"server" toml:"server"`
-	Redis          Redis  `json:"redis" toml:"redis"`
-	Base           Base   `json:"base" toml:"base"`
-	OSS            OSS    `json:"oss" toml:"oss"`
+	Rand            *rand.Rand
+	GlobalSignal    context.Context
+	GlobalShutdown  context.Context
+	Env             string           `json:"env" toml:"env"`
+	Logger          Logger           `json:"log" toml:"log"`
+	Server          Server           `json:"server" toml:"server"`
+	Redis           Redis            `json:"redis" toml:"redis"`
+	Base            Base             `json:"base" toml:"base"`
+	OSS             OSS              `json:"oss" toml:"oss"`
+	Recommendations []Recommendation `json:"recommendations" toml:"recommendations"`
 
 	globalJobs int64 // global async jobs counter for graceful shutdown
 }

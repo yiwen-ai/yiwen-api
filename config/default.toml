@@ -30,3 +30,6 @@ access_key_id = ""
 access_key_secret = ""
 prefix = "dev/cr/"
 url_base = "https://cdn.yiwen.pub/"
+
+[[recommendations]]
+["cil6ehjmps48vprp24f0", "cjoip8a7a762siruokm0"] # cid  ]# gid

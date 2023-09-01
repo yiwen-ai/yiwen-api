@@ -17,11 +17,7 @@ type Jarvis struct {
 }
 
 func (a *Jarvis) ListLanguages(ctx *gear.Context) error {
-	output, err := a.blls.Jarvis.ListLanguages(ctx)
-	if err != nil {
-		return gear.ErrInternalServerError.From(err)
-	}
-
+	output := ctx.Setting(util.LanguagesKey).(util.Languages)
 	return ctx.OkSend(bll.SuccessResponse[[][]string]{Result: output})
 }
 

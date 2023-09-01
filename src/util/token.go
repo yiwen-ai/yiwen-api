@@ -41,5 +41,5 @@ func getTokensRate(lang string) float32 {
 
 func EstimateTranslatingTokens(text, srcLang, dstLang string) uint32 {
 	tokens := Tiktokens(text)
-	return uint32(float32(tokens) * (getTokensRate(srcLang) + getTokensRate(dstLang)))
+	return tokens + uint32(float32(tokens)*getTokensRate(dstLang)/getTokensRate(srcLang))
 }

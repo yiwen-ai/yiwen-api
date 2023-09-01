@@ -7,6 +7,7 @@ import (
 
 	"github.com/fxamacker/cbor/v2"
 	"github.com/teambition/gear"
+	"github.com/yiwen-ai/yiwen-api/src/conf"
 	"github.com/yiwen-ai/yiwen-api/src/content"
 	"github.com/yiwen-ai/yiwen-api/src/util"
 )
@@ -130,6 +131,26 @@ func (list *PublicationOutputs) LoadGroups(loader func(ids ...util.ID) []GroupIn
 	}
 }
 
+func (list PublicationOutputs) PreferVersion(lang string) *PublicationOutput {
+	if len(list) == 0 {
+		return nil
+	}
+
+	for i := range list {
+		if list[i].Language == lang {
+			return &list[i]
+		}
+	}
+
+	for i := range list {
+		if list[i].FromLanguage != nil && list[i].Language == *list[i].FromLanguage {
+			return &list[i]
+		}
+	}
+
+	return &list[0]
+}
+
 func (i *PublicationOutput) ToTEContents() (content.TEContents, error) {
 	if i.Title == nil || i.Summary == nil || i.Content == nil {
 		return nil, gear.ErrInternalServerError.WithMsg("empty title or summary or content")
@@ -200,6 +221,21 @@ func (i *PublicationOutput) IntoPublicationDraft(gid util.ID, language, model st
 	}
 	draft.Content = data
 	return draft, nil
+}
+
+func (b *Writing) InitApp(ctx context.Context, _ *gear.App) error {
+	for _, v := range conf.Config.Recommendations {
+		res, err := b.GetPublicationList(ctx, 2, &QueryAllPublish{
+			GID: v.GID,
+			CID: v.CID,
+		})
+		if err != nil {
+			return err
+		}
+		b.Recommendations = append(b.Recommendations, res.Result)
+	}
+
+	return nil
 }
 
 func (b *Writing) CreatePublication(ctx context.Context, input *CreatePublication) (*PublicationOutput, error) {
@@ -345,12 +381,12 @@ func (b *Writing) ListPublicationByGIDs(ctx context.Context, input *GIDsPaginati
 	return &output, nil
 }
 
-type QueryAPublication struct {
+type QueryAllPublish struct {
 	GID util.ID `json:"gid" cbor:"gid" query:"gid" validate:"required"`
 	CID util.ID `json:"cid" cbor:"cid" query:"cid" validate:"required"`
 }
 
-func (i *QueryAPublication) Validate() error {
+func (i *QueryAllPublish) Validate() error {
 	if err := util.Validator.Struct(i); err != nil {
 		return gear.ErrBadRequest.From(err)
 	}
@@ -358,7 +394,7 @@ func (i *QueryAPublication) Validate() error {
 	return nil
 }
 
-func (b *Writing) GetPublicationList(ctx context.Context, from_status int8, input *QueryAPublication) (*SuccessResponse[PublicationOutputs], error) {
+func (b *Writing) GetPublicationList(ctx context.Context, from_status int8, input *QueryAllPublish) (*SuccessResponse[PublicationOutputs], error) {
 	output := SuccessResponse[PublicationOutputs]{}
 	query := url.Values{}
 	query.Add("gid", input.GID.String())

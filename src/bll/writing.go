@@ -9,8 +9,9 @@ import (
 )
 
 type Writing struct {
-	svc service.APIHost
-	oss *service.OSS
+	svc             service.APIHost
+	oss             *service.OSS
+	Recommendations []PublicationOutputs
 }
 
 type SearchInput struct {

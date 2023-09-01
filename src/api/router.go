@@ -51,7 +51,9 @@ func newRouters(apis *APIs) []*gear.Router {
 	router.Get("/languages", middleware.AuthAllowAnon.Auth, apis.Jarvis.ListLanguages)
 	router.Get("/models", middleware.AuthAllowAnon.Auth, apis.Jarvis.ListModels)
 	router.Get("/search", middleware.AuthAllowAnon.Auth, apis.Jarvis.Search)
+
 	router.Get("/v1/publication", middleware.AuthAllowAnon.Auth, apis.Publication.Get)
+	router.Get("/v1/publication/recommendations", middleware.AuthAllowAnon.Auth, apis.Publication.Recommendations)
 	router.Get("/v1/publication/publish", middleware.AuthAllowAnon.Auth, apis.Publication.GetPublishList)
 	router.Post("/v1/publication/list_published", middleware.AuthAllowAnon.Auth, apis.Publication.ListPublished)
 	router.Get("/v1/group/info", middleware.AuthAllowAnon.Auth, apis.Group.GetInfo)

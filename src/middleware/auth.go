@@ -23,6 +23,7 @@ type Session struct {
 	UserKind   int
 	AppScope   []string
 	RID        string // x-request-id
+	Lang       string // x-language
 }
 
 func (s *Session) HasToken() bool {
@@ -56,12 +57,18 @@ func (m AuthLevel) Auth(ctx *gear.Context) error {
 		}
 	}
 
+	lang := ctx.GetHeader("x-language")
+	languages := ctx.Setting(util.LanguagesKey).(util.Languages)
+	if langs := languages.Get(lang); len(langs) > 0 {
+		lang = langs[0]
+		ctx.Req.Header.Set("x-language", lang)
+	}
+
 	sess, err := extractAuth(ctx)
 	log := logging.FromCtx(ctx)
 	if err != nil {
 		if l == 0 {
-			sess := &Session{}
-			sess.UserID = util.ANON
+			sess := &Session{UserID: util.ANON, Lang: lang}
 			log["uid"] = sess.UserID
 
 			ctx.Req.Header.Set("x-auth-user", sess.UserID.String())
@@ -83,6 +90,8 @@ func (m AuthLevel) Auth(ctx *gear.Context) error {
 		return gear.ErrUnauthorized.From(err)
 	}
 
+	sess.Lang = lang
+	log["language"] = lang
 	log["uid"] = sess.UserID
 	if l > 1 && !sess.HasToken() {
 		return gear.ErrUnauthorized.WithMsg("invalid token")
