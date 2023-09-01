@@ -64,17 +64,12 @@ func (a *Publication) Estimate(ctx *gear.Context) error {
 		return gear.ErrInternalServerError.From(err)
 	}
 
-	teContents, err := src.ToTEContents()
+	teTokens, err := src.ToEstimateToken()
 	if err != nil {
 		return gear.ErrInternalServerError.From(err)
 	}
 
-	teTokens, _ := json.Marshal(teContents)
-	if err != nil {
-		return gear.ErrInternalServerError.From(err)
-	}
-
-	tokens := a.blls.Tiktokens(string(teTokens)) * 2
+	tokens := a.blls.Tiktokens(teTokens) * 2
 	output := &EstimateOutput{
 		Balance: wallet.Balance(),
 		Tokens:  tokens,
@@ -130,18 +125,18 @@ func (a *Publication) Create(ctx *gear.Context) error {
 	}
 
 	if wallet.Balance() < 1 {
-		return gear.ErrPaymentRequired.WithMsgf("insufficient balance")
+		return gear.ErrPaymentRequired.WithMsg("insufficient balance")
 	}
 
-	_, err = a.blls.Writing.GetPublication(ctx, &bll.QueryPublication{
+	dst, _ := a.blls.Writing.GetPublication(ctx, &bll.QueryPublication{
 		GID:      input.GID,
 		CID:      input.CID,
 		Language: *input.ToLanguage,
 		Version:  input.Version,
 		Fields:   "status,creator,updated_at",
 	})
-	if err == nil {
-		return gear.ErrConflict.WithMsg("%s publication already exists", *input.ToLanguage)
+	if dst != nil {
+		return gear.ErrConflict.WithMsgf("%s publication already exists", *input.ToLanguage)
 	}
 
 	src, err := a.blls.Writing.GetPublication(ctx, &bll.QueryPublication{
