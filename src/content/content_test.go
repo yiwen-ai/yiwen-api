@@ -146,3 +146,62 @@ func TestDocumentNodeAmender(t *testing.T) {
 	fmt.Println(string(data))
 	assert.Nil(err)
 }
+
+func TestEstimateTranslatingString(t *testing.T) {
+	assert := assert.New(t)
+	obj := DocumentNode{
+		Type: "doc",
+		Content: []DocumentNode{
+			{
+				Type: "heading",
+				Attrs: map[string]AttrValue{
+					"id":    String("abcdef"),
+					"level": Int64(1),
+				},
+				Content: []DocumentNode{
+					{
+						Type: "text",
+						Text: util.Ptr("Hello"),
+					},
+				},
+			},
+			{
+				Type: "heading",
+				Attrs: map[string]AttrValue{
+					"id":    String("123456"),
+					"level": Int64(1),
+				},
+				Content: []DocumentNode{
+					{
+						Type: "text",
+						Text: util.Ptr("world"),
+					},
+				},
+			},
+			{
+				Type: "paragraph",
+				Content: []DocumentNode{
+					{
+						Type: "text",
+						Text: util.Ptr("some text"),
+					},
+				},
+			},
+		},
+	}
+
+	te := obj.ToTEContents()
+	require.Equal(t, 4, len(te))
+	assert.Equal("abcdef", te[0].ID)
+	assert.Equal("------", te[1].ID)
+	assert.Equal("123456", te[2].ID)
+	assert.Equal("------", te[3].ID)
+
+	data, err := cbor.Marshal(&obj)
+	require.Nil(t, err)
+
+	str, err := EstimateTranslatingString(util.Ptr(util.Bytes(data)))
+	require.Nil(t, err)
+	fmt.Println(str)
+	assert.Equal("[\"0\"]\n[\"Hello\"]\n[\"2\"]\n[\"world\"]\n[\"4\"]\n[\"some text\"]\n", str)
+}

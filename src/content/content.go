@@ -1,8 +1,10 @@
 package content
 
 import (
+	"bytes"
 	"encoding/json"
 	"errors"
+	"strconv"
 
 	"github.com/fxamacker/cbor/v2"
 	"github.com/jaevor/go-nanoid"
@@ -187,6 +189,8 @@ func (a *DocumentNodeAmender) AmendNode(node *DocumentNode) {
 	}
 }
 
+// EstimateTranslatingString estimates the translating string from content.
+// It is not right string for translating, just for estimating translating tokens.
 func EstimateTranslatingString(content *util.Bytes) (string, error) {
 	if content == nil {
 		return "", gear.ErrInternalServerError.WithMsg("empty content")
@@ -197,13 +201,18 @@ func EstimateTranslatingString(content *util.Bytes) (string, error) {
 		return "", gear.ErrInternalServerError.From(err)
 	}
 	contents := doc.ToTEContents()
+	buf := bytes.Buffer{}
+	en := json.NewEncoder(&buf)
 	for i := range contents {
-		contents[i].ID = ""
+		if texts := contents[i].Texts; len(texts) > 0 {
+			if err := en.Encode([]string{strconv.Itoa(i)}); err != nil {
+				return "", gear.ErrInternalServerError.From(err)
+			}
+			if err := en.Encode(texts); err != nil {
+				return "", gear.ErrInternalServerError.From(err)
+			}
+		}
 	}
 
-	teTokens, err := json.Marshal(contents)
-	if err != nil {
-		return "", gear.ErrInternalServerError.From(err)
-	}
-	return string(teTokens), nil
+	return string(buf.String()), nil
 }
