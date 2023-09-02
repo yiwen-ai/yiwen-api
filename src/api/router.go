@@ -50,8 +50,9 @@ func newRouters(apis *APIs) []*gear.Router {
 	// 允许匿名访问
 	router.Get("/languages", middleware.AuthAllowAnon.Auth, apis.Jarvis.ListLanguages)
 	router.Get("/models", middleware.AuthAllowAnon.Auth, apis.Jarvis.ListModels)
-	router.Get("/search", middleware.AuthAllowAnon.Auth, apis.Jarvis.Search)
+	router.Get("/search", middleware.AuthAllowAnon.Auth, apis.Jarvis.Search) // use /v1/search instead
 
+	router.Get("/v1/search", middleware.AuthToken.Auth, apis.Jarvis.Search)
 	router.Get("/v1/publication", middleware.AuthAllowAnon.Auth, apis.Publication.Get)
 	router.Get("/v1/publication/recommendations", middleware.AuthAllowAnon.Auth, apis.Publication.Recommendations)
 	router.Get("/v1/publication/publish", middleware.AuthAllowAnon.Auth, apis.Publication.GetPublishList)
@@ -60,7 +61,6 @@ func newRouters(apis *APIs) []*gear.Router {
 	router.Get("/v1/group/statistic", middleware.AuthAllowAnon.Auth, apis.Group.GetStatistic)
 
 	// 需要 access_token
-	router.Get("/v1/search", middleware.AuthToken.Auth, apis.Jarvis.Search)
 	router.Get("/v1/search/in_group", middleware.AuthToken.Auth, apis.Jarvis.GroupSearch)
 	router.Get("/v1/search/by_original_url", middleware.AuthToken.Auth, apis.Jarvis.OriginalSearch)
 

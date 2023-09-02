@@ -161,34 +161,22 @@ type ListRecentlyLogsInput struct {
 	Fields  []string `json:"fields" cbor:"fields"`
 }
 
-func (b *Logbase) ListRecently(ctx context.Context, input *ListRecentlyLogsInput) (*SuccessResponse[[]*LogOutput], error) {
-	output := SuccessResponse[[]*LogOutput]{}
+func (b *Logbase) ListRecently(ctx context.Context, input *ListRecentlyLogsInput) ([]LogOutput, error) {
+	output := SuccessResponse[[]LogOutput]{}
 
 	if err := b.svc.Post(ctx, "/v1/log/list_recently", input, &output); err != nil {
 		return nil, err
 	}
 
-	return &output, nil
+	return output.Result, nil
 }
 
 type PublicationJob struct {
-	Job    string  `json:"job" cbor:"job"`
-	GID    util.ID `json:"gid" cbor:"gid"`
-	Status int8    `json:"status" cbor:"status"`
-	Action string  `json:"action" cbor:"action"`
-	Error  *string `json:"error,omitempty" cbor:"error,omitempty"`
-}
-
-func PublicationJobsFrom(input []*LogOutput) []*PublicationJob {
-	output := make([]*PublicationJob, 0, len(input))
-	for _, v := range input {
-		output = append(output, &PublicationJob{
-			Job:    v.ID.String(),
-			GID:    *v.GID,
-			Status: v.Status,
-			Action: v.Action,
-			Error:  v.Error,
-		})
-	}
-	return output
+	Job         string            `json:"job" cbor:"job"`
+	Status      int8              `json:"status" cbor:"status"`
+	Action      string            `json:"action" cbor:"action"`
+	Progress    int8              `json:"progress" cbor:"progress"`
+	Tokens      uint32            `json:"tokens" cbor:"tokens"`
+	Publication PublicationOutput `json:"publication,omitempty" cbor:"publication,omitempty"`
+	Error       *string           `json:"error,omitempty" cbor:"error,omitempty"`
 }

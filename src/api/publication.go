@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/fxamacker/cbor/v2"
+	"github.com/rs/xid"
 	"github.com/teambition/gear"
 
 	"github.com/yiwen-ai/yiwen-api/src/bll"
@@ -428,13 +429,80 @@ func (a *Publication) ListJob(ctx *gear.Context) error {
 	logs, err := a.blls.Logbase.ListRecently(ctx, &bll.ListRecentlyLogsInput{
 		UID:     sess.UserID,
 		Actions: []string{"creation.release", "publication.create"},
-		Fields:  []string{"gid", "error"},
+		Fields:  []string{"gid", "error", "tokens", "payload"},
 	})
 
 	if err != nil {
 		return gear.ErrBadRequest.WithMsgf("list jobs failed: %s", err.Error())
 	}
-	return ctx.OkSend(bll.SuccessResponse[[]*bll.PublicationJob]{Result: bll.PublicationJobsFrom(logs.Result)})
+	output := make([]*bll.PublicationJob, 0, len(logs))
+
+	for _, log := range logs {
+		if len(output) > 20 || time.Since(xid.ID(log.ID).Time()) > 48*time.Hour {
+			continue
+		}
+
+		p, err := util.Unmarshal[bll.LogPayload](log.Payload)
+		if err != nil || p.Language == nil || p.Version == nil {
+			continue
+		}
+
+		job := &bll.PublicationJob{
+			Job:    log.ID.String(),
+			Status: log.Status,
+			Action: log.Action,
+			Publication: bll.PublicationOutput{
+				GID:      p.GID,
+				CID:      p.CID,
+				Language: *p.Language,
+				Version:  *p.Version,
+			},
+			Error: log.Error,
+		}
+		if log.Tokens != nil {
+			job.Tokens = *log.Tokens
+		}
+
+		teInput := &bll.TEInput{
+			GID:      p.GID,
+			CID:      p.CID,
+			Language: *p.Language,
+			Version:  *p.Version,
+		}
+
+		if log.Status == 1 {
+			job.Progress = 100
+		} else if log.Status == 0 {
+			if log.Action == "creation.release" {
+				res, err := a.blls.Jarvis.GetSummary(ctx, teInput)
+				if err != nil {
+					continue
+				}
+
+				job.Progress = res.Progress
+			} else {
+				res, err := a.blls.Jarvis.GetTranslation(ctx, teInput)
+				if err != nil {
+					continue
+				}
+				job.Progress = res.Progress
+			}
+		}
+
+		doc, err := a.blls.Writing.GetPublication(ctx, &bll.QueryPublication{
+			GID:      teInput.GID,
+			CID:      teInput.CID,
+			Language: teInput.Language,
+			Version:  teInput.Version,
+			Fields:   "status,from_language,updated_at,title",
+		})
+		if err == nil {
+			job.Publication = *doc
+		}
+
+		output = append(output, job)
+	}
+	return ctx.OkSend(bll.SuccessResponse[[]*bll.PublicationJob]{Result: output})
 }
 
 func (a *Publication) Update(ctx *gear.Context) error {

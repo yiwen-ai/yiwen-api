@@ -117,11 +117,15 @@ func RequestJSON(ctx context.Context, cli *http.Client, method, api string, inpu
 
 	data, err := io.ReadAll(resp.Body)
 	if resp.StatusCode > 206 || err != nil {
-		return fmt.Errorf("RequestJSON %q failed, rid: %s, code: %d, error: %v, body: %s",
+		return gear.Err.WithCode(resp.StatusCode).WithMsgf("RequestJSON failed, url: %q, rid: %s, code: %d, error: %v, body: %s",
 			api, rid, resp.StatusCode, err, string(data))
 	}
 
-	return json.Unmarshal(data, output)
+	if err = json.Unmarshal(data, output); err != nil {
+		return gear.ErrInternalServerError.WithMsgf("json.Unmarshal failed, url: %q, rid: %s, code: %d, error: %v",
+			api, rid, resp.StatusCode, err)
+	}
+	return nil
 }
 
 func RequestCBOR(ctx context.Context, cli *http.Client, method, api string, input, output any) error {
@@ -177,11 +181,15 @@ func RequestCBOR(ctx context.Context, cli *http.Client, method, api string, inpu
 		if e != nil {
 			str = string(data)
 		}
-		return fmt.Errorf("RequestCBOR %q failed, rid: %s, code: %d, error: %v, body: %s",
+		return gear.Err.WithCode(resp.StatusCode).WithMsgf("RequestCBOR failed, url: %q, rid: %s, code: %d, error: %v, body: %s",
 			api, rid, resp.StatusCode, err, str)
 	}
 
-	return cbor.Unmarshal(data, output)
+	if err = cbor.Unmarshal(data, output); err != nil {
+		return gear.ErrInternalServerError.WithMsgf("cbor.Unmarshal failed, url: %q, rid: %s, code: %d, error: %v",
+			api, rid, resp.StatusCode, err)
+	}
+	return nil
 }
 
 func CopyHeader(dst http.Header, src http.Header, names ...string) {

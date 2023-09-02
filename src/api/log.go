@@ -22,5 +22,5 @@ func (a *Log) ListRecently(ctx *gear.Context) error {
 		return gear.ErrInternalServerError.From(err)
 	}
 
-	return ctx.OkSend(output)
+	return ctx.OkSend(bll.SuccessResponse[[]bll.LogOutput]{Result: output})
 }
