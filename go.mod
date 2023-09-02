@@ -8,7 +8,7 @@ require (
 	github.com/bsm/redislock v0.9.4
 	github.com/fxamacker/cbor/v2 v2.5.0
 	github.com/gabriel-vasile/mimetype v1.4.2
-	github.com/go-playground/validator/v10 v10.15.1
+	github.com/go-playground/validator/v10 v10.15.3
 	github.com/google/uuid v1.3.1
 	github.com/jaevor/go-nanoid v1.3.0
 	github.com/klauspost/compress v1.16.7

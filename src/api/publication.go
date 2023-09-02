@@ -1,7 +1,6 @@
 package api
 
 import (
-	"errors"
 	"fmt"
 	"net/http"
 	"time"
@@ -402,7 +401,7 @@ func (a *Publication) GetByJob(ctx *gear.Context) error {
 	})
 
 	if err != nil {
-		if errors.Is(err, util.ErrNotFound) {
+		if util.IsNotFoundErr(err) {
 			return ctx.Send(http.StatusAccepted, bll.SuccessResponse[*bll.PublicationOutput]{
 				Job:      input.ID.String(),
 				Progress: util.Ptr(int8(99)),
