@@ -12,7 +12,8 @@ var onceTK sync.Once
 var tk *tiktoken.Tiktoken
 var tokensRate = map[string]float32{
 	"eng": 1.0,
-	"zho": 1.18,
+	"zho": 1.29,
+	"jpn": 1.88,
 }
 
 const MAX_TOKENS = 64 * 1024 // 64k

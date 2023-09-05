@@ -57,6 +57,7 @@ func newRouters(apis *APIs) []*gear.Router {
 	router.Get("/v1/publication/recommendations", middleware.AuthAllowAnon.Auth, apis.Publication.Recommendations)
 	router.Get("/v1/publication/publish", middleware.AuthAllowAnon.Auth, apis.Publication.GetPublishList)
 	router.Post("/v1/publication/list_published", middleware.AuthAllowAnon.Auth, apis.Publication.ListPublished)
+	router.Post("/v1/publication/list", middleware.AuthAllowAnon.Auth, apis.Publication.List) // 匿名时等价于 list_published
 	router.Get("/v1/group/info", middleware.AuthAllowAnon.Auth, apis.Group.GetInfo)
 	router.Get("/v1/group/statistic", middleware.AuthAllowAnon.Auth, apis.Group.GetStatistic)
 
@@ -90,7 +91,6 @@ func newRouters(apis *APIs) []*gear.Router {
 
 	router.Get("/v1/publication/by_job", middleware.AuthToken.Auth, apis.Publication.GetByJob)
 	router.Get("/v1/publication/list_job", middleware.AuthToken.Auth, apis.Publication.ListJob)
-	router.Post("/v1/publication/list", middleware.AuthToken.Auth, apis.Publication.List)
 	router.Post("/v1/publication/list_by_following", middleware.AuthToken.Auth, apis.Publication.ListByFollowing)
 	router.Post("/v1/publication/list_archived", middleware.AuthToken.Auth, apis.Publication.ListArchived)
 	router.Patch("/v1/publication/archive", middleware.AuthToken.Auth, apis.Publication.Archive)

@@ -570,6 +570,28 @@ func (a *Publication) Delete(ctx *gear.Context) error {
 	return ctx.OkSend(bll.SuccessResponse[bool]{Result: output})
 }
 
+func (a *Publication) ListPublished(ctx *gear.Context) error {
+	input := &bll.GIDPagination{}
+	if err := ctx.ParseBody(input); err != nil {
+		return err
+	}
+
+	input.Status = util.Ptr(int8(2))
+	output, err := a.blls.Writing.ListPublication(ctx, input)
+	if err != nil {
+		return gear.ErrInternalServerError.From(err)
+	}
+
+	output.Result.LoadCreators(func(ids ...util.ID) []bll.UserInfo {
+		return a.blls.Userbase.LoadUserInfo(ctx, ids...)
+	})
+	output.Result.LoadGroups(func(ids ...util.ID) []bll.GroupInfo {
+		return a.blls.Userbase.LoadGroupInfo(ctx, ids...)
+	})
+
+	return ctx.OkSend(output)
+}
+
 func (a *Publication) List(ctx *gear.Context) error {
 	input := &bll.GIDPagination{}
 	if err := ctx.ParseBody(input); err != nil {
@@ -577,7 +599,7 @@ func (a *Publication) List(ctx *gear.Context) error {
 	}
 
 	if _, err := a.checkReadPermission(ctx, input.GID); err != nil {
-		return err
+		input.Status = util.Ptr(int8(2)) // only published for anonymous
 	}
 
 	output, err := a.blls.Writing.ListPublication(ctx, input)
@@ -662,28 +684,6 @@ func (a *Publication) ListArchived(ctx *gear.Context) error {
 	}
 
 	input.Status = util.Ptr(int8(-1))
-	output, err := a.blls.Writing.ListPublication(ctx, input)
-	if err != nil {
-		return gear.ErrInternalServerError.From(err)
-	}
-
-	output.Result.LoadCreators(func(ids ...util.ID) []bll.UserInfo {
-		return a.blls.Userbase.LoadUserInfo(ctx, ids...)
-	})
-	output.Result.LoadGroups(func(ids ...util.ID) []bll.GroupInfo {
-		return a.blls.Userbase.LoadGroupInfo(ctx, ids...)
-	})
-
-	return ctx.OkSend(output)
-}
-
-func (a *Publication) ListPublished(ctx *gear.Context) error {
-	input := &bll.GIDPagination{}
-	if err := ctx.ParseBody(input); err != nil {
-		return err
-	}
-
-	input.Status = util.Ptr(int8(2))
 	output, err := a.blls.Writing.ListPublication(ctx, input)
 	if err != nil {
 		return gear.ErrInternalServerError.From(err)
@@ -909,6 +909,10 @@ func (a *Publication) Collect(ctx *gear.Context) error {
 
 func (a *Publication) checkReadPermission(ctx *gear.Context, gid util.ID) (int8, error) {
 	sess := gear.CtxValue[middleware.Session](ctx)
+	if sess.UserID == util.ANON {
+		return -2, gear.ErrForbidden.WithMsg("no permission")
+	}
+
 	role, err := a.blls.Userbase.UserGroupRole(ctx, sess.UserID, gid)
 	if err != nil {
 		return -2, gear.ErrInternalServerError.From(err)
@@ -922,6 +926,10 @@ func (a *Publication) checkReadPermission(ctx *gear.Context, gid util.ID) (int8,
 
 func (a *Publication) checkCreatePermission(ctx *gear.Context, gid util.ID) error {
 	sess := gear.CtxValue[middleware.Session](ctx)
+	if sess.UserID == util.ANON {
+		return gear.ErrForbidden.WithMsg("no permission")
+	}
+
 	role, err := a.blls.Userbase.UserGroupRole(ctx, sess.UserID, gid)
 	if err != nil {
 		return gear.ErrInternalServerError.From(err)
@@ -935,6 +943,10 @@ func (a *Publication) checkCreatePermission(ctx *gear.Context, gid util.ID) erro
 
 func (a *Publication) checkWritePermission(ctx *gear.Context, gid, cid util.ID, language string, version uint16) (*bll.PublicationOutput, error) {
 	sess := gear.CtxValue[middleware.Session](ctx)
+	if sess.UserID == util.ANON {
+		return nil, gear.ErrForbidden.WithMsg("no permission")
+	}
+
 	role, err := a.blls.Userbase.UserGroupRole(ctx, sess.UserID, gid)
 	if err != nil {
 		return nil, gear.ErrInternalServerError.From(err)
@@ -969,7 +981,7 @@ func (a *Publication) tryReadOne(ctx *gear.Context, gid, cid util.ID, language s
 	var err error
 	var role int8 = -2
 
-	if sess := gear.CtxValue[middleware.Session](ctx); sess != nil {
+	if sess := gear.CtxValue[middleware.Session](ctx); sess != nil && sess.UserID != util.ANON {
 		role, _ = a.blls.Userbase.UserGroupRole(ctx, sess.UserID, gid)
 	}
 
