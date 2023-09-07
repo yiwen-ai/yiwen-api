@@ -70,8 +70,7 @@ type OSS struct {
 	Endpoint        string `json:"endpoint" toml:"endpoint"`
 	AccessKeyId     string `json:"access_key_id" toml:"access_key_id"`
 	AccessKeySecret string `json:"access_key_secret" toml:"access_key_secret"`
-	Prefix          string `json:"prefix" toml:"prefix"`
-	UrlBase         string `json:"url_base" toml:"url_base"`
+	BaseUrl         string `json:"url_base" toml:"base_url"`
 }
 
 type Recommendation struct {

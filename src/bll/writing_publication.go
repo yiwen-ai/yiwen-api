@@ -225,7 +225,7 @@ func (i *PublicationOutput) IntoPublicationDraft(gid util.ID, language, model st
 
 func (b *Writing) InitApp(ctx context.Context, _ *gear.App) error {
 	for _, v := range conf.Config.Recommendations {
-		res, err := b.GetPublicationList(ctx, 2, &QueryAllPublish{
+		res, err := b.GetPublicationList(ctx, 2, &GidCidInput{
 			GID: v.GID,
 			CID: v.CID,
 		})
@@ -381,20 +381,7 @@ func (b *Writing) ListPublicationByGIDs(ctx context.Context, input *GIDsPaginati
 	return &output, nil
 }
 
-type QueryAllPublish struct {
-	GID util.ID `json:"gid" cbor:"gid" query:"gid" validate:"required"`
-	CID util.ID `json:"cid" cbor:"cid" query:"cid" validate:"required"`
-}
-
-func (i *QueryAllPublish) Validate() error {
-	if err := util.Validator.Struct(i); err != nil {
-		return gear.ErrBadRequest.From(err)
-	}
-
-	return nil
-}
-
-func (b *Writing) GetPublicationList(ctx context.Context, from_status int8, input *QueryAllPublish) (*SuccessResponse[PublicationOutputs], error) {
+func (b *Writing) GetPublicationList(ctx context.Context, from_status int8, input *GidCidInput) (*SuccessResponse[PublicationOutputs], error) {
 	output := SuccessResponse[PublicationOutputs]{}
 	query := url.Values{}
 	query.Add("gid", input.GID.String())

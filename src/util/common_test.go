@@ -21,3 +21,9 @@ func TestRemoveDuplicates(t *testing.T) {
 	id2 := mustParseID(id.String())
 	assert.Equal(t, RemoveDuplicates([]ID{id, id2}), []ID{id})
 }
+
+func TestReverse(t *testing.T) {
+	for _, s := range []string{"Hello, 世界", Ptr(NewID()).String()} {
+		assert.Equal(t, s, Reverse(Reverse(s)))
+	}
+}

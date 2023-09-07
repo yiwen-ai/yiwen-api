@@ -119,3 +119,7 @@ func (b *Writing) OriginalSearch(ctx context.Context, input *ScrapingInput) Sear
 
 	return output.Result
 }
+
+func (b *Writing) SignPostPolicy(gid, cid util.ID, lang string, version uint) service.PostFilePolicy {
+	return b.oss.SignPostPolicy(gid.String(), cid.String(), lang, version)
+}

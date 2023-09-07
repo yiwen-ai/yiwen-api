@@ -14,6 +14,7 @@ import (
 	"github.com/yiwen-ai/yiwen-api/src/content"
 	"github.com/yiwen-ai/yiwen-api/src/logging"
 	"github.com/yiwen-ai/yiwen-api/src/middleware"
+	"github.com/yiwen-ai/yiwen-api/src/service"
 	"github.com/yiwen-ai/yiwen-api/src/util"
 )
 
@@ -700,7 +701,7 @@ func (a *Publication) ListArchived(ctx *gear.Context) error {
 }
 
 func (a *Publication) GetPublishList(ctx *gear.Context) error {
-	input := &bll.QueryAllPublish{}
+	input := &bll.GidCidInput{}
 	if err := ctx.ParseURL(input); err != nil {
 		return err
 	}
@@ -905,6 +906,24 @@ func (a *Publication) Collect(ctx *gear.Context) error {
 	}
 
 	return ctx.OkSend(bll.SuccessResponse[*bll.CollectionOutput]{Result: output})
+}
+
+func (a *Publication) UploadFile(ctx *gear.Context) error {
+	input := &bll.QueryPublication{}
+	if err := ctx.ParseBody(input); err != nil {
+		return err
+	}
+	publication, err := a.checkWritePermission(ctx, input.GID, input.CID, input.Language, input.Version)
+	if err != nil {
+		return err
+	}
+
+	if *publication.Status != 0 {
+		return gear.ErrBadRequest.WithMsg("cannot update publication content, status is not 0 or 1")
+	}
+
+	output := a.blls.Writing.SignPostPolicy(publication.GID, publication.CID, publication.Language, uint(publication.Version))
+	return ctx.OkSend(bll.SuccessResponse[service.PostFilePolicy]{Result: output})
 }
 
 func (a *Publication) checkReadPermission(ctx *gear.Context, gid util.ID) (int8, error) {

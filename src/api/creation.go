@@ -15,6 +15,7 @@ import (
 	"github.com/yiwen-ai/yiwen-api/src/content"
 	"github.com/yiwen-ai/yiwen-api/src/logging"
 	"github.com/yiwen-ai/yiwen-api/src/middleware"
+	"github.com/yiwen-ai/yiwen-api/src/service"
 	"github.com/yiwen-ai/yiwen-api/src/util"
 )
 
@@ -483,6 +484,25 @@ func (a *Creation) UpdateContent(ctx *gear.Context) error {
 	}
 
 	return ctx.OkSend(bll.SuccessResponse[*bll.CreationOutput]{Result: output})
+}
+
+func (a *Creation) UploadFile(ctx *gear.Context) error {
+	input := &bll.QueryCreation{}
+	if err := ctx.ParseBody(input); err != nil {
+		return err
+	}
+
+	creation, err := a.checkWritePermission(ctx, input.GID, input.ID)
+	if err != nil {
+		return err
+	}
+
+	if *creation.Status != 0 && *creation.Status != 1 {
+		return gear.ErrBadRequest.WithMsg("cannot update creation content, status is not 0 or 1")
+	}
+
+	output := a.blls.Writing.SignPostPolicy(creation.GID, creation.ID, *creation.Language, uint(*creation.Version))
+	return ctx.OkSend(bll.SuccessResponse[service.PostFilePolicy]{Result: output})
 }
 
 func (a *Creation) checkReadPermission(ctx *gear.Context, gid util.ID) error {

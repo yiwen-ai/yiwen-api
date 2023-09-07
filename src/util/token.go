@@ -11,12 +11,15 @@ import (
 var onceTK sync.Once
 var tk *tiktoken.Tiktoken
 var tokensRate = map[string]float32{
-	"eng": 1.0,
-	"zho": 1.29,
-	"jpn": 1.88,
+	"eng": 1.00,
+	"zho": 1.20,
+	"jpn": 1.65,
+	"fra": 1.31,
+	"kor": 1.57,
+	"ara": 2.10,
 }
 
-const MAX_TOKENS = 64 * 1024 // 64k
+const MAX_TOKENS = 128 * 1024
 
 func init() {
 	onceTK.Do(func() {

@@ -116,3 +116,16 @@ func (i *QueryIdCn) Validate() error {
 	}
 	return nil
 }
+
+type GidCidInput struct {
+	GID util.ID `json:"gid" cbor:"gid" query:"gid" validate:"required"`
+	CID util.ID `json:"cid" cbor:"cid" query:"cid" validate:"required"`
+}
+
+func (i *GidCidInput) Validate() error {
+	if err := util.Validator.Struct(i); err != nil {
+		return gear.ErrBadRequest.From(err)
+	}
+
+	return nil
+}

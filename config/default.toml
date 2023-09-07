@@ -24,12 +24,11 @@ webscraper = "http://127.0.0.1:8080"
 walletbase = "http://127.0.0.1:8080"
 
 [oss]
-bucket = "yiwenai"
+bucket = "ywfs"
 endpoint = "oss-cn-hangzhou.aliyuncs.com"
 access_key_id = ""
 access_key_secret = ""
-prefix = "dev/cr/"
-url_base = "https://cdn.yiwen.pub/"
+base_url = "https://fs.yiwen.pub/"
 
 [[recommendations]]
 gid = "cil6ehjmps48vprp24f0"

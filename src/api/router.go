@@ -83,6 +83,7 @@ func newRouters(apis *APIs) []*gear.Router {
 	router.Put("/v1/creation/update_content", middleware.AuthToken.Auth, apis.Creation.UpdateContent)
 	router.Patch("/v1/creation/update_content", middleware.AuthToken.Auth, todo) // 暂不实现
 	router.Post("/v1/creation/assist", middleware.AuthToken.Auth, todo)          // 暂不实现
+	router.Post("/v1/creation/upload", middleware.AuthToken.Auth, apis.Creation.UploadFile)
 
 	router.Post("/v1/publication", middleware.AuthToken.Auth, apis.Publication.Create)
 	router.Post("/v1/publication/estimate", middleware.AuthToken.Auth, apis.Publication.Estimate)
@@ -99,6 +100,7 @@ func newRouters(apis *APIs) []*gear.Router {
 	router.Put("/v1/publication/update_content", middleware.AuthToken.Auth, apis.Publication.UpdateContent)
 	router.Post("/v1/publication/assist", middleware.AuthToken.Auth, todo) // 暂不实现
 	router.Post("/v1/publication/collect", middleware.AuthToken.Auth, apis.Publication.Collect)
+	router.Post("/v1/publication/upload", middleware.AuthToken.Auth, apis.Publication.UploadFile)
 
 	router.Patch("/v1/collection", middleware.AuthToken.Auth, apis.Collection.Update)
 	router.Delete("/v1/collection", middleware.AuthToken.Auth, apis.Collection.Delete)
