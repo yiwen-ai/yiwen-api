@@ -23,19 +23,19 @@ func TestAPI(t *testing.T) {
 
 	var targetUrl string = "https://datatracker.ietf.org/doc/html/rfc8949"
 
-	authheaders := util.ContextHTTPHeader{}
+	authheaders := util.CtxHeader{}
 	uuid := util.NewUUID()
 	fmt.Printf("UUID: %s\n", uuid.String())
 
 	http.Header(authheaders).Set("x-request-id", uuid.String())
 	http.Header(authheaders).Set("cookie", cookie)
 
-	ctx := gear.CtxWith[util.ContextHTTPHeader](context.Background(), &authheaders)
+	ctx := gear.CtxWith[util.CtxHeader](context.Background(), &authheaders)
 	sess, err := GetToken(ctx)
 	require.NoError(t, err)
 
 	http.Header(authheaders).Set("authorization", "Bearer "+sess.AccessToken)
-	ctx = gear.CtxWith[util.ContextHTTPHeader](context.Background(), &authheaders)
+	ctx = gear.CtxWith[util.CtxHeader](context.Background(), &authheaders)
 
 	myGroups, err := ListMyGroups(ctx)
 	require.NoError(t, err)

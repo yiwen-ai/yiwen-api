@@ -38,11 +38,10 @@ func NewApp() *gear.App {
 		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 		defer cancel()
 
-		headers := http.Header{}
-		headers.Set("x-auth-user", util.JARVIS.String())
-		headers.Set("x-auth-app", util.JARVIS.String())
-		ctxHeader := util.ContextHTTPHeader(headers)
-		ctx = gear.CtxWith[util.ContextHTTPHeader](ctx, &ctxHeader)
+		h := http.Header{}
+		h.Set("x-auth-user", util.JARVIS.String())
+		h.Set("x-auth-app", util.JARVIS.String())
+		ctx = gear.CtxWith[util.CtxHeader](ctx, util.Ptr(util.CtxHeader(h)))
 		if err := blls.Jarvis.InitApp(ctx, app); err != nil {
 			return err
 		}

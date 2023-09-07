@@ -64,7 +64,18 @@ var HTTPClient = &http.Client{
 	Timeout:   time.Second * 5,
 }
 
-type ContextHTTPHeader http.Header
+type CtxHeader http.Header
+
+func (ch CtxHeader) Header() http.Header {
+	return http.Header(ch)
+}
+
+func HeaderFromCtx(ctx context.Context) http.Header {
+	if ch := gear.CtxValue[CtxHeader](ctx); ch != nil {
+		return ch.Header()
+	}
+	return nil
+}
 
 func RequestJSON(ctx context.Context, cli *http.Client, method, api string, input, output any) error {
 	if ctx.Err() != nil {
@@ -94,8 +105,8 @@ func RequestJSON(ctx context.Context, cli *http.Client, method, api string, inpu
 		req.Header.Set(gear.HeaderContentType, gear.MIMEApplicationJSON)
 	}
 
-	if header := gear.CtxValue[ContextHTTPHeader](ctx); header != nil {
-		CopyHeader(req.Header, http.Header(*header))
+	if header := HeaderFromCtx(ctx); header != nil {
+		CopyHeader(req.Header, header)
 	}
 
 	rid := req.Header.Get(gear.HeaderXRequestID)
@@ -155,8 +166,8 @@ func RequestCBOR(ctx context.Context, cli *http.Client, method, api string, inpu
 		req.Header.Set(gear.HeaderContentType, gear.MIMEApplicationCBOR)
 	}
 
-	if header := gear.CtxValue[ContextHTTPHeader](ctx); header != nil {
-		CopyHeader(req.Header, http.Header(*header))
+	if header := HeaderFromCtx(ctx); header != nil {
+		CopyHeader(req.Header, header)
 	}
 
 	rid := req.Header.Get(gear.HeaderXRequestID)

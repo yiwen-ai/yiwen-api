@@ -65,8 +65,7 @@ func (a *Scraping) Convert(ctx *gear.Context) error {
 		return err
 	}
 
-	header := gear.CtxValue[util.ContextHTTPHeader](ctx)
-	http.Header(*header).Set(gear.HeaderContentType, mtype)
+	util.HeaderFromCtx(ctx).Set(gear.HeaderContentType, mtype)
 	output, err := a.blls.Webscraper.Convert(ctx, buf, mtype)
 	if err != nil {
 		return gear.ErrInternalServerError.From(err)
