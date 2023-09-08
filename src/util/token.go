@@ -19,6 +19,7 @@ var tokensRate = map[string]float32{
 	"ara": 2.10,
 }
 
+const MAX_CREATION_TOKENS = 64 * 1024
 const MAX_TOKENS = 128 * 1024
 
 func init() {

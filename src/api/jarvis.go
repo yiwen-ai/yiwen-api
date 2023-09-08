@@ -43,13 +43,10 @@ func (a *Jarvis) Search(ctx *gear.Context) error {
 		defer wg.Done()
 
 		semanticInput := &bll.EmbeddingSearchInput{
-			Input:  input.Q,
-			Public: true,
-			GID:    input.GID,
-		}
-
-		if input.Language != nil {
-			semanticInput.Language = input.Language
+			Input:    input.Q,
+			Public:   true,
+			GID:      input.GID,
+			Language: input.Language,
 		}
 
 		semanticOutput, err := a.blls.Jarvis.EmbeddingSearch(ctx, semanticInput)
