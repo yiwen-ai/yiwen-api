@@ -74,6 +74,9 @@ func (a *Group) GetInfo(ctx *gear.Context) error {
 	if res.MyRole == nil {
 		res.MyRole = util.Ptr(int8(-2))
 	}
+	if res.Following == nil {
+		res.Following = util.Ptr(false)
+	}
 
 	return ctx.OkSend(bll.SuccessResponse[*bll.GroupInfo]{Result: res})
 }
