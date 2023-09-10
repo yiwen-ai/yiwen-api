@@ -113,7 +113,7 @@ func newRouters(apis *APIs) []*gear.Router {
 	router.Patch("/v1/publication/publish", middleware.AuthToken.Auth, apis.Publication.Publish)
 	router.Put("/v1/publication/update_content", middleware.AuthToken.Auth, apis.Publication.UpdateContent)
 	router.Post("/v1/publication/assist", middleware.AuthToken.Auth, todo) // 暂不实现
-	router.Post("/v1/publication/collect", middleware.AuthToken.Auth, apis.Publication.Collect)
+	router.Post("/v1/publication/bookmark", middleware.AuthToken.Auth, apis.Publication.Bookmark)
 	router.Post("/v1/publication/upload", middleware.AuthToken.Auth, apis.Publication.UploadFile)
 
 	router.Patch("/v1/bookmark", middleware.AuthToken.Auth, apis.Bookmark.Update)

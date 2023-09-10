@@ -22,7 +22,7 @@ const (
 	LogActionUserUpdate               = "user.update"
 	LogActionUserUpdateCN             = "user.update.cn"
 	LogActionUserLogout               = "user.logout"
-	LogActionUserCollect              = "user.collect"
+	LogActionUserBookmark             = "user.bookmark"
 	LogActionUserFollow               = "user.follow"
 	LogActionUserSubscribe            = "user.subscribe"
 	LogActionUserSponsor              = "user.sponsor"

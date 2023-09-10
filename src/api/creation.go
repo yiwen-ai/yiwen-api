@@ -72,7 +72,7 @@ func (a *Creation) Create(ctx *gear.Context) error {
 		Language: output.Language,
 		Version:  output.Version,
 	}); err != nil {
-		return gear.ErrInternalServerError.From(err)
+		logging.SetTo(ctx, "writeLogError", err.Error())
 	}
 
 	return ctx.OkSend(bll.SuccessResponse[*bll.CreationOutput]{Result: output})
@@ -130,7 +130,7 @@ func (a *Creation) Update(ctx *gear.Context) error {
 		Language: output.Language,
 		Version:  output.Version,
 	}); err != nil {
-		return gear.ErrInternalServerError.From(err)
+		logging.SetTo(ctx, "writeLogError", err.Error())
 	}
 
 	return ctx.OkSend(bll.SuccessResponse[*bll.CreationOutput]{Result: output})
@@ -161,7 +161,7 @@ func (a *Creation) Delete(ctx *gear.Context) error {
 		CID:    input.ID,
 		Status: util.Ptr(int8(-2)),
 	}); err != nil {
-		return gear.ErrInternalServerError.From(err)
+		logging.SetTo(ctx, "writeLogError", err.Error())
 	}
 
 	return ctx.OkSend(bll.SuccessResponse[bool]{Result: output})
@@ -239,7 +239,7 @@ func (a *Creation) Archive(ctx *gear.Context) error {
 		CID:    input.ID,
 		Status: util.Ptr(int8(-1)),
 	}); err != nil {
-		return gear.ErrInternalServerError.From(err)
+		logging.SetTo(ctx, "writeLogError", err.Error())
 	}
 
 	return ctx.OkSend(bll.SuccessResponse[*bll.CreationOutput]{Result: output})
@@ -267,7 +267,7 @@ func (a *Creation) Redraft(ctx *gear.Context) error {
 		CID:    input.ID,
 		Status: util.Ptr(int8(0)),
 	}); err != nil {
-		return gear.ErrInternalServerError.From(err)
+		logging.SetTo(ctx, "writeLogError", err.Error())
 	}
 
 	return ctx.OkSend(bll.SuccessResponse[*bll.CreationOutput]{Result: output})
@@ -480,7 +480,7 @@ func (a *Creation) UpdateContent(ctx *gear.Context) error {
 		Language: output.Language,
 		Version:  output.Version,
 	}); err != nil {
-		return gear.ErrInternalServerError.From(err)
+		logging.SetTo(ctx, "writeLogError", err.Error())
 	}
 
 	return ctx.OkSend(bll.SuccessResponse[*bll.CreationOutput]{Result: output})

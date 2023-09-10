@@ -532,7 +532,7 @@ func (a *Publication) Update(ctx *gear.Context) error {
 		Version:  &input.Version,
 		Status:   output.Status,
 	}); err != nil {
-		return gear.ErrInternalServerError.From(err)
+		logging.SetTo(ctx, "writeLogError", err.Error())
 	}
 
 	return ctx.OkSend(bll.SuccessResponse[*bll.PublicationOutput]{Result: output})
@@ -565,7 +565,7 @@ func (a *Publication) Delete(ctx *gear.Context) error {
 		Version:  &input.Version,
 		Status:   util.Ptr(int8(-2)),
 	}); err != nil {
-		return gear.ErrInternalServerError.From(err)
+		logging.SetTo(ctx, "writeLogError", err.Error())
 	}
 
 	return ctx.OkSend(bll.SuccessResponse[bool]{Result: output})
@@ -752,7 +752,7 @@ func (a *Publication) Archive(ctx *gear.Context) error {
 		Version:  &input.Version,
 		Status:   util.Ptr(int8(-1)),
 	}); err != nil {
-		return gear.ErrInternalServerError.From(err)
+		logging.SetTo(ctx, "writeLogError", err.Error())
 	}
 
 	return ctx.OkSend(bll.SuccessResponse[*bll.PublicationOutput]{Result: output})
@@ -786,7 +786,7 @@ func (a *Publication) Redraft(ctx *gear.Context) error {
 		Version:  &input.Version,
 		Status:   util.Ptr(int8(0)),
 	}); err != nil {
-		return gear.ErrInternalServerError.From(err)
+		logging.SetTo(ctx, "writeLogError", err.Error())
 	}
 
 	return ctx.OkSend(bll.SuccessResponse[*bll.PublicationOutput]{Result: output})
@@ -828,7 +828,7 @@ func (a *Publication) Publish(ctx *gear.Context) error {
 		Version:  &input.Version,
 		Status:   util.Ptr(int8(2)),
 	}); err != nil {
-		return gear.ErrInternalServerError.From(err)
+		logging.SetTo(ctx, "writeLogError", err.Error())
 	}
 
 	return ctx.OkSend(bll.SuccessResponse[*bll.PublicationOutput]{Result: output})
@@ -874,13 +874,13 @@ func (a *Publication) UpdateContent(ctx *gear.Context) error {
 		Version:  &input.Version,
 		Status:   output.Status,
 	}); err != nil {
-		return gear.ErrInternalServerError.From(err)
+		logging.SetTo(ctx, "writeLogError", err.Error())
 	}
 
 	return ctx.OkSend(bll.SuccessResponse[*bll.PublicationOutput]{Result: output})
 }
 
-func (a *Publication) Collect(ctx *gear.Context) error {
+func (a *Publication) Bookmark(ctx *gear.Context) error {
 	input := &bll.CreateBookmarkInput{}
 	if err := ctx.ParseBody(input); err != nil {
 		return err
@@ -896,13 +896,13 @@ func (a *Publication) Collect(ctx *gear.Context) error {
 	}
 
 	sess := gear.CtxValue[middleware.Session](ctx)
-	if _, err = a.blls.Logbase.Log(ctx, bll.LogActionUserCollect, 1, sess.UserID, &bll.LogPayload{
+	if _, err = a.blls.Logbase.Log(ctx, bll.LogActionUserBookmark, 1, sess.UserID, &bll.LogPayload{
 		GID:      input.GID,
 		CID:      input.CID,
 		Language: &input.Language,
 		Version:  &input.Version,
 	}); err != nil {
-		return gear.ErrInternalServerError.From(err)
+		logging.SetTo(ctx, "writeLogError", err.Error())
 	}
 
 	return ctx.OkSend(bll.SuccessResponse[*bll.BookmarkOutput]{Result: output})
