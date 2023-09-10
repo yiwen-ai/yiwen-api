@@ -9,7 +9,7 @@ import (
 )
 
 // TODO: more validation
-type CreateCollectionInput struct {
+type CreateBookmarkInput struct {
 	GID      util.ID   `json:"gid" cbor:"gid" validate:"required"`
 	CID      util.ID   `json:"cid" cbor:"cid" validate:"required"`
 	Language string    `json:"language" cbor:"language" validate:"required"`
@@ -18,7 +18,7 @@ type CreateCollectionInput struct {
 	Labels   *[]string `json:"labels,omitempty" cbor:"labels,omitempty" validate:"omitempty,gte=0,lte=5"`
 }
 
-func (i *CreateCollectionInput) Validate() error {
+func (i *CreateBookmarkInput) Validate() error {
 	if err := util.Validator.Struct(i); err != nil {
 		return gear.ErrBadRequest.From(err)
 	}
@@ -26,7 +26,7 @@ func (i *CreateCollectionInput) Validate() error {
 	return nil
 }
 
-type CollectionOutput struct {
+type BookmarkOutput struct {
 	ID        util.ID    `json:"id" cbor:"id"`
 	GID       util.ID    `json:"gid" cbor:"gid"`
 	CID       util.ID    `json:"cid" cbor:"cid"`
@@ -38,9 +38,9 @@ type CollectionOutput struct {
 	GroupInfo *GroupInfo `json:"group_info,omitempty" cbor:"group_info,omitempty"`
 }
 
-type CollectionOutputs []CollectionOutput
+type BookmarkOutputs []BookmarkOutput
 
-func (list *CollectionOutputs) LoadGroups(loader func(ids ...util.ID) []GroupInfo) {
+func (list *BookmarkOutputs) LoadGroups(loader func(ids ...util.ID) []GroupInfo) {
 	if len(*list) == 0 {
 		return
 	}
@@ -65,26 +65,26 @@ func (list *CollectionOutputs) LoadGroups(loader func(ids ...util.ID) []GroupInf
 	}
 }
 
-func (b *Writing) CreateCollection(ctx context.Context, input *CreateCollectionInput) (*CollectionOutput, error) {
-	output := SuccessResponse[CollectionOutput]{}
-	if err := b.svc.Post(ctx, "/v1/collection", input, &output); err != nil {
+func (b *Writing) CreateBookmark(ctx context.Context, input *CreateBookmarkInput) (*BookmarkOutput, error) {
+	output := SuccessResponse[BookmarkOutput]{}
+	if err := b.svc.Post(ctx, "/v1/bookmark", input, &output); err != nil {
 		return nil, err
 	}
 
 	return &output.Result, nil
 }
 
-type QueryCollection struct {
+type QueryBookmark struct {
 	ID     util.ID `json:"id" cbor:"id" query:"id" validate:"required"`
 	Fields string  `json:"fields" cbor:"fields" query:"fields"`
 }
 
-func (i *QueryCollection) Validate() error {
+func (i *QueryBookmark) Validate() error {
 	return nil
 }
 
 // TODO: more validation
-type UpdateCollectionInput struct {
+type UpdateBookmarkInput struct {
 	ID        util.ID   `json:"id" cbor:"id" validate:"required"`
 	UpdatedAt int64     `json:"updated_at" cbor:"updated_at"  validate:"required"`
 	Version   *uint16   `json:"version" cbor:"version" validate:"omitempty,gte=1,lte=10000"`
@@ -92,7 +92,7 @@ type UpdateCollectionInput struct {
 	Labels    *[]string `json:"labels,omitempty" cbor:"labels,omitempty" validate:"omitempty,gte=0,lte=5"`
 }
 
-func (i *UpdateCollectionInput) Validate() error {
+func (i *UpdateBookmarkInput) Validate() error {
 	if err := util.Validator.Struct(i); err != nil {
 		return gear.ErrBadRequest.From(err)
 	}
@@ -100,53 +100,53 @@ func (i *UpdateCollectionInput) Validate() error {
 	return nil
 }
 
-func (b *Writing) UpdateCollection(ctx context.Context, input *UpdateCollectionInput) (*CollectionOutput, error) {
-	output := SuccessResponse[CollectionOutput]{}
-	if err := b.svc.Patch(ctx, "/v1/collection", input, &output); err != nil {
+func (b *Writing) UpdateBookmark(ctx context.Context, input *UpdateBookmarkInput) (*BookmarkOutput, error) {
+	output := SuccessResponse[BookmarkOutput]{}
+	if err := b.svc.Patch(ctx, "/v1/bookmark", input, &output); err != nil {
 		return nil, err
 	}
 
 	return &output.Result, nil
 }
 
-func (b *Writing) DeleteCollection(ctx context.Context, input *QueryCollection) (bool, error) {
+func (b *Writing) DeleteBookmark(ctx context.Context, input *QueryBookmark) (bool, error) {
 	output := SuccessResponse[bool]{}
 
 	query := url.Values{}
 	query.Add("id", input.ID.String())
-	if err := b.svc.Delete(ctx, "/v1/collection?"+query.Encode(), &output); err != nil {
+	if err := b.svc.Delete(ctx, "/v1/bookmark?"+query.Encode(), &output); err != nil {
 		return false, err
 	}
 
 	return output.Result, nil
 }
 
-func (b *Writing) ListCollection(ctx context.Context, input *Pagination) (*SuccessResponse[CollectionOutputs], error) {
-	output := SuccessResponse[CollectionOutputs]{}
-	if err := b.svc.Post(ctx, "/v1/collection/list", input, &output); err != nil {
+func (b *Writing) ListBookmark(ctx context.Context, input *Pagination) (*SuccessResponse[BookmarkOutputs], error) {
+	output := SuccessResponse[BookmarkOutputs]{}
+	if err := b.svc.Post(ctx, "/v1/bookmark/list", input, &output); err != nil {
 		return nil, err
 	}
 
 	return &output, nil
 }
 
-type QueryCollectionByCid struct {
+type QueryBookmarkByCid struct {
 	CID    util.ID `json:"cid" cbor:"cid" query:"cid" validate:"required"`
 	Fields string  `json:"fields" cbor:"fields" query:"fields"`
 }
 
-func (i *QueryCollectionByCid) Validate() error {
+func (i *QueryBookmarkByCid) Validate() error {
 	return nil
 }
 
-func (b *Writing) GetCollectionByCid(ctx context.Context, input *QueryCollectionByCid) (*SuccessResponse[CollectionOutputs], error) {
-	output := SuccessResponse[CollectionOutputs]{}
+func (b *Writing) GetBookmarkByCid(ctx context.Context, input *QueryBookmarkByCid) (*SuccessResponse[BookmarkOutputs], error) {
+	output := SuccessResponse[BookmarkOutputs]{}
 	query := url.Values{}
 	query.Add("cid", input.CID.String())
 	if input.Fields != "" {
 		query.Add("fields", input.Fields)
 	}
-	if err := b.svc.Get(ctx, "/v1/collection/by_cid?"+query.Encode(), &output); err != nil {
+	if err := b.svc.Get(ctx, "/v1/bookmark/by_cid?"+query.Encode(), &output); err != nil {
 		return nil, err
 	}
 

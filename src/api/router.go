@@ -18,7 +18,7 @@ func init() {
 // APIs ..
 type APIs struct {
 	Healthz     *Healthz
-	Collection  *Collection
+	Bookmark    *Bookmark
 	Creation    *Creation
 	Group       *Group
 	Jarvis      *Jarvis
@@ -30,7 +30,7 @@ type APIs struct {
 func newAPIs(blls *bll.Blls) *APIs {
 	return &APIs{
 		Healthz:     &Healthz{blls},
-		Collection:  &Collection{blls},
+		Bookmark:    &Bookmark{blls},
 		Creation:    &Creation{blls},
 		Group:       &Group{blls},
 		Jarvis:      &Jarvis{blls},
@@ -116,10 +116,10 @@ func newRouters(apis *APIs) []*gear.Router {
 	router.Post("/v1/publication/collect", middleware.AuthToken.Auth, apis.Publication.Collect)
 	router.Post("/v1/publication/upload", middleware.AuthToken.Auth, apis.Publication.UploadFile)
 
-	router.Patch("/v1/collection", middleware.AuthToken.Auth, apis.Collection.Update)
-	router.Delete("/v1/collection", middleware.AuthToken.Auth, apis.Collection.Delete)
-	router.Get("/v1/collection/by_cid", middleware.AuthToken.Auth, apis.Collection.GetByCid)
-	router.Post("/v1/collection/list", middleware.AuthToken.Auth, apis.Collection.List)
+	router.Patch("/v1/bookmark", middleware.AuthToken.Auth, apis.Bookmark.Update)
+	router.Delete("/v1/bookmark", middleware.AuthToken.Auth, apis.Bookmark.Delete)
+	router.Get("/v1/bookmark/by_cid", middleware.AuthToken.Auth, apis.Bookmark.GetByCid)
+	router.Post("/v1/bookmark/list", middleware.AuthToken.Auth, apis.Bookmark.List)
 
 	router.Patch("/v1/group/follow", middleware.AuthToken.Auth, apis.Group.Follow)
 	router.Patch("/v1/group/unfollow", middleware.AuthToken.Auth, apis.Group.UnFollow)

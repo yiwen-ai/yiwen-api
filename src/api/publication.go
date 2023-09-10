@@ -881,7 +881,7 @@ func (a *Publication) UpdateContent(ctx *gear.Context) error {
 }
 
 func (a *Publication) Collect(ctx *gear.Context) error {
-	input := &bll.CreateCollectionInput{}
+	input := &bll.CreateBookmarkInput{}
 	if err := ctx.ParseBody(input); err != nil {
 		return err
 	}
@@ -890,7 +890,7 @@ func (a *Publication) Collect(ctx *gear.Context) error {
 		return err
 	}
 
-	output, err := a.blls.Writing.CreateCollection(ctx, input)
+	output, err := a.blls.Writing.CreateBookmark(ctx, input)
 	if err != nil {
 		return gear.ErrInternalServerError.From(err)
 	}
@@ -905,7 +905,7 @@ func (a *Publication) Collect(ctx *gear.Context) error {
 		return gear.ErrInternalServerError.From(err)
 	}
 
-	return ctx.OkSend(bll.SuccessResponse[*bll.CollectionOutput]{Result: output})
+	return ctx.OkSend(bll.SuccessResponse[*bll.BookmarkOutput]{Result: output})
 }
 
 func (a *Publication) UploadFile(ctx *gear.Context) error {
