@@ -225,7 +225,7 @@ func (a *Publication) Create(ctx *gear.Context) error {
 		if err == nil {
 			auditLog.Tokens = util.Ptr(teOutput.Tokens)
 
-			exp := bll.ExpendPayload{
+			exp := bll.SpendPayload{
 				GID:      *input.ToGID,
 				CID:      src.CID,
 				Language: *input.ToLanguage,
@@ -235,7 +235,7 @@ func (a *Publication) Create(ctx *gear.Context) error {
 				Tokens:   teOutput.Tokens,
 			}
 
-			wallet, err = a.blls.Walletbase.Expend(gctx, sess.UserID, &exp)
+			wallet, err = a.blls.Walletbase.Spend(gctx, sess.UserID, &exp)
 			if err == nil {
 				txn := &bll.TransactionPK{
 					UID: sess.UserID,

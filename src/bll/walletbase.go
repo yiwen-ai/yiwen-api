@@ -52,14 +52,14 @@ type Walletbase struct {
 	svc service.APIHost
 }
 
-type ExpendInput struct {
+type SpendInput struct {
 	UID         util.ID    `json:"uid" cbor:"uid"`
 	Amount      int64      `json:"amount" cbor:"amount"`
 	Description string     `json:"description,omitempty" cbor:"description,omitempty"`
 	Payload     util.Bytes `json:"payload,omitempty" cbor:"payload,omitempty"`
 }
 
-type ExpendPayload struct {
+type SpendPayload struct {
 	GID      util.ID `json:"gid" cbor:"gid"`
 	CID      util.ID `json:"cid" cbor:"cid"`
 	Language string  `json:"language" cbor:"language"`
@@ -98,7 +98,7 @@ func (b *Walletbase) Get(ctx context.Context, uid util.ID) (*WalletOutput, error
 	return &output.Result, nil
 }
 
-func (b *Walletbase) Expend(ctx context.Context, uid util.ID, input *ExpendPayload) (*WalletOutput, error) {
+func (b *Walletbase) Spend(ctx context.Context, uid util.ID, input *SpendPayload) (*WalletOutput, error) {
 	data, err := cbor.Marshal(input)
 	if err != nil {
 		return nil, err
@@ -107,14 +107,14 @@ func (b *Walletbase) Expend(ctx context.Context, uid util.ID, input *ExpendPaylo
 	input.Model = m.ID
 	input.Price = m.Price
 
-	ex := ExpendInput{
+	ex := SpendInput{
 		UID:         uid,
 		Amount:      m.CostWEN(input.Tokens),
 		Description: "Create Publication",
 		Payload:     data,
 	}
 	output := SuccessResponse[WalletOutput]{}
-	if err := b.svc.Post(ctx, "/v1/wallet/expend", ex, &output); err != nil {
+	if err := b.svc.Post(ctx, "/v1/wallet/spend", ex, &output); err != nil {
 		return nil, err
 	}
 
