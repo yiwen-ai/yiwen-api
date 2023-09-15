@@ -566,11 +566,16 @@ func (a *Creation) summarize(gctx context.Context, gid, cid util.ID, auditLog *b
 	creation, err := a.blls.Writing.GetCreation(gctx, &bll.QueryCreation{
 		GID:    gid,
 		ID:     cid,
-		Fields: "status,creator,updated_at,language,version,content",
+		Fields: "status,creator,updated_at,language,version,keywords,summary,content",
 	})
 
 	if err != nil {
 		return nil, err
+	}
+
+	// do not update summary if exists
+	if creation.Summary != nil && len(*creation.Summary) > 64 {
+		return creation, nil
 	}
 
 	if creation.Content == nil || creation.Status == nil {
@@ -628,13 +633,25 @@ func (a *Creation) summarize(gctx context.Context, gid, cid util.ID, auditLog *b
 		})
 	}
 
+	if len(summary.Keywords) > 5 {
+		summary.Keywords = summary.Keywords[:5]
+	}
+
 	auditLog.Tokens = &summary.Tokens
-	output, err := a.blls.Writing.UpdateCreation(gctx, &bll.UpdateCreationInput{
+	input := &bll.UpdateCreationInput{
 		GID:       gid,
 		ID:        cid,
 		UpdatedAt: *creation.UpdatedAt,
 		Summary:   &summary.Summary,
-	})
+		Keywords:  &summary.Keywords,
+	}
+
+	// do not update keywords if exists
+	if creation.Keywords != nil && len(*creation.Keywords) > 0 {
+		input.Keywords = nil
+	}
+
+	output, err := a.blls.Writing.UpdateCreation(gctx, input)
 	if err != nil {
 		return nil, err
 	}

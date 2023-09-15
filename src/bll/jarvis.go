@@ -64,16 +64,17 @@ func (b *Jarvis) DetectLang(ctx context.Context, input *DetectLangInput) (*TEOut
 }
 
 type SummarizingOutput struct {
-	GID       util.ID `json:"gid" cbor:"gid"`
-	CID       util.ID `json:"cid" cbor:"cid"`
-	Language  string  `json:"language" cbor:"language"`
-	Version   uint16  `json:"version" cbor:"version"`
-	Model     string  `json:"model" cbor:"model"`
-	Tokens    uint32  `json:"tokens" cbor:"tokens"`
-	Progress  int8    `json:"progress" cbor:"progress"`
-	UpdatedAt int64   `json:"updated_at" cbor:"updated_at"`
-	Summary   string  `json:"summary" cbor:"summary"`
-	Error     string  `json:"error" cbor:"error"`
+	GID       util.ID  `json:"gid" cbor:"gid"`
+	CID       util.ID  `json:"cid" cbor:"cid"`
+	Language  string   `json:"language" cbor:"language"`
+	Version   uint16   `json:"version" cbor:"version"`
+	Model     string   `json:"model" cbor:"model"`
+	Tokens    uint32   `json:"tokens" cbor:"tokens"`
+	Progress  int8     `json:"progress" cbor:"progress"`
+	UpdatedAt int64    `json:"updated_at" cbor:"updated_at"`
+	Summary   string   `json:"summary" cbor:"summary"`
+	Keywords  []string `json:"keywords" cbor:"keywords"`
+	Error     string   `json:"error" cbor:"error"`
 }
 
 func (b *Jarvis) Summarize(ctx context.Context, input *TEInput) (*SummarizingOutput, error) {
