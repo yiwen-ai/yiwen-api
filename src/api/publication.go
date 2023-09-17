@@ -81,7 +81,11 @@ func (a *Publication) Estimate(ctx *gear.Context) error {
 		Models:  make(map[string]ModelCost, len(bll.AIModels)),
 	}
 
-	for _, md := range bll.AIModels {
+	models := bll.AIModels
+	if wallet.Level < 2 {
+		models = []bll.AIModel{bll.DefaultModel}
+	}
+	for _, md := range models {
 		output.Models[md.ID] = ModelCost{
 			ID:    md.ID,
 			Name:  md.Name,
@@ -131,6 +135,10 @@ func (a *Publication) Create(ctx *gear.Context) error {
 
 	if wallet.Balance() < 1 {
 		return gear.ErrPaymentRequired.WithMsg("insufficient balance")
+	}
+
+	if wallet.Level < 2 && input.Model != bll.DefaultModel.ID {
+		return gear.ErrBadRequest.WithMsgf("model %q is not allowed for user level < 2", input.Model)
 	}
 
 	dst, _ := a.blls.Writing.GetPublication(ctx, &bll.QueryPublication{
