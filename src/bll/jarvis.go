@@ -3,16 +3,19 @@ package bll
 import (
 	"context"
 	"errors"
+	"strings"
 	"time"
 
 	"github.com/teambition/gear"
+	"github.com/yiwen-ai/yiwen-api/src/conf"
 	"github.com/yiwen-ai/yiwen-api/src/logging"
 	"github.com/yiwen-ai/yiwen-api/src/service"
 	"github.com/yiwen-ai/yiwen-api/src/util"
 )
 
 type Jarvis struct {
-	svc service.APIHost
+	svc        service.APIHost
+	tokensRate map[string]float32
 }
 
 func (b *Jarvis) InitApp(ctx context.Context, app *gear.App) error {
@@ -22,7 +25,28 @@ func (b *Jarvis) InitApp(ctx context.Context, app *gear.App) error {
 	}
 
 	app.Set(util.LanguagesKey, util.Languages(output))
+
+	b.tokensRate = make(map[string]float32, len(conf.Config.TokensRate))
+
+	for _, vv := range output {
+		if f, ok := conf.Config.TokensRate[vv[1]]; ok {
+			b.tokensRate[vv[0]] = f
+		}
+	}
+
 	return nil
+}
+
+func (b *Jarvis) getTokensRate(lang string) float32 {
+	if v, ok := b.tokensRate[strings.ToLower(lang)]; ok {
+		return v
+	}
+	return 1.0
+}
+
+func (b *Jarvis) EstimateTranslatingTokens(text, srcLang, dstLang string) uint32 {
+	tokens := util.Tiktokens(text)
+	return tokens + uint32(float32(tokens)*b.getTokensRate(dstLang)/b.getTokensRate(srcLang))
 }
 
 func (b *Jarvis) ListLanguages(ctx context.Context) ([][]string, error) {

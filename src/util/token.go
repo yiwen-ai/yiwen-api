@@ -1,7 +1,6 @@
 package util
 
 import (
-	"strings"
 	"sync"
 
 	"github.com/pkoukk/tiktoken-go"
@@ -10,14 +9,6 @@ import (
 
 var onceTK sync.Once
 var tk *tiktoken.Tiktoken
-var tokensRate = map[string]float32{
-	"eng": 1.00,
-	"zho": 1.20,
-	"jpn": 1.65,
-	"fra": 1.31,
-	"kor": 1.57,
-	"ara": 2.10,
-}
 
 const MAX_CREATION_TOKENS = 64 * 1024
 const MAX_TOKENS = 128 * 1024
@@ -35,16 +26,4 @@ func init() {
 
 func Tiktokens(input string) uint32 {
 	return uint32(len(tk.Encode(input, nil, nil)))
-}
-
-func getTokensRate(lang string) float32 {
-	if v, ok := tokensRate[strings.ToLower(lang)]; ok {
-		return v
-	}
-	return 1.0
-}
-
-func EstimateTranslatingTokens(text, srcLang, dstLang string) uint32 {
-	tokens := Tiktokens(text)
-	return tokens + uint32(float32(tokens)*getTokensRate(dstLang)/getTokensRate(srcLang))
 }

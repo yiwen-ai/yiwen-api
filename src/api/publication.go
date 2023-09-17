@@ -74,7 +74,7 @@ func (a *Publication) Estimate(ctx *gear.Context) error {
 		return gear.ErrInternalServerError.From(err)
 	}
 
-	tokens := util.EstimateTranslatingTokens(trans, input.Language, toLang)
+	tokens := a.blls.Jarvis.EstimateTranslatingTokens(trans, input.Language, toLang)
 	output := &EstimateOutput{
 		Balance: wallet.Balance(),
 		Tokens:  tokens,
@@ -166,7 +166,7 @@ func (a *Publication) Create(ctx *gear.Context) error {
 			tokens, util.MAX_TOKENS)
 	}
 
-	tokens := uint32(float32(util.EstimateTranslatingTokens(trans, input.Language, *input.ToLanguage)) * 0.9)
+	tokens := a.blls.Jarvis.EstimateTranslatingTokens(trans, input.Language, *input.ToLanguage)
 	estimate_cost := model.CostWEN(tokens)
 	if b := wallet.Balance(); b < estimate_cost {
 		return gear.ErrPaymentRequired.WithMsgf("insufficient balance, expected %d, got %d", estimate_cost, b)
