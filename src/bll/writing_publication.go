@@ -159,20 +159,21 @@ func (i *PublicationOutput) ToTEContents() (content.TEContents, error) {
 	if err != nil {
 		return nil, gear.ErrInternalServerError.From(err)
 	}
-	contents := doc.ToTEContents()
-	contents = append(contents, &content.TEContent{
+
+	contents := content.TEContents{&content.TEContent{
 		ID:    "title",
 		Texts: []string{*i.Title},
 	}, &content.TEContent{
 		ID:    "summary",
 		Texts: []string{*i.Summary},
-	})
+	}}
 	if i.Keywords != nil && len(*i.Keywords) > 0 {
 		contents = append(contents, &content.TEContent{
 			ID:    "keywords",
 			Texts: *i.Keywords,
 		})
 	}
+	contents = append(contents, doc.ToTEContents()...)
 	return contents, nil
 }
 
@@ -182,6 +183,11 @@ func (i *PublicationOutput) IntoPublicationDraft(gid util.ID, language, model st
 		Language: language,
 		Model:    model,
 		Keywords: []string{},
+		Title:    *i.Title,
+		Summary:  *i.Summary,
+	}
+	if i.Keywords != nil && len(*i.Keywords) > 0 {
+		draft.Keywords = *i.Keywords
 	}
 	if i.Cover != nil {
 		draft.Cover = *i.Cover

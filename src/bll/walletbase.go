@@ -110,7 +110,7 @@ func (b *Walletbase) Spend(ctx context.Context, uid util.ID, input *SpendPayload
 	ex := SpendInput{
 		UID:         uid,
 		Amount:      m.CostWEN(input.Tokens),
-		Description: "Create Publication",
+		Description: "publication.create",
 		Payload:     data,
 	}
 	output := SuccessResponse[WalletOutput]{}

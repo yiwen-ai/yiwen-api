@@ -127,7 +127,7 @@ func (b *Jarvis) Summarize(ctx context.Context, input *TEInput) (*SummarizingOut
 			return nil, err
 		}
 
-		if output.Summary != "" {
+		if output.Progress == 100 && output.Summary != "" {
 			return output, nil
 		}
 	}
@@ -186,7 +186,7 @@ func (b *Jarvis) Translate(ctx context.Context, input *TEInput) (*TranslatingOut
 			return nil, err
 		}
 
-		if len(output.Content) > 1 {
+		if output.Progress == 100 && len(output.Content) > 0 {
 			return output, nil
 		}
 	}
