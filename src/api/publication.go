@@ -148,8 +148,17 @@ func (a *Publication) Create(ctx *gear.Context) error {
 		Version:  input.Version,
 		Fields:   "status,creator,updated_at",
 	})
-	if dst != nil {
+	if dst != nil && dst.Status != nil && *dst.Status >= 0 {
 		return gear.ErrConflict.WithMsgf("%s publication already exists", *input.ToLanguage)
+	}
+
+	if dst != nil {
+		a.blls.Writing.DeletePublication(ctx, &bll.QueryPublication{
+			GID:      dst.GID,
+			CID:      dst.CID,
+			Language: *input.ToLanguage,
+			Version:  dst.Version,
+		})
 	}
 
 	src, err := a.blls.Writing.GetPublication(ctx, &bll.QueryPublication{
