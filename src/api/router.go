@@ -82,39 +82,39 @@ func newRouters(apis *APIs) []*gear.Router {
 	router.Get("/v1/scraping", middleware.AuthToken.Auth, apis.Scraping.Create)
 	router.Post("/v1/converting", middleware.AuthToken.Auth, apis.Scraping.Convert)
 
-	router.Post("/v1/creation", middleware.AuthToken.Auth, apis.Creation.Create)
+	router.Post("/v1/creation", middleware.AuthToken.Auth, middleware.CheckUserStatus(0), apis.Creation.Create)
 	router.Get("/v1/creation", middleware.AuthToken.Auth, apis.Creation.Get)
-	router.Patch("/v1/creation", middleware.AuthToken.Auth, apis.Creation.Update)
-	router.Delete("/v1/creation", middleware.AuthToken.Auth, apis.Creation.Delete)
+	router.Patch("/v1/creation", middleware.AuthToken.Auth, middleware.CheckUserStatus(0), apis.Creation.Update)
+	router.Delete("/v1/creation", middleware.AuthToken.Auth, middleware.CheckUserStatus(0), apis.Creation.Delete)
 
 	router.Post("/v1/creation/list", middleware.AuthToken.Auth, apis.Creation.List)
 	router.Post("/v1/creation/list_archived", middleware.AuthToken.Auth, apis.Creation.ListArchived)
-	router.Patch("/v1/creation/archive", middleware.AuthToken.Auth, apis.Creation.Archive)
-	router.Patch("/v1/creation/redraft", middleware.AuthToken.Auth, apis.Creation.Redraft)
-	router.Patch("/v1/creation/review", middleware.AuthToken.Auth, todo)  // 暂不实现
-	router.Patch("/v1/creation/approve", middleware.AuthToken.Auth, todo) // 暂不实现
-	router.Post("/v1/creation/release", middleware.AuthToken.Auth, apis.Creation.Release)
-	router.Put("/v1/creation/update_content", middleware.AuthToken.Auth, apis.Creation.UpdateContent)
-	router.Patch("/v1/creation/update_content", middleware.AuthToken.Auth, todo) // 暂不实现
-	router.Post("/v1/creation/assist", middleware.AuthToken.Auth, todo)          // 暂不实现
-	router.Post("/v1/creation/upload", middleware.AuthToken.Auth, apis.Creation.UploadFile)
+	router.Patch("/v1/creation/archive", middleware.AuthToken.Auth, middleware.CheckUserStatus(0), apis.Creation.Archive)
+	router.Patch("/v1/creation/redraft", middleware.AuthToken.Auth, middleware.CheckUserStatus(0), apis.Creation.Redraft)
+	router.Patch("/v1/creation/review", middleware.AuthToken.Auth, middleware.CheckUserStatus(0), todo)  // 暂不实现
+	router.Patch("/v1/creation/approve", middleware.AuthToken.Auth, middleware.CheckUserStatus(0), todo) // 暂不实现
+	router.Post("/v1/creation/release", middleware.AuthToken.Auth, middleware.CheckUserStatus(0), apis.Creation.Release)
+	router.Put("/v1/creation/update_content", middleware.AuthToken.Auth, middleware.CheckUserStatus(0), apis.Creation.UpdateContent)
+	router.Patch("/v1/creation/update_content", middleware.AuthToken.Auth, middleware.CheckUserStatus(0), todo) // 暂不实现
+	router.Post("/v1/creation/assist", middleware.AuthToken.Auth, middleware.CheckUserStatus(0), todo)          // 暂不实现
+	router.Post("/v1/creation/upload", middleware.AuthToken.Auth, middleware.CheckUserStatus(0), apis.Creation.UploadFile)
 
-	router.Post("/v1/publication", middleware.AuthToken.Auth, apis.Publication.Create)
-	router.Post("/v1/publication/estimate", middleware.AuthToken.Auth, apis.Publication.Estimate)
-	router.Patch("/v1/publication", middleware.AuthToken.Auth, apis.Publication.Update)
-	router.Delete("/v1/publication", middleware.AuthToken.Auth, apis.Publication.Delete)
+	router.Post("/v1/publication", middleware.AuthToken.Auth, middleware.CheckUserStatus(0), apis.Publication.Create)
+	router.Post("/v1/publication/estimate", middleware.AuthToken.Auth, middleware.CheckUserStatus(0), apis.Publication.Estimate)
+	router.Patch("/v1/publication", middleware.AuthToken.Auth, middleware.CheckUserStatus(0), apis.Publication.Update)
+	router.Delete("/v1/publication", middleware.AuthToken.Auth, middleware.CheckUserStatus(0), apis.Publication.Delete)
 
 	router.Get("/v1/publication/by_job", middleware.AuthToken.Auth, apis.Publication.GetByJob)
 	router.Get("/v1/publication/list_job", middleware.AuthToken.Auth, apis.Publication.ListJob)
 	router.Post("/v1/publication/list_by_following", middleware.AuthToken.Auth, apis.Publication.ListByFollowing)
 	router.Post("/v1/publication/list_archived", middleware.AuthToken.Auth, apis.Publication.ListArchived)
-	router.Patch("/v1/publication/archive", middleware.AuthToken.Auth, apis.Publication.Archive)
-	router.Patch("/v1/publication/redraft", middleware.AuthToken.Auth, apis.Publication.Redraft)
-	router.Patch("/v1/publication/publish", middleware.AuthToken.Auth, apis.Publication.Publish)
-	router.Put("/v1/publication/update_content", middleware.AuthToken.Auth, apis.Publication.UpdateContent)
-	router.Post("/v1/publication/assist", middleware.AuthToken.Auth, todo) // 暂不实现
+	router.Patch("/v1/publication/archive", middleware.AuthToken.Auth, middleware.CheckUserStatus(0), apis.Publication.Archive)
+	router.Patch("/v1/publication/redraft", middleware.AuthToken.Auth, middleware.CheckUserStatus(0), apis.Publication.Redraft)
+	router.Patch("/v1/publication/publish", middleware.AuthToken.Auth, middleware.CheckUserStatus(0), apis.Publication.Publish)
+	router.Put("/v1/publication/update_content", middleware.AuthToken.Auth, middleware.CheckUserStatus(0), apis.Publication.UpdateContent)
+	router.Post("/v1/publication/assist", middleware.AuthToken.Auth, middleware.CheckUserStatus(0), todo) // 暂不实现
 	router.Post("/v1/publication/bookmark", middleware.AuthToken.Auth, apis.Publication.Bookmark)
-	router.Post("/v1/publication/upload", middleware.AuthToken.Auth, apis.Publication.UploadFile)
+	router.Post("/v1/publication/upload", middleware.AuthToken.Auth, middleware.CheckUserStatus(0), apis.Publication.UploadFile)
 
 	router.Patch("/v1/bookmark", middleware.AuthToken.Auth, apis.Bookmark.Update)
 	router.Delete("/v1/bookmark", middleware.AuthToken.Auth, apis.Bookmark.Delete)

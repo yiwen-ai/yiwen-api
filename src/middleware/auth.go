@@ -115,6 +115,17 @@ func WithGlobalCtx(ctx *gear.Context) context.Context {
 	return gctx
 }
 
+func CheckUserStatus(status int8) gear.Middleware {
+	return func(ctx *gear.Context) error {
+		sess := gear.CtxValue[Session](ctx)
+		if sess == nil || sess.UserStatus < int(status) {
+			return gear.ErrForbidden.WithMsg("user status not allowed")
+		}
+
+		return nil
+	}
+}
+
 func extractAuth(ctx *gear.Context) (*Session, error) {
 	var err error
 	sess := &Session{}
