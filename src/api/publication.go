@@ -41,25 +41,13 @@ func (a *Publication) Estimate(ctx *gear.Context) error {
 		return err
 	}
 
-	_, err := a.tryReadOne(ctx, input.GID, input.CID, input.Language, input.Version)
+	src, err := a.tryReadOne(ctx, input.GID, input.CID, input.Language, input.Version, true)
 	if err != nil {
 		return gear.ErrForbidden.From(err)
 	}
 
 	sess := gear.CtxValue[middleware.Session](ctx)
 	wallet, err := a.blls.Walletbase.Get(ctx, sess.UserID)
-	if err != nil {
-		return gear.ErrInternalServerError.From(err)
-	}
-
-	src, err := a.blls.Writing.GetPublication(ctx, &bll.QueryPublication{
-		GID:      input.GID,
-		CID:      input.CID,
-		Language: input.Language,
-		Version:  input.Version,
-		Fields:   "",
-	})
-
 	if err != nil {
 		return gear.ErrInternalServerError.From(err)
 	}
@@ -122,7 +110,7 @@ func (a *Publication) Create(ctx *gear.Context) error {
 		return gear.ErrForbidden.From(err)
 	}
 
-	_, err := a.tryReadOne(ctx, input.GID, input.CID, input.Language, input.Version)
+	_, err := a.tryReadOne(ctx, input.GID, input.CID, input.Language, input.Version, false)
 	if err != nil {
 		return gear.ErrForbidden.From(err)
 	}
@@ -323,16 +311,19 @@ func (a *Publication) Create(ctx *gear.Context) error {
 }
 
 func (a *Publication) Get(ctx *gear.Context) error {
-	input := &bll.QueryPublication{}
+	input := &bll.ImplicitQueryPublication{}
 	if err := ctx.ParseURL(input); err != nil {
 		return err
 	}
 
-	if _, err := a.tryReadOne(ctx, input.GID, input.CID, input.Language, input.Version); err != nil {
-		return err
+	var err error
+	var output *bll.PublicationOutput
+	if input.GID != nil && input.Language != "" && input.Version > 0 {
+		output, err = a.tryReadOne(ctx, *input.GID, input.CID, input.Language, input.Version, true)
+	} else {
+		output, err = a.blls.Writing.ImplicitGetPublication(ctx, input)
 	}
 
-	output, err := a.blls.Writing.GetPublication(ctx, input)
 	if err != nil {
 		return gear.ErrBadRequest.From(err)
 	}
@@ -903,8 +894,8 @@ func (a *Publication) Bookmark(ctx *gear.Context) error {
 		return err
 	}
 
-	if _, err := a.tryReadOne(ctx, input.GID, input.CID, input.Language, input.Version); err != nil {
-		return err
+	if _, err := a.tryReadOne(ctx, input.GID, input.CID, input.Language, input.Version, false); err != nil {
+		return gear.ErrForbidden.From(err)
 	}
 
 	output, err := a.blls.Writing.CreateBookmark(ctx, input)
@@ -945,13 +936,13 @@ func (a *Publication) UploadFile(ctx *gear.Context) error {
 
 func (a *Publication) checkReadPermission(ctx *gear.Context, gid util.ID) (int8, error) {
 	sess := gear.CtxValue[middleware.Session](ctx)
-	if sess.UserID == util.ANON {
+	if sess == nil || sess.UserID == util.ANON {
 		return -2, gear.ErrForbidden.WithMsg("no permission")
 	}
 
 	role, err := a.blls.Userbase.UserGroupRole(ctx, sess.UserID, gid)
 	if err != nil {
-		return -2, gear.ErrInternalServerError.From(err)
+		return -2, gear.ErrNotFound.From(err)
 	}
 	if role < -1 {
 		return role, gear.ErrForbidden.WithMsg("no permission")
@@ -962,13 +953,13 @@ func (a *Publication) checkReadPermission(ctx *gear.Context, gid util.ID) (int8,
 
 func (a *Publication) checkCreatePermission(ctx *gear.Context, gid util.ID) error {
 	sess := gear.CtxValue[middleware.Session](ctx)
-	if sess.UserID == util.ANON {
+	if sess == nil || sess.UserID == util.ANON {
 		return gear.ErrForbidden.WithMsg("no permission")
 	}
 
 	role, err := a.blls.Userbase.UserGroupRole(ctx, sess.UserID, gid)
 	if err != nil {
-		return gear.ErrInternalServerError.From(err)
+		return gear.ErrNotFound.From(err)
 	}
 	if role < 0 {
 		return gear.ErrForbidden.WithMsg("no permission")
@@ -979,7 +970,7 @@ func (a *Publication) checkCreatePermission(ctx *gear.Context, gid util.ID) erro
 
 func (a *Publication) checkWritePermission(ctx *gear.Context, gid, cid util.ID, language string, version uint16) (*bll.PublicationOutput, error) {
 	sess := gear.CtxValue[middleware.Session](ctx)
-	if sess.UserID == util.ANON {
+	if sess == nil || sess.UserID == util.ANON {
 		return nil, gear.ErrForbidden.WithMsg("no permission")
 	}
 
@@ -1000,7 +991,7 @@ func (a *Publication) checkWritePermission(ctx *gear.Context, gid, cid util.ID, 
 	})
 
 	if err != nil {
-		return nil, gear.ErrInternalServerError.From(err)
+		return nil, gear.ErrNotFound.From(err)
 	}
 	if publication.Creator == nil || publication.Status == nil {
 		return nil, gear.ErrInternalServerError.WithMsg("invalid publication")
@@ -1013,7 +1004,7 @@ func (a *Publication) checkWritePermission(ctx *gear.Context, gid, cid util.ID, 
 	return publication, nil
 }
 
-func (a *Publication) tryReadOne(ctx *gear.Context, gid, cid util.ID, language string, version uint16) (*bll.PublicationOutput, error) {
+func (a *Publication) tryReadOne(ctx *gear.Context, gid, cid util.ID, language string, version uint16, full bool) (*bll.PublicationOutput, error) {
 	var err error
 	var role int8 = -2
 
@@ -1021,17 +1012,22 @@ func (a *Publication) tryReadOne(ctx *gear.Context, gid, cid util.ID, language s
 		role, _ = a.blls.Userbase.UserGroupRole(ctx, sess.UserID, gid)
 	}
 
-	publication, err := a.blls.Writing.GetPublication(ctx, &bll.QueryPublication{
+	input := &bll.QueryPublication{
 		GID:      gid,
 		CID:      cid,
 		Language: language,
 		Version:  version,
 		Fields:   "status,creator,updated_at",
-	})
+	}
+	if full {
+		input.Fields = ""
+	}
+	publication, err := a.blls.Writing.GetPublication(ctx, input)
 
 	if err != nil {
-		return nil, gear.ErrInternalServerError.From(err)
+		return nil, gear.ErrNotFound.From(err)
 	}
+
 	if publication.Creator == nil || publication.Status == nil {
 		return nil, gear.ErrInternalServerError.WithMsg("invalid publication")
 	}

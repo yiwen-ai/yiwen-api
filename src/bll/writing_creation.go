@@ -11,7 +11,7 @@ import (
 // TODO: more validation
 type CreateCreationInput struct {
 	GID         util.ID    `json:"gid" cbor:"gid" validate:"required"`
-	Title       string     `json:"title" cbor:"title" validate:"gte=4,lte=256"`
+	Title       string     `json:"title" cbor:"title" validate:"gte=1,lte=256"`
 	Content     util.Bytes `json:"content" cbor:"content" validate:"required"`
 	Language    string     `json:"language" cbor:"language"`
 	OriginalUrl *string    `json:"original_url,omitempty" cbor:"original_url,omitempty" validate:"omitempty,http_url"`

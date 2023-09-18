@@ -299,6 +299,43 @@ func (b *Writing) GetPublication(ctx context.Context, input *QueryPublication) (
 	return &output.Result, nil
 }
 
+type ImplicitQueryPublication struct {
+	CID      util.ID  `json:"cid" cbor:"cid" query:"cid" validate:"required"`
+	GID      *util.ID `json:"gid" cbor:"gid" query:"gid"`
+	Language string   `json:"language" cbor:"language" query:"language"`
+	Version  uint16   `json:"version" cbor:"version" query:"version" validate:"omitempty,gte=0,lte=10000"`
+	Fields   string   `json:"fields" cbor:"fields" query:"fields"`
+}
+
+func (i *ImplicitQueryPublication) Validate() error {
+	if err := util.Validator.Struct(i); err != nil {
+		return gear.ErrBadRequest.From(err)
+	}
+
+	return nil
+}
+
+func (b *Writing) ImplicitGetPublication(ctx context.Context, input *ImplicitQueryPublication) (*PublicationOutput, error) {
+	output := SuccessResponse[PublicationOutput]{}
+
+	query := url.Values{}
+	query.Add("cid", input.CID.String())
+	if input.GID != nil {
+		query.Add("gid", input.GID.String())
+	}
+	if input.Language != "" {
+		query.Add("language", input.Language)
+	}
+	if input.Fields != "" {
+		query.Add("fields", input.Fields)
+	}
+	if err := b.svc.Get(ctx, "/v1/publication/implicit_get?"+query.Encode(), &output); err != nil {
+		return nil, err
+	}
+
+	return &output.Result, nil
+}
+
 type UpdatePublicationInput struct {
 	GID       util.ID   `json:"gid" cbor:"gid" validate:"required"`
 	CID       util.ID   `json:"cid" cbor:"cid" validate:"required"`
