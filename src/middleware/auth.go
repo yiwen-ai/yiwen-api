@@ -45,26 +45,32 @@ func (m AuthLevel) Auth(ctx *gear.Context) error {
 	l := uint8(m)
 
 	// extract language from cookie or accept-language
-	if ctx.GetHeader("x-language") == "" {
+	lang := ctx.Query("language")
+	if lang == "" {
+		lang = ctx.Query("lang")
+	}
+	if lang == "" {
+		lang = ctx.GetHeader("x-language")
+	}
+	if lang == "" {
 		if c, _ := ctx.Req.Cookie("lang"); c != nil {
-			ctx.Req.Header.Set("x-language", c.Value)
+			lang = c.Value
 		} else if locale := ctx.AcceptLanguage(); locale != "" {
 			if i := strings.IndexAny(locale, "-_"); i > 0 {
-				locale = locale[:i]
+				lang = locale[:i]
 			}
-			ctx.Req.Header.Set("x-language", locale)
 		}
 	}
 
-	lang := util.Lang639_3(ctx.GetHeader("x-language"))
+	lang = util.Lang639_3(lang)
 	ctx.Req.Header.Set("x-language", lang)
 
 	sess, err := extractAuth(ctx)
 	log := logging.FromCtx(ctx)
+	log["language"] = lang
 	if err != nil {
 		if l == 0 {
 			sess := &Session{UserID: util.ANON, Lang: lang}
-			log["language"] = lang
 			log["uid"] = sess.UserID
 
 			ctx.Req.Header.Set("x-auth-user", sess.UserID.String())
@@ -82,13 +88,11 @@ func (m AuthLevel) Auth(ctx *gear.Context) error {
 	}
 
 	sess.Lang = lang
-	log["language"] = lang
 	log["uid"] = sess.UserID
 	if l > 1 && !sess.HasToken() {
 		return gear.ErrUnauthorized.WithMsg("invalid token")
 	}
 	log["aud"] = sess.AppID
-
 	// inject auth headers into context for base service
 	util.CopyHeader(util.HeaderFromCtx(ctx), ctx.Req.Header,
 		"x-auth-user",
