@@ -45,7 +45,7 @@ func (m AuthLevel) Auth(ctx *gear.Context) error {
 	l := uint8(m)
 
 	// extract language from cookie or accept-language
-	if ctx.Req.Header.Get("x-language") == "" {
+	if ctx.GetHeader("x-language") == "" {
 		if c, _ := ctx.Req.Cookie("lang"); c != nil {
 			ctx.Req.Header.Set("x-language", c.Value)
 		} else if locale := ctx.AcceptLanguage(); locale != "" {
@@ -56,18 +56,15 @@ func (m AuthLevel) Auth(ctx *gear.Context) error {
 		}
 	}
 
-	lang := ctx.GetHeader("x-language")
-	languages := ctx.Setting(util.LanguagesKey).(util.Languages)
-	if langs := languages.Get(lang); len(langs) > 0 {
-		lang = langs[0]
-		ctx.Req.Header.Set("x-language", lang)
-	}
+	lang := util.Lang639_3(ctx.GetHeader("x-language"))
+	ctx.Req.Header.Set("x-language", lang)
 
 	sess, err := extractAuth(ctx)
 	log := logging.FromCtx(ctx)
 	if err != nil {
 		if l == 0 {
 			sess := &Session{UserID: util.ANON, Lang: lang}
+			log["language"] = lang
 			log["uid"] = sess.UserID
 
 			ctx.Req.Header.Set("x-auth-user", sess.UserID.String())

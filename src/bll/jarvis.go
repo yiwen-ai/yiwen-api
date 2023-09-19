@@ -16,6 +16,7 @@ import (
 type Jarvis struct {
 	svc        service.APIHost
 	tokensRate map[string]float32
+	Languages  [][]string
 }
 
 func (b *Jarvis) InitApp(ctx context.Context, app *gear.App) error {
@@ -23,11 +24,8 @@ func (b *Jarvis) InitApp(ctx context.Context, app *gear.App) error {
 	if err != nil {
 		return err
 	}
-
-	app.Set(util.LanguagesKey, util.Languages(output))
-
+	b.Languages = output
 	b.tokensRate = make(map[string]float32, len(conf.Config.TokensRate))
-
 	for _, vv := range output {
 		if f, ok := conf.Config.TokensRate[vv[1]]; ok {
 			b.tokensRate[vv[0]] = f

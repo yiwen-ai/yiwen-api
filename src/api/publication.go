@@ -591,9 +591,9 @@ func (a *Publication) ListPublished(ctx *gear.Context) error {
 		return gear.ErrInternalServerError.From(err)
 	}
 
-	output.Result.LoadCreators(func(ids ...util.ID) []bll.UserInfo {
-		return a.blls.Userbase.LoadUserInfo(ctx, ids...)
-	})
+	// output.Result.LoadCreators(func(ids ...util.ID) []bll.UserInfo {
+	// 	return a.blls.Userbase.LoadUserInfo(ctx, ids...)
+	// })
 	output.Result.LoadGroups(func(ids ...util.ID) []bll.GroupInfo {
 		return a.blls.Userbase.LoadGroupInfo(ctx, ids...)
 	})
@@ -616,9 +616,9 @@ func (a *Publication) List(ctx *gear.Context) error {
 		return gear.ErrInternalServerError.From(err)
 	}
 
-	output.Result.LoadCreators(func(ids ...util.ID) []bll.UserInfo {
-		return a.blls.Userbase.LoadUserInfo(ctx, ids...)
-	})
+	// output.Result.LoadCreators(func(ids ...util.ID) []bll.UserInfo {
+	// 	return a.blls.Userbase.LoadUserInfo(ctx, ids...)
+	// })
 	output.Result.LoadGroups(func(ids ...util.ID) []bll.GroupInfo {
 		return a.blls.Userbase.LoadGroupInfo(ctx, ids...)
 	})
@@ -672,9 +672,9 @@ func (a *Publication) ListByFollowing(ctx *gear.Context) error {
 		return gear.ErrInternalServerError.From(err)
 	}
 
-	output.Result.LoadCreators(func(ids ...util.ID) []bll.UserInfo {
-		return a.blls.Userbase.LoadUserInfo(ctx, ids...)
-	})
+	// output.Result.LoadCreators(func(ids ...util.ID) []bll.UserInfo {
+	// 	return a.blls.Userbase.LoadUserInfo(ctx, ids...)
+	// })
 	output.Result.LoadGroups(func(ids ...util.ID) []bll.GroupInfo {
 		return a.blls.Userbase.LoadGroupInfo(ctx, ids...)
 	})
@@ -698,9 +698,9 @@ func (a *Publication) ListArchived(ctx *gear.Context) error {
 		return gear.ErrInternalServerError.From(err)
 	}
 
-	output.Result.LoadCreators(func(ids ...util.ID) []bll.UserInfo {
-		return a.blls.Userbase.LoadUserInfo(ctx, ids...)
-	})
+	// output.Result.LoadCreators(func(ids ...util.ID) []bll.UserInfo {
+	// 	return a.blls.Userbase.LoadUserInfo(ctx, ids...)
+	// })
 	output.Result.LoadGroups(func(ids ...util.ID) []bll.GroupInfo {
 		return a.blls.Userbase.LoadGroupInfo(ctx, ids...)
 	})

@@ -17,8 +17,7 @@ type Jarvis struct {
 }
 
 func (a *Jarvis) ListLanguages(ctx *gear.Context) error {
-	output := ctx.Setting(util.LanguagesKey).(util.Languages)
-	return ctx.OkSend(bll.SuccessResponse[[][]string]{Result: output})
+	return ctx.OkSend(bll.SuccessResponse[[][]string]{Result: a.blls.Jarvis.Languages})
 }
 
 func (a *Jarvis) ListModels(ctx *gear.Context) error {
@@ -34,6 +33,9 @@ func (a *Jarvis) Search(ctx *gear.Context) error {
 	lang := ""
 	if sess := gear.CtxValue[middleware.Session](ctx); sess != nil {
 		lang = sess.Lang
+	}
+	if input.Language == nil && lang != "" {
+		input.Language = util.Ptr(lang)
 	}
 
 	output := bll.SearchOutput{}
@@ -100,11 +102,9 @@ func (a *Jarvis) Search(ctx *gear.Context) error {
 			continue
 		}
 
-		if doc, err := a.blls.Writing.GetPublication(ctx, &bll.QueryPublication{
-			GID:      item.GID,
+		if doc, err := a.blls.Writing.ImplicitGetPublication(ctx, &bll.ImplicitQueryPublication{
 			CID:      item.CID,
 			Language: item.Language,
-			Version:  item.Version,
 			Fields:   "status,title,summary",
 		}); err == nil && *doc.Status == 2 {
 			v := bll.SearchDocument{
@@ -153,6 +153,10 @@ func (a *Jarvis) GroupSearch(ctx *gear.Context) error {
 	}
 
 	lang := sess.Lang
+	if input.Language == nil && lang != "" {
+		input.Language = util.Ptr(lang)
+	}
+
 	output := bll.SearchOutput{}
 	var wg sync.WaitGroup
 	wg.Add(2)
@@ -220,11 +224,10 @@ func (a *Jarvis) GroupSearch(ctx *gear.Context) error {
 			continue
 		}
 
-		if doc, err := a.blls.Writing.GetPublication(ctx, &bll.QueryPublication{
-			GID:      item.GID,
+		if doc, err := a.blls.Writing.ImplicitGetPublication(ctx, &bll.ImplicitQueryPublication{
+			GID:      util.Ptr(item.GID),
 			CID:      item.CID,
 			Language: item.Language,
-			Version:  item.Version,
 			Fields:   "title,summary",
 		}); err == nil {
 			v := bll.SearchDocument{
