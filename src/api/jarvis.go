@@ -31,7 +31,11 @@ func (a *Jarvis) Search(ctx *gear.Context) error {
 		return err
 	}
 
-	rid := ctx.GetHeader("X-Request-Id")
+	lang := ""
+	if sess := gear.CtxValue[middleware.Session](ctx); sess != nil {
+		lang = sess.Lang
+	}
+
 	output := bll.SearchOutput{}
 	var wg sync.WaitGroup
 	wg.Add(2)
@@ -39,6 +43,8 @@ func (a *Jarvis) Search(ctx *gear.Context) error {
 	now := time.Now()
 	semanticElapsed := int64(0)
 	literalElapsed := int64(0)
+
+	var semanticOutput []*bll.EmbeddingSearchOutput
 	go logging.Run(func() logging.Log {
 		defer wg.Done()
 
@@ -49,39 +55,7 @@ func (a *Jarvis) Search(ctx *gear.Context) error {
 			Language: input.Language,
 		}
 
-		semanticOutput, err := a.blls.Jarvis.EmbeddingSearch(ctx, semanticInput)
-		if err != nil {
-			semanticElapsed = int64(time.Since(now)) / 1e6
-			return logging.Log{
-				"action":   "semantic_search",
-				"rid":      rid,
-				"gid":      input.GID.String(),
-				"language": input.Language,
-				"elapsed":  semanticElapsed,
-				"error":    err.Error(),
-			}
-		}
-
-		for _, item := range semanticOutput {
-			if doc, err := a.blls.Writing.GetPublication(ctx, &bll.QueryPublication{
-				GID:      item.GID,
-				CID:      item.CID,
-				Language: item.Language,
-				Version:  item.Version,
-				Fields:   "title,summary",
-			}); err == nil {
-				output.Hits = append(output.Hits, bll.SearchDocument{
-					GID:      doc.GID,
-					CID:      doc.CID,
-					Language: doc.Language,
-					Version:  doc.Version,
-					Kind:     1,
-					Title:    *doc.Title,
-					Summary:  *doc.Summary,
-				})
-			}
-		}
-
+		semanticOutput = a.blls.Jarvis.EmbeddingSearch(ctx, semanticInput)
 		semanticElapsed = int64(time.Since(now)) / 1e6
 		return nil
 	})
@@ -96,17 +70,66 @@ func (a *Jarvis) Search(ctx *gear.Context) error {
 	})
 
 	wg.Wait()
-
-	logging.SetTo(ctx, "semanticResults", len(output.Hits))
+	logging.SetTo(ctx, "semanticResults", len(semanticOutput))
 	logging.SetTo(ctx, "literalResults", len(literalOutput.Hits))
-	output.Hits = append(output.Hits, literalOutput.Hits...)
+	logging.SetTo(ctx, "semanticElapsed", semanticElapsed)
+	logging.SetTo(ctx, "literalElapsed", literalElapsed)
+
+	output.Hits = make([]bll.SearchDocument, 0, len(semanticOutput)+len(literalOutput.Hits))
+	// append(output.Hits, literalOutput.Hits...)
 	output.Languages = literalOutput.Languages
+	resMap := make(map[util.ID]int, len(semanticOutput)+len(literalOutput.Hits))
+	for i, item := range literalOutput.Hits {
+		j, ok := resMap[item.CID]
+		if ok && item.Language != lang {
+			continue
+		}
+
+		v := literalOutput.Hits[i]
+		if ok {
+			output.Hits[j] = v
+		} else {
+			output.Hits = append(output.Hits, v)
+			resMap[item.CID] = len(output.Hits) - 1
+		}
+	}
+
+	for _, item := range semanticOutput {
+		j, ok := resMap[item.CID]
+		if ok && item.Language != lang {
+			continue
+		}
+
+		if doc, err := a.blls.Writing.GetPublication(ctx, &bll.QueryPublication{
+			GID:      item.GID,
+			CID:      item.CID,
+			Language: item.Language,
+			Version:  item.Version,
+			Fields:   "status,title,summary",
+		}); err == nil && *doc.Status == 2 {
+			v := bll.SearchDocument{
+				GID:      doc.GID,
+				CID:      doc.CID,
+				Language: doc.Language,
+				Version:  doc.Version,
+				Kind:     1,
+				Title:    *doc.Title,
+				Summary:  *doc.Summary,
+			}
+
+			if ok {
+				output.Hits[j] = v
+			} else {
+				output.Hits = append(output.Hits, v)
+				resMap[item.CID] = len(output.Hits) - 1
+			}
+		}
+	}
+
 	(&output).LoadGroups(func(ids ...util.ID) []bll.GroupInfo {
 		return a.blls.Userbase.LoadGroupInfo(ctx, ids...)
 	})
 
-	logging.SetTo(ctx, "semanticElapsed", semanticElapsed)
-	logging.SetTo(ctx, "literalElapsed", literalElapsed)
 	return ctx.OkSend(bll.SuccessResponse[bll.SearchOutput]{Result: output})
 }
 
@@ -129,6 +152,7 @@ func (a *Jarvis) GroupSearch(ctx *gear.Context) error {
 		return gear.ErrForbidden.WithMsg("no permission")
 	}
 
+	lang := sess.Lang
 	output := bll.SearchOutput{}
 	var wg sync.WaitGroup
 	wg.Add(2)
@@ -136,6 +160,8 @@ func (a *Jarvis) GroupSearch(ctx *gear.Context) error {
 	now := time.Now()
 	semanticElapsed := int64(0)
 	literalElapsed := int64(0)
+
+	var semanticOutput []*bll.EmbeddingSearchOutput
 	go logging.Run(func() logging.Log {
 		defer wg.Done()
 
@@ -149,40 +175,7 @@ func (a *Jarvis) GroupSearch(ctx *gear.Context) error {
 			semanticInput.Language = input.Language
 		}
 
-		semanticOutput, err := a.blls.Jarvis.EmbeddingSearch(ctx, semanticInput)
-		if err != nil {
-			semanticElapsed = int64(time.Since(now)) / 1e6
-			return logging.Log{
-				"action":   "semantic_search",
-				"rid":      sess.RID,
-				"uid":      sess.UserID,
-				"gid":      input.GID.String(),
-				"language": input.Language,
-				"elapsed":  semanticElapsed,
-				"error":    err.Error(),
-			}
-		}
-
-		for _, item := range semanticOutput {
-			if doc, err := a.blls.Writing.GetPublication(ctx, &bll.QueryPublication{
-				GID:      item.GID,
-				CID:      item.CID,
-				Language: item.Language,
-				Version:  item.Version,
-				Fields:   "title,summary",
-			}); err == nil {
-				output.Hits = append(output.Hits, bll.SearchDocument{
-					GID:      doc.GID,
-					CID:      doc.CID,
-					Language: doc.Language,
-					Version:  doc.Version,
-					Kind:     1,
-					Title:    *doc.Title,
-					Summary:  *doc.Summary,
-				})
-			}
-		}
-
+		semanticOutput = a.blls.Jarvis.EmbeddingSearch(ctx, semanticInput)
 		semanticElapsed = int64(time.Since(now)) / 1e6
 		return nil
 	})
@@ -197,14 +190,66 @@ func (a *Jarvis) GroupSearch(ctx *gear.Context) error {
 	})
 
 	wg.Wait()
-	output.Hits = append(output.Hits, literalOutput.Hits...)
+	logging.SetTo(ctx, "semanticResults", len(semanticOutput))
+	logging.SetTo(ctx, "literalResults", len(literalOutput.Hits))
+	logging.SetTo(ctx, "semanticElapsed", semanticElapsed)
+	logging.SetTo(ctx, "literalElapsed", literalElapsed)
+
+	output.Hits = make([]bll.SearchDocument, 0, len(semanticOutput)+len(literalOutput.Hits))
+	// append(output.Hits, literalOutput.Hits...)
 	output.Languages = literalOutput.Languages
+	resMap := make(map[util.ID]int, len(semanticOutput)+len(literalOutput.Hits))
+	for i, item := range literalOutput.Hits {
+		j, ok := resMap[item.CID]
+		if ok && item.Language != lang {
+			continue
+		}
+
+		v := literalOutput.Hits[i]
+		if ok {
+			output.Hits[j] = v
+		} else {
+			output.Hits = append(output.Hits, v)
+			resMap[item.CID] = len(output.Hits) - 1
+		}
+	}
+
+	for _, item := range semanticOutput {
+		j, ok := resMap[item.CID]
+		if ok && item.Language != lang {
+			continue
+		}
+
+		if doc, err := a.blls.Writing.GetPublication(ctx, &bll.QueryPublication{
+			GID:      item.GID,
+			CID:      item.CID,
+			Language: item.Language,
+			Version:  item.Version,
+			Fields:   "title,summary",
+		}); err == nil {
+			v := bll.SearchDocument{
+				GID:      doc.GID,
+				CID:      doc.CID,
+				Language: doc.Language,
+				Version:  doc.Version,
+				Kind:     1,
+				Title:    *doc.Title,
+				Summary:  *doc.Summary,
+			}
+
+			if ok {
+				output.Hits[j] = v
+			} else {
+				output.Hits = append(output.Hits, v)
+				resMap[item.CID] = len(output.Hits) - 1
+			}
+		}
+	}
+
 	(&output).LoadGroups(func(ids ...util.ID) []bll.GroupInfo {
 		return a.blls.Userbase.LoadGroupInfo(ctx, ids...)
 	})
 
-	logging.SetTo(ctx, "semanticElapsed", semanticElapsed)
-	logging.SetTo(ctx, "literalElapsed", literalElapsed)
 	return ctx.OkSend(bll.SuccessResponse[bll.SearchOutput]{Result: output})
 }
 

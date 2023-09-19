@@ -240,11 +240,8 @@ type EmbeddingSearchOutput struct {
 	Content  util.Bytes `json:"content" cbor:"content"`
 }
 
-func (b *Jarvis) EmbeddingSearch(ctx context.Context, input *EmbeddingSearchInput) ([]*EmbeddingSearchOutput, error) {
+func (b *Jarvis) EmbeddingSearch(ctx context.Context, input *EmbeddingSearchInput) []*EmbeddingSearchOutput {
 	output := SuccessResponse[[]*EmbeddingSearchOutput]{}
-	if err := b.svc.Post(ctx, "/v1/embedding/search", input, &output); err != nil {
-		return nil, err
-	}
-
-	return output.Result, nil
+	b.svc.Post(ctx, "/v1/embedding/search", input, &output)
+	return output.Result
 }

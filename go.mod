@@ -11,7 +11,7 @@ require (
 	github.com/go-playground/validator/v10 v10.15.4
 	github.com/google/uuid v1.3.1
 	github.com/jaevor/go-nanoid v1.3.0
-	github.com/klauspost/compress v1.16.7
+	github.com/klauspost/compress v1.17.0
 	github.com/pkoukk/tiktoken-go v0.1.6
 	github.com/pkoukk/tiktoken-go-loader v0.0.1
 	github.com/redis/go-redis/v9 v9.1.0
