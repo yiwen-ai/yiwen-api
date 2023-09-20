@@ -57,8 +57,9 @@ func (m AuthLevel) Auth(ctx *gear.Context) error {
 			lang = c.Value
 		} else if locale := ctx.AcceptLanguage(); locale != "" {
 			if i := strings.IndexAny(locale, "-_"); i > 0 {
-				lang = locale[:i]
+				locale = locale[:i]
 			}
+			lang = locale
 		}
 	}
 
