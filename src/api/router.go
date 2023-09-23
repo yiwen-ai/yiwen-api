@@ -25,6 +25,7 @@ type APIs struct {
 	Log         *Log
 	Publication *Publication
 	Scraping    *Scraping
+	Wechat      *Wechat
 }
 
 func newAPIs(blls *bll.Blls) *APIs {
@@ -37,6 +38,7 @@ func newAPIs(blls *bll.Blls) *APIs {
 		Log:         &Log{blls},
 		Publication: &Publication{blls},
 		Scraping:    &Scraping{blls},
+		Wechat:      &Wechat{blls},
 	}
 }
 
@@ -74,6 +76,8 @@ func newRouters(apis *APIs) []*gear.Router {
 	router.Post("/v1/publication/list", middleware.AuthAllowAnon.Auth, apis.Publication.List) // 匿名时等价于 list_published
 	router.Get("/v1/group/info", middleware.AuthAllowAnon.Auth, apis.Group.GetInfo)
 	router.Get("/v1/group/statistic", middleware.AuthAllowAnon.Auth, apis.Group.GetStatistic)
+
+	router.Post("/v1/wechat/jsapi_ticket", middleware.AuthAllowAnon.Auth, apis.Wechat.JsapiTicket)
 
 	// 需要 access_token
 	router.Get("/v1/search/in_group", middleware.AuthToken.Auth, apis.Jarvis.GroupSearch)

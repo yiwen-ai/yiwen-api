@@ -23,11 +23,12 @@ type Blls struct {
 	Userbase   *Userbase
 	Walletbase *Walletbase
 	Webscraper *Webscraper
+	Wechat     *Wechat
 	Writing    *Writing
 }
 
 // NewBlls ...
-func NewBlls(oss *service.OSS, locker *service.Locker) *Blls {
+func NewBlls(oss *service.OSS, redis *service.Redis, locker *service.Locker) *Blls {
 	cfg := conf.Config.Base
 	return &Blls{
 		Locker:     locker,
@@ -37,6 +38,7 @@ func NewBlls(oss *service.OSS, locker *service.Locker) *Blls {
 		Userbase:   &Userbase{svc: service.APIHost(cfg.Userbase)},
 		Walletbase: &Walletbase{svc: service.APIHost(cfg.Walletbase)},
 		Webscraper: &Webscraper{svc: service.APIHost(cfg.Webscraper)},
+		Wechat:     &Wechat{redis: redis},
 		Writing:    &Writing{svc: service.APIHost(cfg.Writing), oss: oss},
 	}
 }

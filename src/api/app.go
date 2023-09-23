@@ -50,6 +50,10 @@ func NewApp() *gear.App {
 			return err
 		}
 
+		if err := blls.Wechat.InitApp(ctx, app); err != nil {
+			return err
+		}
+
 		return nil
 	})
 

@@ -30,6 +30,10 @@ access_key_id = ""
 access_key_secret = ""
 base_url = "https://fs.yiwen.pub/"
 
+[wechat]
+appid = ""
+secret = ""
+
 [tokens_rate]
 English = 1.0
 Chinese = 1.40

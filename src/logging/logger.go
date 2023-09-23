@@ -1,6 +1,7 @@
 package logging
 
 import (
+	"context"
 	"fmt"
 	"os"
 
@@ -35,6 +36,16 @@ func Run(fn func() Log) {
 		} else {
 			Logger.Info(log)
 		}
+	}
+}
+
+func CtxRun(ctx context.Context, action string, fn func(context.Context) error) {
+	if err := fn(ctx); err != nil {
+		Logger.Err(Log{
+			"kind":    "server",
+			"action":  action,
+			"message": err.Error(),
+		})
 	}
 }
 

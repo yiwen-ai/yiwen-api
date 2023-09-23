@@ -1,6 +1,28 @@
 package util
 
-import "unicode/utf8"
+import (
+	crand "crypto/rand"
+	"encoding/base64"
+	"math/rand"
+	"time"
+	"unicode/utf8"
+)
+
+var mathR *rand.Rand
+
+func init() {
+	mathR = rand.New(rand.NewSource(time.Now().UnixNano()))
+}
+
+func Int63n(n int64) int64 {
+	return mathR.Int63n(n)
+}
+
+func RandString(n int) string {
+	b := make([]byte, n)
+	crand.Read(b)
+	return base64.RawURLEncoding.EncodeToString(b)
+}
 
 func SliceHas[T comparable](sl []T, v T) bool {
 	for _, s := range sl {
