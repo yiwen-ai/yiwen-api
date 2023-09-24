@@ -130,8 +130,8 @@ func newRouters(apis *APIs) []*gear.Router {
 	router.Post("/v1/group/list_my", middleware.AuthToken.Auth, apis.Group.ListMy)
 	router.Post("/v1/group/list_following", middleware.AuthToken.Auth, apis.Group.ListFollowing)
 	router.Post("/v1/group/list_subscribing", middleware.AuthToken.Auth, todo) // 暂不实现
-	router.Patch("/v1/group", middleware.AuthToken.Auth, apis.Group.UpdateInfo)
-	router.Get("/v1/group/upload_logo", middleware.AuthToken.Auth, middleware.CheckUserStatus(0), apis.Publication.UploadFile)
+	router.Patch("/v1/group", middleware.AuthToken.Auth, middleware.CheckUserStatus(0), apis.Group.UpdateInfo)
+	router.Get("/v1/group/upload_logo", middleware.AuthToken.Auth, middleware.CheckUserStatus(0), apis.Group.UploadLogo)
 
 	router.Get("/v1/log/list_recently", middleware.AuthToken.Auth, apis.Log.ListRecently)
 
