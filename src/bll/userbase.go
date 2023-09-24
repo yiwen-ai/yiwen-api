@@ -4,8 +4,10 @@ import (
 	"context"
 	"fmt"
 	"net/url"
+	"strings"
 
 	"github.com/teambition/gear"
+	"github.com/yiwen-ai/yiwen-api/src/conf"
 	"github.com/yiwen-ai/yiwen-api/src/logging"
 	"github.com/yiwen-ai/yiwen-api/src/service"
 	"github.com/yiwen-ai/yiwen-api/src/util"
@@ -13,6 +15,7 @@ import (
 
 type Userbase struct {
 	svc service.APIHost
+	oss *service.OSS
 }
 
 func (b *Userbase) UserGroupRole(ctx context.Context, uid, gid util.ID) (int8, error) {
@@ -192,4 +195,37 @@ func (b *Userbase) GroupInfo(ctx context.Context, input *QueryIdCn) (*GroupInfo,
 	}
 
 	return &output.Result, nil
+}
+
+type UpdateGroupInfoInput struct {
+	ID      util.ID `json:"id" cbor:"id" validate:"required"`
+	Name    *string `json:"name,omitempty" cbor:"name,omitempty" validate:"omitempty,gte=2,lte=16"`
+	Logo    *string `json:"logo,omitempty" cbor:"logo,omitempty" validate:"omitempty,http_url"`
+	Slogan  *string `json:"slogan,omitempty" cbor:"slogan,omitempty" validate:"omitempty,gte=0,lte=256"`
+	Website *string `json:"website,omitempty" cbor:"website,omitempty" validate:"omitempty,http_url"`
+}
+
+func (i *UpdateGroupInfoInput) Validate() error {
+	if err := util.Validator.Struct(i); err != nil {
+		return gear.ErrBadRequest.From(err)
+	}
+	if i.Logo != nil && !strings.HasPrefix(*i.Logo, conf.Config.OSSPic.BaseUrl) {
+		return gear.ErrBadRequest.WithMsgf("logo must be a url from %s", conf.Config.OSSPic.BaseUrl)
+	}
+	return nil
+}
+
+func (b *Userbase) UpdateGroupInfo(ctx context.Context, input *UpdateGroupInfoInput) (*GroupInfo, error) {
+	output := SuccessResponse[GroupInfo]{}
+
+	err := b.svc.Patch(ctx, "/v1/group", input, &output)
+	if err != nil {
+		return nil, err
+	}
+
+	return &output.Result, nil
+}
+
+func (b *Userbase) SignPicturePolicy(id util.ID) service.PostFilePolicy {
+	return b.oss.SignPicturePolicy(id.String())
 }

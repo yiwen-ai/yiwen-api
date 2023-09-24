@@ -35,7 +35,7 @@ func NewBlls(oss *service.OSS, redis *service.Redis, locker *service.Locker) *Bl
 		Jarvis:     &Jarvis{svc: service.APIHost(cfg.Jarvis)},
 		Logbase:    &Logbase{svc: service.APIHost(cfg.Logbase)},
 		Taskbase:   &Taskbase{svc: service.APIHost(cfg.Taskbase)},
-		Userbase:   &Userbase{svc: service.APIHost(cfg.Userbase)},
+		Userbase:   &Userbase{svc: service.APIHost(cfg.Userbase), oss: oss},
 		Walletbase: &Walletbase{svc: service.APIHost(cfg.Walletbase)},
 		Webscraper: &Webscraper{svc: service.APIHost(cfg.Webscraper)},
 		Wechat:     &Wechat{redis: redis},

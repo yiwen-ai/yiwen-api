@@ -70,7 +70,8 @@ type OSS struct {
 	Endpoint        string `json:"endpoint" toml:"endpoint"`
 	AccessKeyId     string `json:"access_key_id" toml:"access_key_id"`
 	AccessKeySecret string `json:"access_key_secret" toml:"access_key_secret"`
-	BaseUrl         string `json:"url_base" toml:"base_url"`
+	Prefix          string `json:"prefix" toml:"prefix"`
+	BaseUrl         string `json:"base_url" toml:"base_url"`
 }
 
 type Wechat struct {
@@ -94,6 +95,7 @@ type ConfigTpl struct {
 	Redis           Redis              `json:"redis" toml:"redis"`
 	Base            Base               `json:"base" toml:"base"`
 	OSS             OSS                `json:"oss" toml:"oss"`
+	OSSPic          OSS                `json:"oss_pic" toml:"oss_pic"`
 	Wechat          Wechat             `json:"wechat" toml:"wechat"`
 	TokensRate      map[string]float32 `json:"tokens_rate" toml:"tokens_rate"`
 	Recommendations []Recommendation   `json:"recommendations" toml:"recommendations"`

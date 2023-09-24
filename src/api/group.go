@@ -4,6 +4,8 @@ import (
 	"github.com/teambition/gear"
 
 	"github.com/yiwen-ai/yiwen-api/src/bll"
+	"github.com/yiwen-ai/yiwen-api/src/middleware"
+	"github.com/yiwen-ai/yiwen-api/src/service"
 	"github.com/yiwen-ai/yiwen-api/src/util"
 )
 
@@ -79,6 +81,52 @@ func (a *Group) GetInfo(ctx *gear.Context) error {
 	}
 
 	return ctx.OkSend(bll.SuccessResponse[*bll.GroupInfo]{Result: res})
+}
+
+func (a *Group) UploadLogo(ctx *gear.Context) error {
+	input := &bll.QueryIdCn{}
+	err := ctx.ParseURL(input)
+	if err != nil {
+		return err
+	}
+
+	if input.ID == nil {
+		return gear.ErrBadRequest.WithMsgf("missing group id")
+	}
+
+	sess := gear.CtxValue[middleware.Session](ctx)
+	role, err := a.blls.Userbase.UserGroupRole(ctx, sess.UserID, *input.ID)
+	if err != nil {
+		return gear.ErrInternalServerError.From(err)
+	}
+	if role < 1 {
+		return gear.ErrForbidden.WithMsg("no permission")
+	}
+
+	output := a.blls.Userbase.SignPicturePolicy(*input.ID)
+	return ctx.OkSend(bll.SuccessResponse[service.PostFilePolicy]{Result: output})
+}
+
+func (a *Group) UpdateInfo(ctx *gear.Context) error {
+	input := &bll.UpdateGroupInfoInput{}
+	if err := ctx.ParseBody(input); err != nil {
+		return err
+	}
+
+	sess := gear.CtxValue[middleware.Session](ctx)
+	role, err := a.blls.Userbase.UserGroupRole(ctx, sess.UserID, input.ID)
+	if err != nil {
+		return gear.ErrInternalServerError.From(err)
+	}
+	if role < 1 {
+		return gear.ErrForbidden.WithMsg("no permission")
+	}
+
+	output, err := a.blls.Userbase.UpdateGroupInfo(ctx, input)
+	if err != nil {
+		return gear.ErrInternalServerError.From(err)
+	}
+	return ctx.OkSend(bll.SuccessResponse[*bll.GroupInfo]{Result: output})
 }
 
 type GroupStatisticOutput struct {

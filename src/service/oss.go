@@ -19,8 +19,10 @@ func init() {
 }
 
 type OSS struct {
-	cfg    conf.OSS
-	bucket *oss.Bucket
+	cfg       conf.OSS
+	bucket    *oss.Bucket
+	cfgPic    conf.OSS
+	bucketPic *oss.Bucket
 }
 
 func NewOSS() *OSS {
@@ -34,9 +36,21 @@ func NewOSS() *OSS {
 		panic(err)
 	}
 
+	cfgPic := conf.Config.OSSPic
+	clientPic, err := oss.New(cfgPic.Endpoint, cfgPic.AccessKeyId, cfgPic.AccessKeySecret)
+	if err != nil {
+		panic(err)
+	}
+	bucketPic, err := clientPic.Bucket(cfgPic.Bucket)
+	if err != nil {
+		panic(err)
+	}
+
 	return &OSS{
-		cfg:    cfg,
-		bucket: bucket,
+		cfg:       cfg,
+		bucket:    bucket,
+		cfgPic:    cfgPic,
+		bucketPic: bucketPic,
 	}
 }
 
@@ -91,6 +105,37 @@ func (s *OSS) SignPostPolicy(gid, cid, lang string, version uint) PostFilePolicy
 		Policy:    policy,
 		Signature: base64.StdEncoding.EncodeToString(hm.Sum(nil)),
 		BaseUrl:   s.cfg.BaseUrl + dir,
+	}
+	return pp
+}
+
+func (s *OSS) SignPicturePolicy(id string) PostFilePolicy {
+	expiration := time.Now().Add(60 * time.Second).UTC().Format("2006-01-02T15:04:05.999Z")
+	// https://help.aliyun.com/zh/oss/use-cases/oss-performance-and-scalability-best-practices
+	// 反转打散分区，避免热点
+	key := fmt.Sprintf("%s/%s/%s", s.cfgPic.Prefix, util.Reverse(id), util.RandString(4))
+	data, _ := json.Marshal(map[string]any{
+		"expiration": expiration,
+		"conditions": []any{
+			// map[string]string{"bucket": "ywfs"},
+			[]any{"content-length-range", ossMinContentLength, ossMaxContentLength},
+			[]any{"eq", "$key", key},
+			[]any{"in", "$content-type", ossContentType},
+			[]any{"eq", "$cache-control", ossCacheControl},
+			[]any{"eq", "$content-disposition", ossContentDisposition},
+		},
+	})
+
+	policy := base64.StdEncoding.EncodeToString(data)
+	hm := hmac.New(sha1.New, []byte(s.cfgPic.AccessKeySecret))
+	hm.Write([]byte(policy))
+	pp := PostFilePolicy{
+		Host:      fmt.Sprintf("https://%s.%s", s.cfgPic.Bucket, s.cfgPic.Endpoint),
+		Dir:       key,
+		AccessKey: s.cfgPic.AccessKeyId,
+		Policy:    policy,
+		Signature: base64.StdEncoding.EncodeToString(hm.Sum(nil)),
+		BaseUrl:   s.cfgPic.BaseUrl + key,
 	}
 	return pp
 }

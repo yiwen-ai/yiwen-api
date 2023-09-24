@@ -30,6 +30,14 @@ access_key_id = ""
 access_key_secret = ""
 base_url = "https://fs.yiwen.pub/"
 
+[oss_pic]
+bucket = "yiwenai"
+endpoint = "oss-cn-hangzhou.aliyuncs.com"
+access_key_id = ""
+access_key_secret = ""
+prefix = "dev/pic/"
+base_url = "https://cdn.yiwen.pub/"
+
 [wechat]
 appid = ""
 secret = ""
