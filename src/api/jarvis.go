@@ -34,9 +34,9 @@ func (a *Jarvis) Search(ctx *gear.Context) error {
 	if sess := gear.CtxValue[middleware.Session](ctx); sess != nil {
 		lang = sess.Lang
 	}
-	if input.Language == nil && lang != "" {
-		input.Language = util.Ptr(lang)
-	}
+	// if input.Language == nil && lang != "" {
+	// 	input.Language = util.Ptr(lang)
+	// }
 
 	output := bll.SearchOutput{}
 	var wg sync.WaitGroup
@@ -153,9 +153,9 @@ func (a *Jarvis) GroupSearch(ctx *gear.Context) error {
 	}
 
 	lang := sess.Lang
-	if input.Language == nil && lang != "" {
-		input.Language = util.Ptr(lang)
-	}
+	// if input.Language == nil && lang != "" {
+	// 	input.Language = util.Ptr(lang)
+	// }
 
 	output := bll.SearchOutput{}
 	var wg sync.WaitGroup
