@@ -11,6 +11,7 @@ import (
 
 	"github.com/yiwen-ai/yiwen-api/src/bll"
 	"github.com/yiwen-ai/yiwen-api/src/conf"
+	"github.com/yiwen-ai/yiwen-api/src/logging"
 	"github.com/yiwen-ai/yiwen-api/src/util"
 )
 
@@ -60,9 +61,13 @@ func (a *Wechat) JsapiTicket(ctx *gear.Context) error {
 		Timestamp: uint(time.Now().Unix()),
 	}
 	h := sha1.New()
-	h.Write([]byte(fmt.Sprintf("jsapi_ticket=%s&noncestr=%s&timestamp=%d&url=%s",
-		ticket, output.NonceStr, output.Timestamp, output.Url)))
+	s := fmt.Sprintf("jsapi_ticket=%s&noncestr=%s&timestamp=%d&url=%s",
+		ticket, output.NonceStr, output.Timestamp, output.Url)
+	h.Write([]byte(s))
 	output.Signature = hex.EncodeToString(h.Sum(nil))
+	logging.SetTo(ctx, "input_url", output.Url)
+	logging.SetTo(ctx, "output_s", s)
+	logging.SetTo(ctx, "output_sig", output.Signature)
 
 	return ctx.OkSend(bll.SuccessResponse[*WechatTicketOutput]{Result: output})
 }
