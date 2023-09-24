@@ -128,7 +128,7 @@ func (b *Wechat) fetchTicket(ctx context.Context) error {
 	}
 
 	api := fmt.Sprintf(
-		"https://api.weixin.qq.com/cgi-bin/ticket/getticket?access_token=%s&type=wx_card", token)
+		"https://api.weixin.qq.com/cgi-bin/ticket/getticket?access_token=%s&type=jsapi", token)
 	output := &WechatTicket{}
 	if err := util.RequestJSON(ctx, util.ExternalHTTPClient, "GET", api, nil, output); err != nil {
 		return err

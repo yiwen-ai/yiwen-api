@@ -66,8 +66,6 @@ func (a *Wechat) JsapiTicket(ctx *gear.Context) error {
 	h.Write([]byte(s))
 	output.Signature = hex.EncodeToString(h.Sum(nil))
 	logging.SetTo(ctx, "input_url", output.Url)
-	logging.SetTo(ctx, "output_s", s)
-	logging.SetTo(ctx, "output_sig", output.Signature)
 
 	return ctx.OkSend(bll.SuccessResponse[*WechatTicketOutput]{Result: output})
 }
