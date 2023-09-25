@@ -29,7 +29,7 @@ type SearchDocument struct {
 	CID       util.ID    `json:"cid" cbor:"cid"`
 	Language  string     `json:"language" cbor:"language"`
 	Version   uint16     `json:"version" cbor:"version"`
-	UpdatedAt int64      `json:"updated_at,omitempty" cbor:"updated_at,omitempty"`
+	UpdatedAt int64      `json:"updated_at" cbor:"updated_at"`
 	Kind      int8       `json:"kind" cbor:"kind"`
 	Title     string     `json:"title" cbor:"title"`
 	Summary   string     `json:"summary" cbor:"summary"`

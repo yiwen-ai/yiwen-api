@@ -378,28 +378,30 @@ func (a *Publication) GetByJob(ctx *gear.Context) error {
 		Version:  *p.Version,
 	}
 
-	progress := int8(0)
-	if log.Action == "creation.release" {
-		res, err := a.blls.Jarvis.GetSummary(ctx, teInput)
-		if err != nil {
-			return gear.ErrInternalServerError.From(err)
+	if log.Status == 0 {
+		progress := int8(0)
+		if log.Action == "creation.release" {
+			res, err := a.blls.Jarvis.GetSummary(ctx, teInput)
+			if err != nil {
+				return gear.ErrInternalServerError.From(err)
+			}
+
+			progress = res.Progress
+		} else {
+			res, err := a.blls.Jarvis.GetTranslation(ctx, teInput)
+			if err != nil {
+				return gear.ErrInternalServerError.From(err)
+			}
+			progress = res.Progress
 		}
 
-		progress = res.Progress
-	} else {
-		res, err := a.blls.Jarvis.GetTranslation(ctx, teInput)
-		if err != nil {
-			return gear.ErrInternalServerError.From(err)
+		if progress < 100 {
+			return ctx.Send(http.StatusAccepted, bll.SuccessResponse[*bll.PublicationOutput]{
+				Job:      input.ID.String(),
+				Progress: util.Ptr(progress),
+				Result:   nil,
+			})
 		}
-		progress = res.Progress
-	}
-
-	if progress < 100 {
-		return ctx.Send(http.StatusAccepted, bll.SuccessResponse[*bll.PublicationOutput]{
-			Job:      input.ID.String(),
-			Progress: util.Ptr(progress),
-			Result:   nil,
-		})
 	}
 
 	output, err := a.blls.Writing.GetPublication(ctx, &bll.QueryPublication{
