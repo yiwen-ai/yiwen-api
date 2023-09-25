@@ -25,14 +25,16 @@ func (i *SearchInput) Validate() error {
 }
 
 type SearchDocument struct {
-	GID      util.ID    `json:"gid" cbor:"gid"`
-	CID      util.ID    `json:"cid" cbor:"cid"`
-	Language string     `json:"language" cbor:"language"`
-	Version  uint16     `json:"version" cbor:"version"`
-	Kind     int8       `json:"kind" cbor:"kind"`
-	Title    string     `json:"title" cbor:"title"`
-	Summary  string     `json:"summary" cbor:"summary"`
-	Group    *GroupInfo `json:"group,omitempty" cbor:"group,omitempty"`
+	GID       util.ID    `json:"gid" cbor:"gid"`
+	CID       util.ID    `json:"cid" cbor:"cid"`
+	Language  string     `json:"language" cbor:"language"`
+	Version   uint16     `json:"version" cbor:"version"`
+	UpdatedAt int64      `json:"updated_at,omitempty" cbor:"updated_at,omitempty"`
+	Kind      int8       `json:"kind" cbor:"kind"`
+	Title     string     `json:"title" cbor:"title"`
+	Summary   string     `json:"summary" cbor:"summary"`
+	Group     *GroupInfo `json:"group,omitempty" cbor:"group,omitempty"`
+	GroupInfo *GroupInfo `json:"group_info,omitempty" cbor:"group_info,omitempty"`
 }
 
 type SearchOutput struct {
@@ -61,6 +63,7 @@ func (so *SearchOutput) LoadGroups(loader func(ids ...util.ID) []GroupInfo) {
 
 	for i := range so.Hits {
 		so.Hits[i].Group = infoMap[so.Hits[i].GID]
+		so.Hits[i].GroupInfo = infoMap[so.Hits[i].GID]
 	}
 }
 

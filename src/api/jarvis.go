@@ -105,16 +105,17 @@ func (a *Jarvis) Search(ctx *gear.Context) error {
 		if doc, err := a.blls.Writing.ImplicitGetPublication(ctx, &bll.ImplicitQueryPublication{
 			CID:      item.CID,
 			Language: item.Language,
-			Fields:   "status,title,summary",
+			Fields:   "status,updated_at,title,summary",
 		}); err == nil && *doc.Status == 2 {
 			v := bll.SearchDocument{
-				GID:      doc.GID,
-				CID:      doc.CID,
-				Language: doc.Language,
-				Version:  doc.Version,
-				Kind:     1,
-				Title:    *doc.Title,
-				Summary:  *doc.Summary,
+				GID:       doc.GID,
+				CID:       doc.CID,
+				Language:  doc.Language,
+				Version:   doc.Version,
+				UpdatedAt: *doc.UpdatedAt,
+				Kind:      1,
+				Title:     *doc.Title,
+				Summary:   *doc.Summary,
 			}
 
 			if ok {
@@ -228,16 +229,17 @@ func (a *Jarvis) GroupSearch(ctx *gear.Context) error {
 			GID:      util.Ptr(item.GID),
 			CID:      item.CID,
 			Language: item.Language,
-			Fields:   "title,summary",
+			Fields:   "updated_at,title,summary",
 		}); err == nil {
 			v := bll.SearchDocument{
-				GID:      doc.GID,
-				CID:      doc.CID,
-				Language: doc.Language,
-				Version:  doc.Version,
-				Kind:     1,
-				Title:    *doc.Title,
-				Summary:  *doc.Summary,
+				GID:       doc.GID,
+				CID:       doc.CID,
+				Language:  doc.Language,
+				Version:   doc.Version,
+				UpdatedAt: *doc.UpdatedAt,
+				Kind:      1,
+				Title:     *doc.Title,
+				Summary:   *doc.Summary,
 			}
 
 			if ok {
