@@ -329,7 +329,7 @@ func (b *Writing) ImplicitGetPublication(ctx context.Context, input *ImplicitQue
 	if input.Fields != "" {
 		query.Add("fields", input.Fields)
 	}
-	if err := b.svc.Get(ctx, "/v1/publication/implicit_get?"+query.Encode(), &output); err != nil {
+	if err := b.svc.Get(ctx, "/beta/publication/implicit_get?"+query.Encode(), &output); err != nil {
 		return nil, err
 	}
 
@@ -393,7 +393,7 @@ func (b *Writing) ListPublication(ctx context.Context, input *GIDPagination) (*S
 
 func (b *Writing) CountPublicationPublish(ctx context.Context, input *GIDPagination) (uint, error) {
 	output := SuccessResponse[uint]{}
-	if err := b.svc.Post(ctx, "/v1/publication/count_publish", input, &output); err != nil {
+	if err := b.svc.Post(ctx, "/beta/publication/count_publish", input, &output); err != nil {
 		return 0, err
 	}
 
@@ -417,7 +417,7 @@ func (i *GIDsPagination) Validate() error {
 
 func (b *Writing) ListPublicationByGIDs(ctx context.Context, input *GIDsPagination) (*SuccessResponse[PublicationOutputs], error) {
 	output := SuccessResponse[PublicationOutputs]{}
-	if err := b.svc.Post(ctx, "/v1/publication/list_by_gids", input, &output); err != nil {
+	if err := b.svc.Post(ctx, "/beta/publication/list_by_gids", input, &output); err != nil {
 		return nil, err
 	}
 
@@ -430,7 +430,7 @@ func (b *Writing) GetPublicationList(ctx context.Context, from_status int8, inpu
 	query.Add("gid", input.GID.String())
 	query.Add("cid", input.CID.String())
 	query.Add("status", strconv.Itoa(int(from_status)))
-	if err := b.svc.Get(ctx, "/v1/publication/publish?"+query.Encode(), &output); err != nil {
+	if err := b.svc.Get(ctx, "/beta/publication/publish?"+query.Encode(), &output); err != nil {
 		return nil, err
 	}
 
