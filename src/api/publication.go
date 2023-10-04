@@ -130,7 +130,7 @@ func (a *Publication) Create(ctx *gear.Context) error {
 	}
 
 	dst, _ := a.blls.Writing.GetPublication(ctx, &bll.QueryPublication{
-		GID:      input.GID,
+		GID:      *input.ToGID,
 		CID:      input.CID,
 		Language: *input.ToLanguage,
 		Version:  input.Version,
@@ -200,7 +200,7 @@ func (a *Publication) Create(ctx *gear.Context) error {
 		Version:  &src.Version,
 	}
 
-	log, err := a.blls.Logbase.Log(ctx, bll.LogActionPublicationCreate, 0, input.GID, payload)
+	log, err := a.blls.Logbase.Log(ctx, bll.LogActionPublicationCreate, 0, payload.GID, payload)
 	if err != nil {
 		locker.Release(gctx)
 		return gear.ErrInternalServerError.From(err)
