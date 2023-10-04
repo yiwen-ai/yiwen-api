@@ -618,9 +618,6 @@ func (a *Publication) List(ctx *gear.Context) error {
 		return gear.ErrInternalServerError.From(err)
 	}
 
-	// output.Result.LoadCreators(func(ids ...util.ID) []bll.UserInfo {
-	// 	return a.blls.Userbase.LoadUserInfo(ctx, ids...)
-	// })
 	output.Result.LoadGroups(func(ids ...util.ID) []bll.GroupInfo {
 		return a.blls.Userbase.LoadGroupInfo(ctx, ids...)
 	})
@@ -658,25 +655,25 @@ func (a *Publication) ListByFollowing(ctx *gear.Context) error {
 		return gear.ErrInternalServerError.From(err)
 	}
 
+	var output *bll.SuccessResponse[bll.PublicationOutputs]
 	if len(gids) == 0 {
-		return ctx.OkSend(bll.SuccessResponse[[]*bll.PublicationOutput]{
-			Result: []*bll.PublicationOutput{},
+		output, err = a.blls.Writing.ListLatestPublications(ctx, &bll.Pagination{
+			PageToken: input.PageToken,
+			PageSize:  input.PageSize,
+			Fields:    input.Fields,
+		})
+	} else {
+		output, err = a.blls.Writing.ListPublicationByGIDs(ctx, &bll.GIDsPagination{
+			GIDs:      gids,
+			PageToken: input.PageToken,
+			PageSize:  input.PageSize,
+			Fields:    input.Fields,
 		})
 	}
-
-	output, err := a.blls.Writing.ListPublicationByGIDs(ctx, &bll.GIDsPagination{
-		GIDs:      gids,
-		PageToken: input.PageToken,
-		PageSize:  input.PageSize,
-		Fields:    input.Fields,
-	})
 	if err != nil {
 		return gear.ErrInternalServerError.From(err)
 	}
 
-	// output.Result.LoadCreators(func(ids ...util.ID) []bll.UserInfo {
-	// 	return a.blls.Userbase.LoadUserInfo(ctx, ids...)
-	// })
 	output.Result.LoadGroups(func(ids ...util.ID) []bll.GroupInfo {
 		return a.blls.Userbase.LoadGroupInfo(ctx, ids...)
 	})

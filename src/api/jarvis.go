@@ -1,6 +1,7 @@
 package api
 
 import (
+	"strings"
 	"sync"
 	"time"
 
@@ -34,80 +35,19 @@ func (a *Jarvis) Search(ctx *gear.Context) error {
 	if sess := gear.CtxValue[middleware.Session](ctx); sess != nil {
 		lang = sess.Lang
 	}
-	// if input.Language == nil && lang != "" {
-	// 	input.Language = util.Ptr(lang)
-	// }
 
-	output := bll.SearchOutput{}
-	var wg sync.WaitGroup
-	wg.Add(2)
-
-	now := time.Now()
-	semanticElapsed := int64(0)
-	literalElapsed := int64(0)
-
-	var semanticOutput []*bll.EmbeddingSearchOutput
-	go logging.Run(func() logging.Log {
-		defer wg.Done()
-
-		semanticInput := &bll.EmbeddingSearchInput{
-			Input:    input.Q,
-			Public:   true,
-			GID:      input.GID,
-			Language: input.Language,
+	output := bll.SearchOutput{Hits: []bll.SearchDocument{}, Languages: map[string]int{}}
+	if strings.TrimSpace(input.Q) == "" {
+		res, err := a.blls.Writing.ListLatestPublications(ctx, &bll.Pagination{
+			Fields: util.Ptr([]string{"updated_at", "title", "summary"}),
+		})
+		if err != nil {
+			return ctx.OkSend(bll.SuccessResponse[bll.SearchOutput]{Result: output})
 		}
 
-		semanticOutput = a.blls.Jarvis.EmbeddingSearch(ctx, semanticInput)
-		semanticElapsed = int64(time.Since(now)) / 1e6
-		return nil
-	})
-
-	var literalOutput bll.SearchOutput
-	go logging.Run(func() logging.Log {
-		defer wg.Done()
-
-		literalOutput = a.blls.Writing.Search(ctx, input)
-		literalElapsed = int64(time.Since(now)) / 1e6
-		return nil
-	})
-
-	wg.Wait()
-	logging.SetTo(ctx, "semanticResults", len(semanticOutput))
-	logging.SetTo(ctx, "literalResults", len(literalOutput.Hits))
-	logging.SetTo(ctx, "semanticElapsed", semanticElapsed)
-	logging.SetTo(ctx, "literalElapsed", literalElapsed)
-
-	output.Hits = make([]bll.SearchDocument, 0, len(semanticOutput)+len(literalOutput.Hits))
-	// append(output.Hits, literalOutput.Hits...)
-	output.Languages = literalOutput.Languages
-	resMap := make(map[util.ID]int, len(semanticOutput)+len(literalOutput.Hits))
-	for i, item := range literalOutput.Hits {
-		j, ok := resMap[item.CID]
-		if ok && item.Language != lang {
-			continue
-		}
-
-		v := literalOutput.Hits[i]
-		if ok {
-			output.Hits[j] = v
-		} else {
-			output.Hits = append(output.Hits, v)
-			resMap[item.CID] = len(output.Hits) - 1
-		}
-	}
-
-	for _, item := range semanticOutput {
-		j, ok := resMap[item.CID]
-		if ok && item.Language != lang {
-			continue
-		}
-
-		if doc, err := a.blls.Writing.ImplicitGetPublication(ctx, &bll.ImplicitQueryPublication{
-			CID:      item.CID,
-			Language: item.Language,
-			Fields:   "status,updated_at,title,summary",
-		}); err == nil && *doc.Status == 2 {
-			v := bll.SearchDocument{
+		output.Hits = make([]bll.SearchDocument, 0, len(res.Result))
+		for _, doc := range res.Result {
+			output.Hits = append(output.Hits, bll.SearchDocument{
 				GID:       doc.GID,
 				CID:       doc.CID,
 				Language:  doc.Language,
@@ -116,13 +56,94 @@ func (a *Jarvis) Search(ctx *gear.Context) error {
 				Kind:      1,
 				Title:     *doc.Title,
 				Summary:   *doc.Summary,
+			})
+		}
+	} else {
+		var wg sync.WaitGroup
+		wg.Add(2)
+
+		now := time.Now()
+		semanticElapsed := int64(0)
+		literalElapsed := int64(0)
+
+		var semanticOutput []*bll.EmbeddingSearchOutput
+		go logging.Run(func() logging.Log {
+			defer wg.Done()
+
+			semanticInput := &bll.EmbeddingSearchInput{
+				Input:    input.Q,
+				Public:   true,
+				GID:      input.GID,
+				Language: input.Language,
 			}
 
+			semanticOutput = a.blls.Jarvis.EmbeddingSearch(ctx, semanticInput)
+			semanticElapsed = int64(time.Since(now)) / 1e6
+			return nil
+		})
+
+		var literalOutput bll.SearchOutput
+		go logging.Run(func() logging.Log {
+			defer wg.Done()
+
+			literalOutput = a.blls.Writing.Search(ctx, input)
+			literalElapsed = int64(time.Since(now)) / 1e6
+			return nil
+		})
+
+		wg.Wait()
+		logging.SetTo(ctx, "semanticResults", len(semanticOutput))
+		logging.SetTo(ctx, "literalResults", len(literalOutput.Hits))
+		logging.SetTo(ctx, "semanticElapsed", semanticElapsed)
+		logging.SetTo(ctx, "literalElapsed", literalElapsed)
+
+		output.Hits = make([]bll.SearchDocument, 0, len(semanticOutput)+len(literalOutput.Hits))
+		// append(output.Hits, literalOutput.Hits...)
+		output.Languages = literalOutput.Languages
+		resMap := make(map[util.ID]int, len(semanticOutput)+len(literalOutput.Hits))
+		for i, item := range literalOutput.Hits {
+			j, ok := resMap[item.CID]
+			if ok && item.Language != lang {
+				continue
+			}
+
+			v := literalOutput.Hits[i]
 			if ok {
 				output.Hits[j] = v
 			} else {
 				output.Hits = append(output.Hits, v)
 				resMap[item.CID] = len(output.Hits) - 1
+			}
+		}
+
+		for _, item := range semanticOutput {
+			j, ok := resMap[item.CID]
+			if ok && item.Language != lang {
+				continue
+			}
+
+			if doc, err := a.blls.Writing.ImplicitGetPublication(ctx, &bll.ImplicitQueryPublication{
+				CID:      item.CID,
+				Language: item.Language,
+				Fields:   "status,updated_at,title,summary",
+			}); err == nil && *doc.Status == 2 {
+				v := bll.SearchDocument{
+					GID:       doc.GID,
+					CID:       doc.CID,
+					Language:  doc.Language,
+					Version:   doc.Version,
+					UpdatedAt: *doc.UpdatedAt,
+					Kind:      1,
+					Title:     *doc.Title,
+					Summary:   *doc.Summary,
+				}
+
+				if ok {
+					output.Hits[j] = v
+				} else {
+					output.Hits = append(output.Hits, v)
+					resMap[item.CID] = len(output.Hits) - 1
+				}
 			}
 		}
 	}

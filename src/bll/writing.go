@@ -33,7 +33,6 @@ type SearchDocument struct {
 	Kind      int8       `json:"kind" cbor:"kind"`
 	Title     string     `json:"title" cbor:"title"`
 	Summary   string     `json:"summary" cbor:"summary"`
-	Group     *GroupInfo `json:"group,omitempty" cbor:"group,omitempty"`
 	GroupInfo *GroupInfo `json:"group_info,omitempty" cbor:"group_info,omitempty"`
 }
 
@@ -62,7 +61,6 @@ func (so *SearchOutput) LoadGroups(loader func(ids ...util.ID) []GroupInfo) {
 	}
 
 	for i := range so.Hits {
-		so.Hits[i].Group = infoMap[so.Hits[i].GID]
 		so.Hits[i].GroupInfo = infoMap[so.Hits[i].GID]
 	}
 }

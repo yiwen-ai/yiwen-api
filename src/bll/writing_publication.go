@@ -424,6 +424,15 @@ func (b *Writing) ListPublicationByGIDs(ctx context.Context, input *GIDsPaginati
 	return &output, nil
 }
 
+func (b *Writing) ListLatestPublications(ctx context.Context, input *Pagination) (*SuccessResponse[PublicationOutputs], error) {
+	output := SuccessResponse[PublicationOutputs]{}
+	if err := b.svc.Post(ctx, "/beta/publication/list_latest", input, &output); err != nil {
+		return nil, err
+	}
+
+	return &output, nil
+}
+
 func (b *Writing) GetPublicationList(ctx context.Context, from_status int8, input *GidCidInput) (*SuccessResponse[PublicationOutputs], error) {
 	output := SuccessResponse[PublicationOutputs]{}
 	query := url.Values{}
