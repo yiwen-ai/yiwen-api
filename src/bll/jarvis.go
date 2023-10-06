@@ -63,12 +63,14 @@ type DetectLangInput struct {
 }
 
 type TEInput struct {
-	GID      util.ID     `json:"gid" cbor:"gid"`
-	CID      util.ID     `json:"cid" cbor:"cid"`
-	Language string      `json:"language" cbor:"language"`
-	Version  uint16      `json:"version" cbor:"version"`
-	Model    *string     `json:"model,omitempty" cbor:"model,omitempty"`
-	Content  *util.Bytes `json:"content,omitempty" cbor:"content,omitempty"`
+	GID          util.ID     `json:"gid" cbor:"gid"`
+	CID          util.ID     `json:"cid" cbor:"cid"`
+	Language     string      `json:"language" cbor:"language"`
+	Version      uint16      `json:"version" cbor:"version"`
+	FromLanguage *string     `json:"from_language,omitempty" cbor:"from_language,omitempty"`
+	Context      *string     `json:"context,omitempty" cbor:"context,omitempty"`
+	Model        *string     `json:"model,omitempty" cbor:"model,omitempty"`
+	Content      *util.Bytes `json:"content,omitempty" cbor:"content,omitempty"`
 }
 
 type TEOutput struct {

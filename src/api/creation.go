@@ -574,7 +574,7 @@ func (a *Creation) summarize(gctx context.Context, gid, cid util.ID, auditLog *b
 	}
 
 	// do not update summary if exists
-	if creation.Summary != nil && len(*creation.Summary) > 64 {
+	if creation.Summary != nil && len(*creation.Summary) > 16 {
 		return creation, nil
 	}
 

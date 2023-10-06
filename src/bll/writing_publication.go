@@ -21,6 +21,7 @@ type CreatePublicationInput struct {
 	Model      string   `json:"model" cbor:"model" validate:"omitempty,gte=2,lte=16"`
 	ToGID      *util.ID `json:"to_gid,omitempty" cbor:"to_gid,omitempty"`
 	ToLanguage *string  `json:"to_language,omitempty" cbor:"to_language,omitempty"`
+	Context    *string  `json:"context,omitempty" cbor:"context,omitempty"` // Contextual definition for translating
 }
 
 func (i *CreatePublicationInput) Validate() error {

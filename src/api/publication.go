@@ -186,6 +186,10 @@ func (a *Publication) Create(ctx *gear.Context) error {
 		return gear.ErrInternalServerError.From(err)
 	}
 
+	if input.Context == nil {
+		input.Context = util.Ptr(fmt.Sprintf("The text is part or all of the %q", *src.Title))
+	}
+
 	gctx := middleware.WithGlobalCtx(ctx)
 	key := fmt.Sprintf("CP:%s:%s:%s:%d", input.ToGID.String(), input.CID.String(), *input.ToLanguage, input.Version)
 	locker, err := a.blls.Locker.Lock(gctx, key, 20*60*time.Second)
@@ -218,12 +222,14 @@ func (a *Publication) Create(ctx *gear.Context) error {
 
 		now := time.Now()
 		teOutput, err := a.blls.Jarvis.Translate(gctx, &bll.TEInput{
-			GID:      *input.ToGID,
-			CID:      src.CID,
-			Language: *input.ToLanguage,
-			Version:  src.Version,
-			Model:    util.Ptr(input.Model),
-			Content:  util.Ptr(util.Bytes(teData)),
+			GID:          *input.ToGID,
+			CID:          src.CID,
+			Language:     *input.ToLanguage,
+			Version:      src.Version,
+			FromLanguage: util.Ptr(input.Language),
+			Context:      input.Context,
+			Model:        util.Ptr(input.Model),
+			Content:      util.Ptr(util.Bytes(teData)),
 		})
 
 		var draft *bll.PublicationDraft
