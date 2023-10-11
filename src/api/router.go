@@ -23,6 +23,7 @@ type APIs struct {
 	Group       *Group
 	Jarvis      *Jarvis
 	Log         *Log
+	Message     *Message
 	Publication *Publication
 	Scraping    *Scraping
 	Wechat      *Wechat
@@ -36,6 +37,7 @@ func newAPIs(blls *bll.Blls) *APIs {
 		Group:       &Group{blls},
 		Jarvis:      &Jarvis{blls},
 		Log:         &Log{blls},
+		Message:     &Message{blls},
 		Publication: &Publication{blls},
 		Scraping:    &Scraping{blls},
 		Wechat:      &Wechat{blls},
@@ -119,6 +121,12 @@ func newRouters(apis *APIs) []*gear.Router {
 	router.Post("/v1/publication/assist", middleware.AuthToken.Auth, middleware.CheckUserStatus(0), todo) // 暂不实现
 	router.Post("/v1/publication/bookmark", middleware.AuthToken.Auth, apis.Publication.Bookmark)
 	router.Post("/v1/publication/upload", middleware.AuthToken.Auth, middleware.CheckUserStatus(0), apis.Publication.UploadFile)
+
+	router.Post("/v1/message", middleware.AuthToken.Auth, apis.Message.Create)
+	router.Patch("/v1/message", middleware.AuthToken.Auth, apis.Message.Update)
+	router.Post("/v1/message/translate", middleware.AuthToken.Auth, apis.Message.UpdateI18n)
+	router.Get("/v1/message", middleware.AuthToken.Auth, apis.Message.Get)
+	router.Get("/v1/message/by_job", middleware.AuthToken.Auth, apis.Message.GetByJob)
 
 	router.Patch("/v1/bookmark", middleware.AuthToken.Auth, apis.Bookmark.Update)
 	router.Delete("/v1/bookmark", middleware.AuthToken.Auth, apis.Bookmark.Delete)

@@ -132,3 +132,15 @@ func (i *GidCidInput) Validate() error {
 
 	return nil
 }
+
+type QueryID struct {
+	ID     util.ID `json:"id" cbor:"id" query:"id" validate:"required"`
+	Fields string  `json:"fields" cbor:"fields" query:"fields"`
+}
+
+func (i *QueryID) Validate() error {
+	if err := util.Validator.Struct(i); err != nil {
+		return gear.ErrBadRequest.From(err)
+	}
+	return nil
+}

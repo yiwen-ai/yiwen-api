@@ -270,12 +270,12 @@ func (i *QueryPublication) Validate() error {
 	return nil
 }
 
-type QueryPublicationJob struct {
+type QueryJob struct {
 	ID     util.ID `json:"job" cbor:"job" query:"job" validate:"required"`
 	Fields string  `json:"fields" cbor:"fields" query:"fields"`
 }
 
-func (i *QueryPublicationJob) Validate() error {
+func (i *QueryJob) Validate() error {
 	if err := util.Validator.Struct(i); err != nil {
 		return gear.ErrBadRequest.From(err)
 	}

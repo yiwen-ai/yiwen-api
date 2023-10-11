@@ -152,7 +152,7 @@ type UpdateCreationInput struct {
 	GID       util.ID   `json:"gid" cbor:"gid" validate:"required"`
 	ID        util.ID   `json:"id" cbor:"id" validate:"required"`
 	UpdatedAt int64     `json:"updated_at" cbor:"updated_at"  validate:"required"`
-	Title     *string   `json:"title,omitempty" cbor:"title,omitempty" validate:"gte=4,lte=256"`
+	Title     *string   `json:"title,omitempty" cbor:"title,omitempty" validate:"omitempty,gte=4,lte=256"`
 	Cover     *string   `json:"cover,omitempty" cbor:"cover,omitempty" validate:"omitempty,http_url"`
 	Keywords  *[]string `json:"keywords,omitempty" cbor:"keywords,omitempty" validate:"omitempty,gte=0,lte=5"`
 	Labels    *[]string `json:"labels,omitempty" cbor:"labels,omitempty" validate:"omitempty,gte=0,lte=5"`

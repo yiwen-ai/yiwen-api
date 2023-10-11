@@ -161,7 +161,16 @@ func (a *Publication) Create(ctx *gear.Context) error {
 		return gear.ErrInternalServerError.From(err)
 	}
 
-	trans, err := content.EstimateTranslatingString(src.Content)
+	teContents, err := src.ToTEContents()
+	if err != nil {
+		return gear.ErrInternalServerError.From(err)
+	}
+	teData, err := cbor.Marshal(teContents)
+	if err != nil {
+		return gear.ErrInternalServerError.From(err)
+	}
+
+	trans, err := teContents.EstimateTranslatingString()
 	if err != nil {
 		return gear.ErrInternalServerError.From(err)
 	}
@@ -175,15 +184,6 @@ func (a *Publication) Create(ctx *gear.Context) error {
 	estimate_cost := model.CostWEN(tokens)
 	if b := wallet.Balance(); b < estimate_cost {
 		return gear.ErrPaymentRequired.WithMsgf("insufficient balance, expected %d, got %d", estimate_cost, b)
-	}
-
-	teContents, err := src.ToTEContents()
-	if err != nil {
-		return gear.ErrInternalServerError.From(err)
-	}
-	teData, err := cbor.Marshal(teContents)
-	if err != nil {
-		return gear.ErrInternalServerError.From(err)
 	}
 
 	if input.Context == nil {
@@ -238,7 +238,8 @@ func (a *Publication) Create(ctx *gear.Context) error {
 
 			exp := bll.SpendPayload{
 				GID:      *input.ToGID,
-				CID:      src.CID,
+				CID:      &src.CID,
+				Action:   bll.LogActionPublicationCreate,
 				Language: *input.ToLanguage,
 				Version:  src.Version,
 				Model:    model.ID,
@@ -335,9 +336,9 @@ func (a *Publication) Get(ctx *gear.Context) error {
 	}
 
 	result := bll.PublicationOutputs{*output}
-	result.LoadCreators(func(ids ...util.ID) []bll.UserInfo {
-		return a.blls.Userbase.LoadUserInfo(ctx, ids...)
-	})
+	// result.LoadCreators(func(ids ...util.ID) []bll.UserInfo {
+	// 	return a.blls.Userbase.LoadUserInfo(ctx, ids...)
+	// })
 	result.LoadGroups(func(ids ...util.ID) []bll.GroupInfo {
 		return a.blls.Userbase.LoadGroupInfo(ctx, ids...)
 	})
@@ -346,7 +347,7 @@ func (a *Publication) Get(ctx *gear.Context) error {
 }
 
 func (a *Publication) GetByJob(ctx *gear.Context) error {
-	input := &bll.QueryPublicationJob{}
+	input := &bll.QueryJob{}
 	if err := ctx.ParseURL(input); err != nil {
 		return err
 	}
@@ -357,7 +358,7 @@ func (a *Publication) GetByJob(ctx *gear.Context) error {
 		return gear.ErrBadRequest.WithMsgf("invalid job: %s", err.Error())
 	}
 
-	if log.Action != "creation.release" && log.Action != "publication.create" {
+	if log.Action != bll.LogActionCreationRelease && log.Action != bll.LogActionPublicationCreate {
 		return gear.ErrBadRequest.WithMsgf("invalid job action: %s", log.Action)
 	}
 
@@ -386,19 +387,26 @@ func (a *Publication) GetByJob(ctx *gear.Context) error {
 
 	if log.Status == 0 {
 		progress := int8(0)
-		if log.Action == "creation.release" {
+		if log.Action == bll.LogActionCreationRelease {
 			res, err := a.blls.Jarvis.GetSummary(ctx, teInput)
 			if err != nil {
-				return gear.ErrInternalServerError.From(err)
+				er := gear.ErrInternalServerError.From(err)
+				if er.Code != 404 {
+					return er
+				}
+			} else if res != nil {
+				progress = res.Progress
 			}
-
-			progress = res.Progress
 		} else {
 			res, err := a.blls.Jarvis.GetTranslation(ctx, teInput)
 			if err != nil {
-				return gear.ErrInternalServerError.From(err)
+				er := gear.ErrInternalServerError.From(err)
+				if er.Code != 404 {
+					return er
+				}
+			} else if res != nil {
+				progress = res.Progress
 			}
-			progress = res.Progress
 		}
 
 		if progress < 100 {
@@ -430,9 +438,9 @@ func (a *Publication) GetByJob(ctx *gear.Context) error {
 	}
 
 	result := bll.PublicationOutputs{*output}
-	result.LoadCreators(func(ids ...util.ID) []bll.UserInfo {
-		return a.blls.Userbase.LoadUserInfo(ctx, ids...)
-	})
+	// result.LoadCreators(func(ids ...util.ID) []bll.UserInfo {
+	// 	return a.blls.Userbase.LoadUserInfo(ctx, ids...)
+	// })
 	result.LoadGroups(func(ids ...util.ID) []bll.GroupInfo {
 		return a.blls.Userbase.LoadGroupInfo(ctx, ids...)
 	})
@@ -444,7 +452,7 @@ func (a *Publication) ListJob(ctx *gear.Context) error {
 	sess := gear.CtxValue[middleware.Session](ctx)
 	logs, err := a.blls.Logbase.ListRecently(ctx, &bll.ListRecentlyLogsInput{
 		UID:     sess.UserID,
-		Actions: []string{"creation.release", "publication.create"},
+		Actions: []string{bll.LogActionCreationRelease, bll.LogActionPublicationCreate},
 		Fields:  []string{"gid", "error", "tokens", "payload"},
 	})
 
@@ -489,7 +497,7 @@ func (a *Publication) ListJob(ctx *gear.Context) error {
 		if log.Status == 1 {
 			job.Progress = 100
 		} else if log.Status == 0 {
-			if log.Action == "creation.release" {
+			if log.Action == bll.LogActionCreationRelease {
 				res, err := a.blls.Jarvis.GetSummary(ctx, teInput)
 				if err != nil {
 					continue

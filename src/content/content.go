@@ -56,7 +56,7 @@ func (te *TEContents) visitNode(node *DocumentNode) {
 	}
 }
 
-func (d DocumentNode) ToTEContents() []*TEContent {
+func (d DocumentNode) ToTEContents() TEContents {
 	tes := new(TEContents)
 	for i, node := range d.Content {
 		tes.visitNode(&node)
@@ -189,6 +189,23 @@ func (a *DocumentNodeAmender) AmendNode(node *DocumentNode) {
 	}
 }
 
+func (te *TEContents) EstimateTranslatingString() (string, error) {
+	buf := bytes.Buffer{}
+	en := json.NewEncoder(&buf)
+	for i, v := range *te {
+		if texts := v.Texts; len(texts) > 0 {
+			if err := en.Encode([]string{strconv.Itoa(i)}); err != nil {
+				return "", gear.ErrInternalServerError.From(err)
+			}
+			if err := en.Encode(texts); err != nil {
+				return "", gear.ErrInternalServerError.From(err)
+			}
+		}
+	}
+
+	return string(buf.String()), nil
+}
+
 // EstimateTranslatingString estimates the translating string from content.
 // It is not right string for translating, just for estimating translating tokens.
 func EstimateTranslatingString(content *util.Bytes) (string, error) {
@@ -201,18 +218,5 @@ func EstimateTranslatingString(content *util.Bytes) (string, error) {
 		return "", gear.ErrInternalServerError.From(err)
 	}
 	contents := doc.ToTEContents()
-	buf := bytes.Buffer{}
-	en := json.NewEncoder(&buf)
-	for i := range contents {
-		if texts := contents[i].Texts; len(texts) > 0 {
-			if err := en.Encode([]string{strconv.Itoa(i)}); err != nil {
-				return "", gear.ErrInternalServerError.From(err)
-			}
-			if err := en.Encode(texts); err != nil {
-				return "", gear.ErrInternalServerError.From(err)
-			}
-		}
-	}
-
-	return string(buf.String()), nil
+	return contents.EstimateTranslatingString()
 }

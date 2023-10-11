@@ -182,9 +182,9 @@ func (a *Creation) List(ctx *gear.Context) error {
 		return gear.ErrInternalServerError.From(err)
 	}
 
-	output.Result.LoadCreators(func(ids ...util.ID) []bll.UserInfo {
-		return a.blls.Userbase.LoadUserInfo(ctx, ids...)
-	})
+	// output.Result.LoadCreators(func(ids ...util.ID) []bll.UserInfo {
+	// 	return a.blls.Userbase.LoadUserInfo(ctx, ids...)
+	// })
 	output.Result.LoadGroups(func(ids ...util.ID) []bll.GroupInfo {
 		return a.blls.Userbase.LoadGroupInfo(ctx, ids...)
 	})
@@ -207,9 +207,9 @@ func (a *Creation) ListArchived(ctx *gear.Context) error {
 	if err != nil {
 		return gear.ErrInternalServerError.From(err)
 	}
-	output.Result.LoadCreators(func(ids ...util.ID) []bll.UserInfo {
-		return a.blls.Userbase.LoadUserInfo(ctx, ids...)
-	})
+	// output.Result.LoadCreators(func(ids ...util.ID) []bll.UserInfo {
+	// 	return a.blls.Userbase.LoadUserInfo(ctx, ids...)
+	// })
 	output.Result.LoadGroups(func(ids ...util.ID) []bll.GroupInfo {
 		return a.blls.Userbase.LoadGroupInfo(ctx, ids...)
 	})
@@ -312,7 +312,7 @@ func (a *Creation) Release(ctx *gear.Context) error {
 
 	gctx := middleware.WithGlobalCtx(ctx)
 	key := fmt.Sprintf("RC:%s:%s", input.GID.String(), input.CID.String())
-	locker, err := a.blls.Locker.Lock(gctx, key, 20*60*time.Second)
+	locker, err := a.blls.Locker.Lock(gctx, key, 10*60*time.Second)
 	if err != nil {
 		return gear.ErrLocked.From(err)
 	}
@@ -574,7 +574,7 @@ func (a *Creation) summarize(gctx context.Context, gid, cid util.ID, auditLog *b
 	}
 
 	// do not update summary if exists
-	if creation.Summary != nil && len(*creation.Summary) > 16 {
+	if creation.Summary != nil && len(*creation.Summary) > 0 {
 		return creation, nil
 	}
 

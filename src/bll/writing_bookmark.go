@@ -74,15 +74,6 @@ func (b *Writing) CreateBookmark(ctx context.Context, input *CreateBookmarkInput
 	return &output.Result, nil
 }
 
-type QueryBookmark struct {
-	ID     util.ID `json:"id" cbor:"id" query:"id" validate:"required"`
-	Fields string  `json:"fields" cbor:"fields" query:"fields"`
-}
-
-func (i *QueryBookmark) Validate() error {
-	return nil
-}
-
 // TODO: more validation
 type UpdateBookmarkInput struct {
 	ID        util.ID   `json:"id" cbor:"id" validate:"required"`
@@ -109,7 +100,7 @@ func (b *Writing) UpdateBookmark(ctx context.Context, input *UpdateBookmarkInput
 	return &output.Result, nil
 }
 
-func (b *Writing) DeleteBookmark(ctx context.Context, input *QueryBookmark) (bool, error) {
+func (b *Writing) DeleteBookmark(ctx context.Context, input *QueryID) (bool, error) {
 	output := SuccessResponse[bool]{}
 
 	query := url.Values{}

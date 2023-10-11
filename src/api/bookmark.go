@@ -26,7 +26,7 @@ func (a *Bookmark) Update(ctx *gear.Context) error {
 }
 
 func (a *Bookmark) Delete(ctx *gear.Context) error {
-	input := &bll.QueryBookmark{}
+	input := &bll.QueryID{}
 	if err := ctx.ParseURL(input); err != nil {
 		return err
 	}

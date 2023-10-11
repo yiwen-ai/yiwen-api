@@ -60,13 +60,15 @@ type SpendInput struct {
 }
 
 type SpendPayload struct {
-	GID      util.ID `json:"gid" cbor:"gid"`
-	CID      util.ID `json:"cid" cbor:"cid"`
-	Language string  `json:"language" cbor:"language"`
-	Version  uint16  `json:"version" cbor:"version"`
-	Model    string  `json:"model" cbor:"model"`
-	Price    float64 `json:"price" cbor:"price"`
-	Tokens   uint32  `json:"tokens" cbor:"tokens"`
+	GID      util.ID  `json:"gid" cbor:"gid"`
+	CID      *util.ID `json:"cid,omitempty" cbor:"cid,omitempty"`
+	ID       *util.ID `json:"id,omitempty" cbor:"id,omitempty"`
+	Action   string   `json:"action" cbor:"action"`
+	Language string   `json:"language" cbor:"language"`
+	Version  uint16   `json:"version" cbor:"version"`
+	Model    string   `json:"model" cbor:"model"`
+	Price    float64  `json:"price" cbor:"price"`
+	Tokens   uint32   `json:"tokens" cbor:"tokens"`
 }
 
 type WalletOutput struct {
@@ -110,7 +112,7 @@ func (b *Walletbase) Spend(ctx context.Context, uid util.ID, input *SpendPayload
 	ex := SpendInput{
 		UID:         uid,
 		Amount:      m.CostWEN(input.Tokens),
-		Description: "publication.create",
+		Description: input.Action,
 		Payload:     data,
 	}
 	output := SuccessResponse[WalletOutput]{}

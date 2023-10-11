@@ -24,8 +24,10 @@ const (
 	LogActionUserLogout               = "user.logout"
 	LogActionUserBookmark             = "user.bookmark"
 	LogActionUserFollow               = "user.follow"
-	LogActionUserSubscribe            = "user.subscribe"
-	LogActionUserSponsor              = "user.sponsor"
+	LogActionUserSpend                = "user.spend"
+	LogActionUserWithdraw             = "user.withdraw"
+	LogActionUserTopup                = "user.topup"
+	LogActionUserRefund               = "user.refund"
 	LogActionGroupCreate              = "group.create"
 	LogActionGroupUpdate              = "group.update"
 	LogActionGroupUpdateCN            = "group.update.cn"
@@ -45,12 +47,21 @@ const (
 	LogActionCreationDelete           = "creation.delete"
 	LogActionCreationAssist           = "creation.assist"
 	LogActionCreationTransfer         = "creation.transfer"
+	LogActionCreationSubscribe        = "creation.subscribe"
 	LogActionPublicationCreate        = "publication.create"
 	LogActionPublicationUpdate        = "publication.update"
 	LogActionPublicationUpdateContent = "publication.update.content"
 	LogActionPublicationPublish       = "publication.publish"
 	LogActionPublicationDelete        = "publication.delete"
 	LogActionPublicationAssist        = "publication.assist"
+	LogActionMessageCreate            = "message.create"
+	LogActionMessageUpdate            = "message.update"
+	LogActionMessageDelete            = "message.delete"
+	LogActionCollectionCreate         = "collection.create"
+	LogActionCollectionUpdate         = "collection.update"
+	LogActionCollectionUpdateChildren = "collection.update.children"
+	LogActionCollectionDelete         = "collection.delete"
+	LogActionCollectionSubscribe      = "collection.subscribe"
 )
 
 type Logbase struct {
@@ -103,6 +114,14 @@ type LogPayload struct {
 	Language *string `json:"language,omitempty" cbor:"language,omitempty"`
 	Status   *int8   `json:"status,omitempty" cbor:"status,omitempty"`
 	Rating   *int8   `json:"rating,omitempty" cbor:"rating,omitempty"`
+}
+
+type LogMessage struct {
+	ID       util.ID `json:"id" cbor:"id"`
+	AttachTo util.ID `json:"attach_to" cbor:"attach_to"`
+	Kind     *string `json:"kind,omitempty" cbor:"kind,omitempty"`
+	Language *string `json:"language,omitempty" cbor:"language,omitempty"`
+	Version  *uint16 `json:"version,omitempty" cbor:"version,omitempty"`
 }
 
 func (b *Logbase) Log(ctx *gear.Context, action string, status int8, gid util.ID, payload any) (*LogOutput, error) {

@@ -192,6 +192,69 @@ func (b *Jarvis) Translate(ctx context.Context, input *TEInput) (*TranslatingOut
 	}
 }
 
+type TMInput struct {
+	ID           util.ID     `json:"id" cbor:"id"`
+	Language     string      `json:"language" cbor:"language"`
+	Version      uint16      `json:"version" cbor:"version"`
+	FromLanguage *string     `json:"from_language,omitempty" cbor:"from_language,omitempty"`
+	Context      *string     `json:"context,omitempty" cbor:"context,omitempty"`
+	Model        *string     `json:"model,omitempty" cbor:"model,omitempty"`
+	Content      *util.Bytes `json:"content,omitempty" cbor:"content,omitempty"`
+}
+
+type TMOutput struct {
+	Model    string     `json:"model" cbor:"model"`
+	Progress int8       `json:"progress" cbor:"progress"`
+	Tokens   uint32     `json:"tokens" cbor:"tokens"`
+	Content  util.Bytes `json:"content" cbor:"content"`
+	Error    string     `json:"error" cbor:"error"`
+}
+
+func (b *Jarvis) TranslateMessage(ctx context.Context, input *TMInput) (*TMOutput, error) {
+	o0 := SuccessResponse[TMOutput]{}
+	if err := b.svc.Post(ctx, "/v1/message/translating", input, &o0); err != nil {
+		return nil, err
+	}
+
+	getInput := &TMInput{
+		ID:       input.ID,
+		Language: input.Language,
+		Version:  input.Version,
+	}
+
+	i := 0
+	for {
+		i += 1
+		if i > 1200 {
+			return nil, errors.New("translating timeout")
+		}
+
+		time.Sleep(time.Second * 3)
+		output, err := b.GetMessageTranslation(ctx, getInput)
+		if err != nil {
+			return nil, err
+		}
+
+		if output.Progress == 100 && len(output.Content) > 0 {
+			return output, nil
+		}
+	}
+}
+
+func (b *Jarvis) GetMessageTranslation(ctx context.Context, input *TMInput) (*TMOutput, error) {
+	output := SuccessResponse[TMOutput]{}
+
+	err := b.svc.Post(ctx, "/v1/message/translating/get", input, &output)
+	if err != nil {
+		return nil, err
+	}
+	if output.Result.Error != "" {
+		return nil, errors.New(output.Result.Error)
+	}
+
+	return &output.Result, nil
+}
+
 func (b *Jarvis) GetTranslation(ctx context.Context, input *TEInput) (*TranslatingOutput, error) {
 	output := SuccessResponse[TranslatingOutput]{}
 
