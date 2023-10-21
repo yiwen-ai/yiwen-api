@@ -10,12 +10,14 @@ import (
 
 // TODO: more validation
 type CreateBookmarkInput struct {
-	GID      util.ID   `json:"gid" cbor:"gid" validate:"required"`
-	CID      util.ID   `json:"cid" cbor:"cid" validate:"required"`
-	Language string    `json:"language" cbor:"language" validate:"required"`
-	Version  uint16    `json:"version" cbor:"version" validate:"gte=1,lte=10000"`
-	Title    string    `json:"title" cbor:"title" validate:"gte=4,lte=256"`
-	Labels   *[]string `json:"labels,omitempty" cbor:"labels,omitempty" validate:"omitempty,gte=0,lte=5"`
+	GID      util.ID     `json:"gid" cbor:"gid" validate:"required"`
+	CID      util.ID     `json:"cid" cbor:"cid" validate:"required"`
+	Language string      `json:"language" cbor:"language" validate:"required"`
+	Kind     int8        `json:"kind" cbor:"kind" validate:"gte=0,lte=2"`
+	Version  uint16      `json:"version" cbor:"version" validate:"gte=1,lte=10000"`
+	Title    string      `json:"title" cbor:"title" validate:"gte=4,lte=256"`
+	Labels   *[]string   `json:"labels,omitempty" cbor:"labels,omitempty" validate:"omitempty,gte=0,lte=5"`
+	Payload  *util.Bytes `json:"payload,omitempty" cbor:"payload,omitempty"`
 }
 
 func (i *CreateBookmarkInput) Validate() error {
@@ -27,15 +29,17 @@ func (i *CreateBookmarkInput) Validate() error {
 }
 
 type BookmarkOutput struct {
-	ID        util.ID    `json:"id" cbor:"id"`
-	GID       util.ID    `json:"gid" cbor:"gid"`
-	CID       util.ID    `json:"cid" cbor:"cid"`
-	Language  string     `json:"language" cbor:"language"`
-	Version   uint16     `json:"version" cbor:"version"`
-	UpdatedAt *int64     `json:"updated_at,omitempty" cbor:"updated_at,omitempty"`
-	Title     *string    `json:"title,omitempty" cbor:"title,omitempty"`
-	Labels    *[]string  `json:"labels,omitempty" cbor:"labels,omitempty"`
-	GroupInfo *GroupInfo `json:"group_info,omitempty" cbor:"group_info,omitempty"`
+	ID        util.ID     `json:"id" cbor:"id"`
+	GID       util.ID     `json:"gid" cbor:"gid"`
+	CID       util.ID     `json:"cid" cbor:"cid"`
+	Language  string      `json:"language" cbor:"language"`
+	Kind      int8        `json:"kind" cbor:"kind"`
+	Version   uint16      `json:"version" cbor:"version"`
+	UpdatedAt *int64      `json:"updated_at,omitempty" cbor:"updated_at,omitempty"`
+	Title     *string     `json:"title,omitempty" cbor:"title,omitempty"`
+	Labels    *[]string   `json:"labels,omitempty" cbor:"labels,omitempty"`
+	Payload   *util.Bytes `json:"payload,omitempty" cbor:"payload,omitempty"`
+	GroupInfo *GroupInfo  `json:"group_info,omitempty" cbor:"group_info,omitempty"`
 }
 
 type BookmarkOutputs []BookmarkOutput
@@ -76,11 +80,12 @@ func (b *Writing) CreateBookmark(ctx context.Context, input *CreateBookmarkInput
 
 // TODO: more validation
 type UpdateBookmarkInput struct {
-	ID        util.ID   `json:"id" cbor:"id" validate:"required"`
-	UpdatedAt int64     `json:"updated_at" cbor:"updated_at"  validate:"required"`
-	Version   *uint16   `json:"version" cbor:"version" validate:"omitempty,gte=1,lte=10000"`
-	Title     *string   `json:"title,omitempty" cbor:"title,omitempty" validate:"omitempty,gte=4,lte=256"`
-	Labels    *[]string `json:"labels,omitempty" cbor:"labels,omitempty" validate:"omitempty,gte=0,lte=5"`
+	ID        util.ID     `json:"id" cbor:"id" validate:"required"`
+	UpdatedAt int64       `json:"updated_at" cbor:"updated_at"  validate:"required"`
+	Version   *uint16     `json:"version" cbor:"version" validate:"omitempty,gte=1,lte=10000"`
+	Title     *string     `json:"title,omitempty" cbor:"title,omitempty" validate:"omitempty,gte=4,lte=256"`
+	Labels    *[]string   `json:"labels,omitempty" cbor:"labels,omitempty" validate:"omitempty,gte=0,lte=5"`
+	Payload   *util.Bytes `json:"payload,omitempty" cbor:"payload,omitempty"`
 }
 
 func (i *UpdateBookmarkInput) Validate() error {

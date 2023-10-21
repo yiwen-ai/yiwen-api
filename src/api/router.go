@@ -19,11 +19,13 @@ func init() {
 type APIs struct {
 	Healthz     *Healthz
 	Bookmark    *Bookmark
+	Collection  *Collection
 	Creation    *Creation
 	Group       *Group
 	Jarvis      *Jarvis
 	Log         *Log
 	Message     *Message
+	Payment     *Payment
 	Publication *Publication
 	Scraping    *Scraping
 	Wechat      *Wechat
@@ -33,11 +35,13 @@ func newAPIs(blls *bll.Blls) *APIs {
 	return &APIs{
 		Healthz:     &Healthz{blls},
 		Bookmark:    &Bookmark{blls},
+		Collection:  &Collection{blls},
 		Creation:    &Creation{blls},
 		Group:       &Group{blls},
 		Jarvis:      &Jarvis{blls},
 		Log:         &Log{blls},
 		Message:     &Message{blls},
+		Payment:     &Payment{blls},
 		Publication: &Publication{blls},
 		Scraping:    &Scraping{blls},
 		Wechat:      &Wechat{blls},
@@ -76,6 +80,10 @@ func newRouters(apis *APIs) []*gear.Router {
 	router.Get("/v1/publication/publish", middleware.AuthAllowAnon.Auth, apis.Publication.GetPublishList)
 	router.Post("/v1/publication/list_published", middleware.AuthAllowAnon.Auth, apis.Publication.ListPublished)
 	router.Post("/v1/publication/list", middleware.AuthAllowAnon.Auth, apis.Publication.List) // 匿名时等价于 list_published
+	router.Get("/v1/collection", middleware.AuthAllowAnon.Auth, apis.Collection.Get)
+	router.Get("/v1/collection/list_by_child", middleware.AuthAllowAnon.Auth, apis.Collection.ListByChild)
+	router.Post("/v1/collection/list", middleware.AuthAllowAnon.Auth, apis.Collection.List)
+	router.Post("/v1/collection/list_children", middleware.AuthAllowAnon.Auth, apis.Collection.ListChildren)
 	router.Get("/v1/group/info", middleware.AuthAllowAnon.Auth, apis.Group.GetInfo)
 	router.Get("/v1/group/statistic", middleware.AuthAllowAnon.Auth, apis.Group.GetStatistic)
 
@@ -104,6 +112,7 @@ func newRouters(apis *APIs) []*gear.Router {
 	router.Patch("/v1/creation/update_content", middleware.AuthToken.Auth, middleware.CheckUserStatus(0), todo) // 暂不实现
 	router.Post("/v1/creation/assist", middleware.AuthToken.Auth, middleware.CheckUserStatus(0), todo)          // 暂不实现
 	router.Post("/v1/creation/upload", middleware.AuthToken.Auth, middleware.CheckUserStatus(0), apis.Creation.UploadFile)
+	router.Patch("/v1/creation/price", middleware.AuthToken.Auth, middleware.CheckUserStatus(0), apis.Creation.UpdatePrice)
 
 	router.Post("/v1/publication", middleware.AuthToken.Auth, middleware.CheckUserStatus(0), apis.Publication.Create)
 	router.Post("/v1/publication/estimate", middleware.AuthToken.Auth, middleware.CheckUserStatus(0), apis.Publication.Estimate)
@@ -122,6 +131,18 @@ func newRouters(apis *APIs) []*gear.Router {
 	router.Post("/v1/publication/bookmark", middleware.AuthToken.Auth, apis.Publication.Bookmark)
 	router.Post("/v1/publication/upload", middleware.AuthToken.Auth, middleware.CheckUserStatus(0), apis.Publication.UploadFile)
 
+	router.Post("/v1/collection/list_archived", middleware.AuthToken.Auth, apis.Collection.ListArchived)
+	router.Post("/v1/collection", middleware.AuthToken.Auth, middleware.CheckUserStatus(0), apis.Collection.Create)
+	router.Patch("/v1/collection", middleware.AuthToken.Auth, middleware.CheckUserStatus(0), apis.Collection.Update)
+	router.Delete("/v1/collection", middleware.AuthToken.Auth, middleware.CheckUserStatus(0), apis.Collection.Delete)
+	router.Get("/v1/collection/info", middleware.AuthToken.Auth, apis.Collection.GetInfo)
+	router.Patch("/v1/collection/info", middleware.AuthToken.Auth, middleware.CheckUserStatus(0), apis.Collection.UpdateInfo)
+	router.Patch("/v1/collection/status", middleware.AuthToken.Auth, middleware.CheckUserStatus(0), apis.Collection.UpdateStatus)
+	router.Post("/v1/collection/child", middleware.AuthToken.Auth, middleware.CheckUserStatus(0), apis.Collection.AddChildren)
+	router.Patch("/v1/collection/child", middleware.AuthToken.Auth, middleware.CheckUserStatus(0), apis.Collection.UpdateChild)
+	router.Delete("/v1/collection/child", middleware.AuthToken.Auth, middleware.CheckUserStatus(0), apis.Collection.RemoveChild)
+	router.Get("/v1/collection/upload", middleware.AuthToken.Auth, middleware.CheckUserStatus(0), apis.Collection.UploadFile)
+
 	router.Post("/v1/message", middleware.AuthToken.Auth, apis.Message.Create)
 	router.Patch("/v1/message", middleware.AuthToken.Auth, apis.Message.Update)
 	router.Post("/v1/message/translate", middleware.AuthToken.Auth, apis.Message.UpdateI18n)
@@ -139,7 +160,10 @@ func newRouters(apis *APIs) []*gear.Router {
 	router.Post("/v1/group/list_following", middleware.AuthToken.Auth, apis.Group.ListFollowing)
 	router.Post("/v1/group/list_subscribing", middleware.AuthToken.Auth, todo) // 暂不实现
 	router.Patch("/v1/group", middleware.AuthToken.Auth, middleware.CheckUserStatus(0), apis.Group.UpdateInfo)
-	router.Get("/v1/group/upload_logo", middleware.AuthToken.Auth, middleware.CheckUserStatus(0), apis.Group.UploadLogo)
+	router.Get("/v1/group/upload_logo", middleware.AuthToken.Auth, middleware.CheckUserStatus(0), apis.Group.UploadPicture)
+
+	router.Get("/v1/payment/code", middleware.AuthToken.Auth, apis.Payment.GetCode)
+	router.Post("/v1/payment/code", middleware.AuthToken.Auth, apis.Payment.PayByCode)
 
 	router.Get("/v1/log/list_recently", middleware.AuthToken.Auth, apis.Log.ListRecently)
 

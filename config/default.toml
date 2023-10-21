@@ -10,6 +10,10 @@ addr = ":8080"
 # The maximum number of seconds to wait for graceful shutdown.
 graceful_shutdown = 10
 
+[keys]
+hmac = "./keys/hmac.key"
+aesgcm = "./keys/aesgcm.key"
+
 [redis]
 prefix = "YWAPI:"
 node = "127.0.0.1:6379"

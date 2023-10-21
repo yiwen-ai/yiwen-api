@@ -43,7 +43,7 @@ func (b *Jarvis) getTokensRate(lang string) float32 {
 }
 
 func (b *Jarvis) EstimateTranslatingTokens(text, srcLang, dstLang string) uint32 {
-	tokens := util.Tiktokens(text)
+	tokens := util.Tiktokens(text) + 100
 	return tokens + uint32(float32(tokens)*b.getTokensRate(dstLang)/b.getTokensRate(srcLang))
 }
 

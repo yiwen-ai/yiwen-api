@@ -126,7 +126,7 @@ func (a *Jarvis) Search(ctx *gear.Context) error {
 				CID:      item.CID,
 				Language: item.Language,
 				Fields:   "status,updated_at,title,summary",
-			}); err == nil && *doc.Status == 2 {
+			}, nil); err == nil && *doc.Status == 2 {
 				v := bll.SearchDocument{
 					GID:       doc.GID,
 					CID:       doc.CID,
@@ -251,7 +251,7 @@ func (a *Jarvis) GroupSearch(ctx *gear.Context) error {
 			CID:      item.CID,
 			Language: item.Language,
 			Fields:   "updated_at,title,summary",
-		}); err == nil {
+		}, nil); err == nil {
 			v := bll.SearchDocument{
 				GID:       doc.GID,
 				CID:       doc.CID,

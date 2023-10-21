@@ -84,6 +84,7 @@ func (b *Writing) CreateMessage(ctx context.Context, input *CreateMessageInput) 
 
 type UpdateMessageInput struct {
 	ID       util.ID     `json:"id" cbor:"id" validate:"required"`
+	GID      util.ID     `json:"gid" cbor:"gid" validate:"required"`
 	Version  uint16      `json:"version" cbor:"version" validate:"gte=1,lte=32767"`
 	Context  *string     `json:"context,omitempty" cbor:"context,omitempty" validate:"omitempty,gte=4,lte=1024"`
 	Language *string     `json:"language,omitempty" cbor:"language,omitempty"`

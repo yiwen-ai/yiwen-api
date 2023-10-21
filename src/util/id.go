@@ -14,6 +14,7 @@ import (
 var ZeroID ID
 var JARVIS ID = mustParseID("0000000000000jarvis0") // system user
 var ANON ID = mustParseID("000000000000000anon0")   // anonymous user
+var MinID ID = ID(xid.ID([12]byte{0, 0, 0, 0, 255, 255, 255, 255, 255, 255, 255, 255}))
 
 func NewID() ID {
 	return ID(xid.New())
@@ -43,6 +44,10 @@ func (id *ID) String() string {
 	}
 
 	return xid.ID(*id).String()
+}
+
+func (id ID) Compare(other ID) int {
+	return xid.ID(id).Compare(xid.ID(other))
 }
 
 func (id ID) MarshalCBOR() ([]byte, error) {
@@ -194,4 +199,16 @@ func Unmarshal[T any](b *Bytes) (*T, error) {
 		return nil, err
 	}
 	return &v, nil
+}
+
+func Marshal[T any](v *T) (Bytes, error) {
+	if v == nil {
+		return nil, errors.New("nil value")
+	}
+
+	b, err := cbor.Marshal(v)
+	if err != nil {
+		return nil, err
+	}
+	return Bytes(b), nil
 }

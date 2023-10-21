@@ -110,11 +110,6 @@ func (a *Publication) Create(ctx *gear.Context) error {
 		return gear.ErrForbidden.From(err)
 	}
 
-	_, err := a.tryReadOne(ctx, input.GID, input.CID, input.Language, input.Version, false)
-	if err != nil {
-		return gear.ErrForbidden.From(err)
-	}
-
 	sess := gear.CtxValue[middleware.Session](ctx)
 	wallet, err := a.blls.Walletbase.Get(ctx, sess.UserID)
 	if err != nil {
@@ -129,36 +124,9 @@ func (a *Publication) Create(ctx *gear.Context) error {
 		return gear.ErrBadRequest.WithMsgf("model %q is not allowed for user level < 2", input.Model)
 	}
 
-	dst, _ := a.blls.Writing.GetPublication(ctx, &bll.QueryPublication{
-		GID:      *input.ToGID,
-		CID:      input.CID,
-		Language: *input.ToLanguage,
-		Version:  input.Version,
-		Fields:   "status,creator,updated_at",
-	})
-	if dst != nil && dst.Status != nil && *dst.Status >= 0 {
-		return gear.ErrConflict.WithMsgf("%s publication already exists", *input.ToLanguage)
-	}
-
-	if dst != nil {
-		a.blls.Writing.DeletePublication(ctx, &bll.QueryPublication{
-			GID:      dst.GID,
-			CID:      dst.CID,
-			Language: *input.ToLanguage,
-			Version:  dst.Version,
-		})
-	}
-
-	src, err := a.blls.Writing.GetPublication(ctx, &bll.QueryPublication{
-		GID:      input.GID,
-		CID:      input.CID,
-		Language: input.Language,
-		Version:  input.Version,
-		Fields:   "",
-	})
-
+	src, err := a.tryReadOne(ctx, input.GID, input.CID, input.Language, input.Version, true)
 	if err != nil {
-		return gear.ErrInternalServerError.From(err)
+		return gear.ErrForbidden.From(err)
 	}
 
 	teContents, err := src.ToTEContents()
@@ -188,6 +156,26 @@ func (a *Publication) Create(ctx *gear.Context) error {
 
 	if input.Context == nil {
 		input.Context = util.Ptr(fmt.Sprintf("The text is part or all of the %q", *src.Title))
+	}
+
+	dst, _ := a.blls.Writing.GetPublication(ctx, &bll.QueryPublication{
+		GID:      *input.ToGID,
+		CID:      input.CID,
+		Language: *input.ToLanguage,
+		Version:  input.Version,
+		Fields:   "status,creator,updated_at",
+	})
+	if dst != nil && dst.Status != nil && *dst.Status >= 0 {
+		return gear.ErrConflict.WithMsgf("%s publication already exists", *input.ToLanguage)
+	}
+
+	if dst != nil {
+		a.blls.Writing.DeletePublication(ctx, &bll.QueryPublication{
+			GID:      dst.GID,
+			CID:      dst.CID,
+			Language: *input.ToLanguage,
+			Version:  dst.Version,
+		})
 	}
 
 	gctx := middleware.WithGlobalCtx(ctx)
@@ -265,12 +253,12 @@ func (a *Publication) Create(ctx *gear.Context) error {
 					})
 
 					if err == nil {
-						err = a.blls.Walletbase.CommitExpending(gctx, txn)
+						err = a.blls.Walletbase.CommitTxn(gctx, txn)
 					}
 				}
 
 				if err != nil {
-					_ = a.blls.Walletbase.CancelExpending(gctx, txn)
+					_ = a.blls.Walletbase.CancelTxn(gctx, txn)
 				}
 			}
 		}
@@ -323,22 +311,23 @@ func (a *Publication) Get(ctx *gear.Context) error {
 		return err
 	}
 
-	var err error
-	var output *bll.PublicationOutput
-	if input.GID != nil && input.Language != "" && input.Version > 0 {
-		output, err = a.tryReadOne(ctx, *input.GID, input.CID, input.Language, input.Version, true)
-	} else {
-		output, err = a.blls.Writing.ImplicitGetPublication(ctx, input)
+	subscription_in := util.ZeroID
+	subtoken, err := util.DecodeMac0[SubscriptionToken](a.blls.MACer, input.SubToken, []byte("SubscriptionToken"))
+	if err == nil {
+		// fast API calling with subtoken
+		subscription_in = subtoken.GID
+		if input.Parent != nil && *input.Parent != subtoken.CID {
+			return gear.ErrBadRequest.WithMsg("invalid parent")
+		}
+		input.Parent = &subtoken.CID
 	}
 
+	output, err := a.blls.Writing.ImplicitGetPublication(ctx, input, &subscription_in)
 	if err != nil {
 		return gear.ErrBadRequest.From(err)
 	}
 
 	result := bll.PublicationOutputs{*output}
-	// result.LoadCreators(func(ids ...util.ID) []bll.UserInfo {
-	// 	return a.blls.Userbase.LoadUserInfo(ctx, ids...)
-	// })
 	result.LoadGroups(func(ids ...util.ID) []bll.GroupInfo {
 		return a.blls.Userbase.LoadGroupInfo(ctx, ids...)
 	})
@@ -438,9 +427,6 @@ func (a *Publication) GetByJob(ctx *gear.Context) error {
 	}
 
 	result := bll.PublicationOutputs{*output}
-	// result.LoadCreators(func(ids ...util.ID) []bll.UserInfo {
-	// 	return a.blls.Userbase.LoadUserInfo(ctx, ids...)
-	// })
 	result.LoadGroups(func(ids ...util.ID) []bll.GroupInfo {
 		return a.blls.Userbase.LoadGroupInfo(ctx, ids...)
 	})
@@ -722,7 +708,7 @@ func (a *Publication) ListArchived(ctx *gear.Context) error {
 }
 
 func (a *Publication) GetPublishList(ctx *gear.Context) error {
-	input := &bll.GidCidInput{}
+	input := &bll.QueryGidCid{}
 	if err := ctx.ParseURL(input); err != nil {
 		return err
 	}
@@ -911,6 +897,7 @@ func (a *Publication) Bookmark(ctx *gear.Context) error {
 		return gear.ErrForbidden.From(err)
 	}
 
+	input.Kind = 1
 	output, err := a.blls.Writing.CreateBookmark(ctx, input)
 	if err != nil {
 		return gear.ErrInternalServerError.From(err)
@@ -949,7 +936,7 @@ func (a *Publication) UploadFile(ctx *gear.Context) error {
 
 func (a *Publication) checkReadPermission(ctx *gear.Context, gid util.ID) (int8, error) {
 	sess := gear.CtxValue[middleware.Session](ctx)
-	if sess == nil || sess.UserID == util.ANON {
+	if sess == nil || sess.UserID.Compare(util.MinID) <= 0 {
 		return -2, gear.ErrForbidden.WithMsg("no permission")
 	}
 
@@ -966,7 +953,7 @@ func (a *Publication) checkReadPermission(ctx *gear.Context, gid util.ID) (int8,
 
 func (a *Publication) checkCreatePermission(ctx *gear.Context, gid util.ID) error {
 	sess := gear.CtxValue[middleware.Session](ctx)
-	if sess == nil || sess.UserID == util.ANON {
+	if sess == nil || sess.UserID.Compare(util.MinID) <= 0 {
 		return gear.ErrForbidden.WithMsg("no permission")
 	}
 
@@ -983,7 +970,7 @@ func (a *Publication) checkCreatePermission(ctx *gear.Context, gid util.ID) erro
 
 func (a *Publication) checkWritePermission(ctx *gear.Context, gid, cid util.ID, language string, version uint16) (*bll.PublicationOutput, error) {
 	sess := gear.CtxValue[middleware.Session](ctx)
-	if sess == nil || sess.UserID == util.ANON {
+	if sess == nil || sess.UserID.Compare(util.MinID) <= 0 {
 		return nil, gear.ErrForbidden.WithMsg("no permission")
 	}
 
@@ -1018,13 +1005,12 @@ func (a *Publication) checkWritePermission(ctx *gear.Context, gid, cid util.ID, 
 }
 
 func (a *Publication) tryReadOne(ctx *gear.Context, gid, cid util.ID, language string, version uint16, full bool) (*bll.PublicationOutput, error) {
-	var err error
-	var role int8 = -2
-
-	if sess := gear.CtxValue[middleware.Session](ctx); sess != nil && sess.UserID != util.ANON {
-		role, _ = a.blls.Userbase.UserGroupRole(ctx, sess.UserID, gid)
+	sess := gear.CtxValue[middleware.Session](ctx)
+	if sess == nil || sess.UserID.Compare(util.MinID) <= 0 {
+		return nil, gear.ErrForbidden.WithMsg("no permission")
 	}
 
+	role, _ := a.blls.Userbase.UserGroupRole(ctx, sess.UserID, gid)
 	input := &bll.QueryPublication{
 		GID:      gid,
 		CID:      cid,

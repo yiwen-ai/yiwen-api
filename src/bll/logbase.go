@@ -114,6 +114,7 @@ type LogPayload struct {
 	Language *string `json:"language,omitempty" cbor:"language,omitempty"`
 	Status   *int8   `json:"status,omitempty" cbor:"status,omitempty"`
 	Rating   *int8   `json:"rating,omitempty" cbor:"rating,omitempty"`
+	Price    *int64  `json:"price,omitempty" cbor:"price,omitempty"`
 }
 
 type LogMessage struct {

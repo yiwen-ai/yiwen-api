@@ -7,11 +7,12 @@ require (
 	github.com/aliyun/aliyun-oss-go-sdk v2.2.9+incompatible
 	github.com/bsm/redislock v0.9.4
 	github.com/fxamacker/cbor/v2 v2.5.0
-	github.com/gabriel-vasile/mimetype v1.4.2
+	github.com/gabriel-vasile/mimetype v1.4.3
 	github.com/go-playground/validator/v10 v10.15.5
 	github.com/google/uuid v1.3.1
 	github.com/jaevor/go-nanoid v1.3.0
-	github.com/klauspost/compress v1.17.0
+	github.com/klauspost/compress v1.17.1
+	github.com/ldclabs/cose v1.1.2
 	github.com/pkoukk/tiktoken-go v0.1.6
 	github.com/pkoukk/tiktoken-go-loader v0.0.1
 	github.com/redis/go-redis/v9 v9.2.1
@@ -19,7 +20,7 @@ require (
 	github.com/saintfish/chardet v0.0.0-20230101081208-5e3ef4b5456d
 	github.com/stretchr/testify v1.8.4
 	github.com/teambition/gear v1.27.3
-	go.uber.org/dig v1.17.0
+	go.uber.org/dig v1.17.1
 	golang.org/x/text v0.13.0
 )
 

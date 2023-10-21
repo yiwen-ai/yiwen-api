@@ -3,6 +3,9 @@ package bll
 import (
 	"context"
 
+	"github.com/ldclabs/cose/key"
+	_ "github.com/ldclabs/cose/key/aesgcm"
+	_ "github.com/ldclabs/cose/key/hmac"
 	"github.com/teambition/gear"
 
 	"github.com/yiwen-ai/yiwen-api/src/conf"
@@ -16,6 +19,8 @@ func init() {
 
 // Blls ...
 type Blls struct {
+	MACer      key.MACer
+	Encryptor  key.Encryptor
 	Locker     *service.Locker
 	Jarvis     *Jarvis
 	Logbase    *Logbase
@@ -30,7 +35,18 @@ type Blls struct {
 // NewBlls ...
 func NewBlls(oss *service.OSS, redis *service.Redis, locker *service.Locker) *Blls {
 	cfg := conf.Config.Base
+	macer, err := conf.Config.COSEKeys.Hmac.MACer()
+	if err != nil {
+		panic(err)
+	}
+	encryptor, err := conf.Config.COSEKeys.Aesgcm.Encryptor()
+	if err != nil {
+		panic(err)
+	}
+
 	return &Blls{
+		MACer:      macer,
+		Encryptor:  encryptor,
 		Locker:     locker,
 		Jarvis:     &Jarvis{svc: service.APIHost(cfg.Jarvis)},
 		Logbase:    &Logbase{svc: service.APIHost(cfg.Logbase)},
@@ -91,6 +107,23 @@ func (i *Pagination) Validate() error {
 	return nil
 }
 
+type IDGIDPagination struct {
+	ID        util.ID     `json:"id" cbor:"id" validate:"required"`
+	GID       util.ID     `json:"gid" cbor:"gid" validate:"required"`
+	PageToken *util.Bytes `json:"page_token,omitempty" cbor:"page_token,omitempty"`
+	PageSize  *uint16     `json:"page_size,omitempty" cbor:"page_size,omitempty" validate:"omitempty,gte=5,lte=100"`
+	Status    *int8       `json:"status,omitempty" cbor:"status,omitempty"`
+	Fields    *[]string   `json:"fields,omitempty" cbor:"fields,omitempty"`
+}
+
+func (i *IDGIDPagination) Validate() error {
+	if err := util.Validator.Struct(i); err != nil {
+		return gear.ErrBadRequest.From(err)
+	}
+
+	return nil
+}
+
 type GIDPagination struct {
 	GID       util.ID     `json:"gid" cbor:"gid" validate:"required"`
 	PageToken *util.Bytes `json:"page_token,omitempty" cbor:"page_token,omitempty"`
@@ -120,12 +153,28 @@ func (i *QueryIdCn) Validate() error {
 	return nil
 }
 
-type GidCidInput struct {
+type QueryGidIdCid struct {
 	GID util.ID `json:"gid" cbor:"gid" query:"gid" validate:"required"`
+	ID  util.ID `json:"id" cbor:"id" query:"id" validate:"required"`
 	CID util.ID `json:"cid" cbor:"cid" query:"cid" validate:"required"`
 }
 
-func (i *GidCidInput) Validate() error {
+func (i *QueryGidIdCid) Validate() error {
+	if err := util.Validator.Struct(i); err != nil {
+		return gear.ErrBadRequest.From(err)
+	}
+
+	return nil
+}
+
+type QueryGidCid struct {
+	GID    util.ID `json:"gid" cbor:"gid" query:"gid" validate:"required"`
+	CID    util.ID `json:"cid" cbor:"cid" query:"cid" validate:"required"`
+	Status int8    `json:"status,omitempty" cbor:"status,omitempty"`
+	Fields string  `json:"fields,omitempty" cbor:"fields,omitempty"`
+}
+
+func (i *QueryGidCid) Validate() error {
 	if err := util.Validator.Struct(i); err != nil {
 		return gear.ErrBadRequest.From(err)
 	}
@@ -142,5 +191,56 @@ func (i *QueryID) Validate() error {
 	if err := util.Validator.Struct(i); err != nil {
 		return gear.ErrBadRequest.From(err)
 	}
+	return nil
+}
+
+type QueryGidID struct {
+	GID    util.ID `json:"gid" cbor:"gid" query:"gid" validate:"required"`
+	ID     util.ID `json:"id" cbor:"id" query:"id" validate:"required"`
+	Fields string  `json:"fields" cbor:"fields" query:"fields"`
+}
+
+func (i *QueryGidID) Validate() error {
+	if err := util.Validator.Struct(i); err != nil {
+		return gear.ErrBadRequest.From(err)
+	}
+	return nil
+}
+
+type SubscriptionInput struct {
+	UID       util.ID `json:"uid" cbor:"uid"`
+	CID       util.ID `json:"cid" cbor:"cid"`
+	Txn       util.ID `json:"txn" cbor:"txn"`
+	ExpireAt  int64   `json:"expire_at" cbor:"expire_at"`
+	UpdatedAt int64   `json:"updated_at" cbor:"updated_at"`
+}
+
+type SubscriptionOutput struct {
+	UID       util.ID `json:"uid" cbor:"uid"`
+	CID       util.ID `json:"cid" cbor:"cid"`
+	GID       util.ID `json:"gid" cbor:"gid"`
+	Txn       util.ID `json:"txn" cbor:"txn"`
+	ExpireAt  int64   `json:"expire_at" cbor:"expire_at"`
+	UpdatedAt int64   `json:"updated_at" cbor:"updated_at"`
+}
+
+// Request for Payment
+type RFP struct {
+	Creation   uint64 `json:"creation,omitempty" cbor:"creation,omitempty"`
+	Collection uint64 `json:"collection,omitempty" cbor:"collection,omitempty"`
+}
+
+type UpdateStatusInput struct {
+	GID       util.ID `json:"gid" cbor:"gid" validate:"required"`
+	ID        util.ID `json:"id" cbor:"id" validate:"required"`
+	UpdatedAt int64   `json:"updated_at" cbor:"updated_at" validate:"required"`
+	Status    int8    `json:"status" cbor:"status" validate:"gte=-2,lte=2"`
+}
+
+func (i *UpdateStatusInput) Validate() error {
+	if err := util.Validator.Struct(i); err != nil {
+		return gear.ErrBadRequest.From(err)
+	}
+
 	return nil
 }

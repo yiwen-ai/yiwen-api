@@ -55,6 +55,8 @@ type Walletbase struct {
 type SpendInput struct {
 	UID         util.ID    `json:"uid" cbor:"uid"`
 	Amount      int64      `json:"amount" cbor:"amount"`
+	Payee       *util.ID   `json:"payee,omitempty" cbor:"payee,omitempty"`
+	SubPayee    *util.ID   `json:"sub_payee,omitempty" cbor:"sub_payee,omitempty"`
 	Description string     `json:"description,omitempty" cbor:"description,omitempty"`
 	Payload     util.Bytes `json:"payload,omitempty" cbor:"payload,omitempty"`
 }
@@ -100,6 +102,7 @@ func (b *Walletbase) Get(ctx context.Context, uid util.ID) (*WalletOutput, error
 	return &output.Result, nil
 }
 
+// should call CommitTxn or CancelTxn to confirm the transaction
 func (b *Walletbase) Spend(ctx context.Context, uid util.ID, input *SpendPayload) (*WalletOutput, error) {
 	data, err := cbor.Marshal(input)
 	if err != nil {
@@ -117,6 +120,17 @@ func (b *Walletbase) Spend(ctx context.Context, uid util.ID, input *SpendPayload
 	}
 	output := SuccessResponse[WalletOutput]{}
 	if err := b.svc.Post(ctx, "/v1/wallet/spend", ex, &output); err != nil {
+		return nil, err
+	}
+
+	output.Result.SetLevel()
+	return &output.Result, nil
+}
+
+// should call CommitTxn or CancelTxn to confirm the transaction
+func (b *Walletbase) Subscribe(ctx context.Context, input *SpendInput) (*WalletOutput, error) {
+	output := SuccessResponse[WalletOutput]{}
+	if err := b.svc.Post(ctx, "/v1/wallet/subscribe", input, &output); err != nil {
 		return nil, err
 	}
 
@@ -143,7 +157,7 @@ type TransactionOutput struct {
 	Payload     *util.Bytes `json:"payload,omitempty" cbor:"payload,omitempty"`
 }
 
-func (b *Walletbase) CommitExpending(ctx context.Context, input *TransactionPK) error {
+func (b *Walletbase) CommitTxn(ctx context.Context, input *TransactionPK) error {
 	output := SuccessResponse[TransactionOutput]{}
 	if err := b.svc.Post(ctx, "/v1/transaction/commit", input, &output); err != nil {
 		return err
@@ -152,7 +166,7 @@ func (b *Walletbase) CommitExpending(ctx context.Context, input *TransactionPK) 
 	return nil
 }
 
-func (b *Walletbase) CancelExpending(ctx context.Context, input *TransactionPK) error {
+func (b *Walletbase) CancelTxn(ctx context.Context, input *TransactionPK) error {
 	output := SuccessResponse[TransactionOutput]{}
 	if err := b.svc.Post(ctx, "/v1/transaction/cancel", input, &output); err != nil {
 		return err

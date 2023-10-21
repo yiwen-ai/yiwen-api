@@ -65,17 +65,7 @@ func (a *Message) Update(ctx *gear.Context) error {
 		}
 	}
 
-	msg, err := a.blls.Writing.GetMessage(ctx, &bll.QueryID{
-		ID: input.ID, Fields: "version,attach_to",
-	})
-	if err != nil {
-		return gear.ErrInternalServerError.From(err)
-	}
-	if *msg.Version != input.Version {
-		return gear.ErrBadRequest.WithMsg("version mismatch")
-	}
-
-	if err := a.checkWritePermission(ctx, *msg.AttachTo); err != nil {
+	if err := a.checkWritePermission(ctx, input.GID); err != nil {
 		return err
 	}
 
@@ -84,9 +74,9 @@ func (a *Message) Update(ctx *gear.Context) error {
 		return gear.ErrInternalServerError.From(err)
 	}
 
-	if _, err = a.blls.Logbase.Log(ctx, bll.LogActionMessageUpdate, 1, *msg.AttachTo, &bll.LogMessage{
+	if _, err = a.blls.Logbase.Log(ctx, bll.LogActionMessageUpdate, 1, input.GID, &bll.LogMessage{
 		ID:       input.ID,
-		AttachTo: *msg.AttachTo,
+		AttachTo: input.GID,
 		Language: input.Language,
 		Version:  &input.Version,
 	}); err != nil {
@@ -106,6 +96,10 @@ func (a *Message) UpdateI18n(ctx *gear.Context) error {
 		return gear.ErrBadRequest.WithMsg("invalid language")
 	}
 
+	if err := a.checkWritePermission(ctx, input.GID); err != nil {
+		return err
+	}
+
 	lang := *input.Language
 	msg, err := a.blls.Writing.GetMessage(ctx, &bll.QueryID{
 		ID: input.ID, Fields: "version,language,attach_to,context,message," + lang,
@@ -119,9 +113,8 @@ func (a *Message) UpdateI18n(ctx *gear.Context) error {
 	if *msg.Language == *input.Language {
 		return gear.ErrBadRequest.WithMsg("language is the same")
 	}
-
-	if err := a.checkWritePermission(ctx, *msg.AttachTo); err != nil {
-		return err
+	if *msg.AttachTo != input.GID {
+		return gear.ErrForbidden.WithMsg("no permission")
 	}
 
 	var kv bll.KVMessage
@@ -137,6 +130,10 @@ func (a *Message) UpdateI18n(ctx *gear.Context) error {
 		for k := range langKV {
 			delete(kv, k) // don't need to translate
 		}
+	}
+
+	if len(kv) == 0 {
+		return gear.ErrBadRequest.WithMsg("no need to translate")
 	}
 
 	sess := gear.CtxValue[middleware.Session](ctx)
@@ -244,11 +241,11 @@ func (a *Message) UpdateI18n(ctx *gear.Context) error {
 				}
 
 				if err == nil {
-					err = a.blls.Walletbase.CommitExpending(gctx, txn)
+					err = a.blls.Walletbase.CommitTxn(gctx, txn)
 				}
 
 				if err != nil {
-					_ = a.blls.Walletbase.CancelExpending(gctx, txn)
+					_ = a.blls.Walletbase.CancelTxn(gctx, txn)
 				}
 			}
 		}

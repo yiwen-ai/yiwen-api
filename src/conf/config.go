@@ -2,14 +2,18 @@ package conf
 
 import (
 	"context"
+	"encoding/base64"
 	"fmt"
 	"math/rand"
 	"os"
+	"path/filepath"
 	"sync"
 	"sync/atomic"
 	"time"
 
 	"github.com/BurntSushi/toml"
+	"github.com/fxamacker/cbor/v2"
+	"github.com/ldclabs/cose/key"
 	"github.com/teambition/gear"
 	"github.com/yiwen-ai/yiwen-api/src/util"
 )
@@ -48,6 +52,11 @@ type Logger struct {
 type Server struct {
 	Addr             string `json:"addr" toml:"addr"`
 	GracefulShutdown uint   `json:"graceful_shutdown" toml:"graceful_shutdown"`
+}
+
+type Keys struct {
+	Hmac   string `json:"hmac" toml:"hmac"`
+	Aesgcm string `json:"aesgcm" toml:"aesgcm"`
 }
 
 type Redis struct {
@@ -92,6 +101,7 @@ type ConfigTpl struct {
 	Env             string             `json:"env" toml:"env"`
 	Logger          Logger             `json:"log" toml:"log"`
 	Server          Server             `json:"server" toml:"server"`
+	Keys            Keys               `json:"keys" toml:"keys"`
 	Redis           Redis              `json:"redis" toml:"redis"`
 	Base            Base               `json:"base" toml:"base"`
 	OSS             OSS                `json:"oss" toml:"oss"`
@@ -99,11 +109,28 @@ type ConfigTpl struct {
 	Wechat          Wechat             `json:"wechat" toml:"wechat"`
 	TokensRate      map[string]float32 `json:"tokens_rate" toml:"tokens_rate"`
 	Recommendations []Recommendation   `json:"recommendations" toml:"recommendations"`
+	COSEKeys        struct {
+		Hmac   key.Key
+		Aesgcm key.Key
+	}
 
 	globalJobs int64 // global async jobs counter for graceful shutdown
 }
 
 func (c *ConfigTpl) Validate() error {
+	var err error
+	execDir := os.Getenv("EXEC_DIR_PATH")
+	if execDir != "" {
+		c.Keys.Hmac = filepath.Join(execDir, c.Keys.Hmac)
+		c.Keys.Aesgcm = filepath.Join(execDir, c.Keys.Aesgcm)
+	}
+
+	if c.COSEKeys.Hmac, err = readKey(c.Keys.Hmac); err != nil {
+		return err
+	}
+	if c.COSEKeys.Aesgcm, err = readKey(c.Keys.Aesgcm); err != nil {
+		return err
+	}
 	return nil
 }
 
@@ -117,6 +144,20 @@ func (c *ConfigTpl) ReleaseJob() {
 
 func (c *ConfigTpl) JobsIdle() bool {
 	return atomic.LoadInt64(&c.globalJobs) <= 0
+}
+
+func readKey(filePath string) (k key.Key, err error) {
+	var data []byte
+	data, err = os.ReadFile(filePath)
+	if err != nil {
+		return
+	}
+	data, err = base64.RawURLEncoding.DecodeString(string(data))
+	if err != nil {
+		return
+	}
+	err = cbor.Unmarshal(data, &k)
+	return
 }
 
 func readConfig(v interface{}, path ...string) {

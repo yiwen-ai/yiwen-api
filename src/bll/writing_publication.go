@@ -52,60 +52,34 @@ type PublicationDraft struct {
 }
 
 type PublicationOutput struct {
-	GID          util.ID     `json:"gid" cbor:"gid"`
-	CID          util.ID     `json:"cid" cbor:"cid"`
-	Language     string      `json:"language" cbor:"language"`
-	Version      uint16      `json:"version" cbor:"version"`
-	Rating       *int8       `json:"rating,omitempty" cbor:"rating,omitempty"`
-	Status       *int8       `json:"status,omitempty" cbor:"status,omitempty"`
-	Creator      *util.ID    `json:"creator,omitempty" cbor:"creator,omitempty"`
-	CreatedAt    *int64      `json:"created_at,omitempty" cbor:"created_at,omitempty"`
-	UpdatedAt    *int64      `json:"updated_at,omitempty" cbor:"updated_at,omitempty"`
-	Model        *string     `json:"model,omitempty" cbor:"model,omitempty"`
-	OriginalUrl  *string     `json:"original_url,omitempty" cbor:"original_url,omitempty"`
-	FromLanguage *string     `json:"from_language,omitempty" cbor:"from_language,omitempty"`
-	Genre        *[]string   `json:"genre,omitempty" cbor:"genre,omitempty"`
-	Title        *string     `json:"title,omitempty" cbor:"title,omitempty"`
-	Cover        *string     `json:"cover,omitempty" cbor:"cover,omitempty"`
-	Keywords     *[]string   `json:"keywords,omitempty" cbor:"keywords,omitempty"`
-	Authors      *[]string   `json:"authors,omitempty" cbor:"authors,omitempty"`
-	Summary      *string     `json:"summary,omitempty" cbor:"summary,omitempty"`
-	Content      *util.Bytes `json:"content,omitempty" cbor:"content,omitempty"`
-	License      *string     `json:"license,omitempty" cbor:"license,omitempty"`
-	CreatorInfo  *UserInfo   `json:"creator_info,omitempty" cbor:"creator_info,omitempty"`
-	GroupInfo    *GroupInfo  `json:"group_info,omitempty" cbor:"group_info,omitempty"`
+	GID          util.ID             `json:"gid" cbor:"gid"`
+	CID          util.ID             `json:"cid" cbor:"cid"`
+	Language     string              `json:"language" cbor:"language"`
+	Version      uint16              `json:"version" cbor:"version"`
+	Rating       *int8               `json:"rating,omitempty" cbor:"rating,omitempty"`
+	Price        *int64              `json:"price,omitempty" cbor:"price,omitempty"`
+	Status       *int8               `json:"status,omitempty" cbor:"status,omitempty"`
+	Creator      *util.ID            `json:"creator,omitempty" cbor:"creator,omitempty"`
+	CreatedAt    *int64              `json:"created_at,omitempty" cbor:"created_at,omitempty"`
+	UpdatedAt    *int64              `json:"updated_at,omitempty" cbor:"updated_at,omitempty"`
+	Model        *string             `json:"model,omitempty" cbor:"model,omitempty"`
+	OriginalUrl  *string             `json:"original_url,omitempty" cbor:"original_url,omitempty"`
+	FromLanguage *string             `json:"from_language,omitempty" cbor:"from_language,omitempty"`
+	Genre        *[]string           `json:"genre,omitempty" cbor:"genre,omitempty"`
+	Title        *string             `json:"title,omitempty" cbor:"title,omitempty"`
+	Cover        *string             `json:"cover,omitempty" cbor:"cover,omitempty"`
+	Keywords     *[]string           `json:"keywords,omitempty" cbor:"keywords,omitempty"`
+	Authors      *[]string           `json:"authors,omitempty" cbor:"authors,omitempty"`
+	Summary      *string             `json:"summary,omitempty" cbor:"summary,omitempty"`
+	Content      *util.Bytes         `json:"content,omitempty" cbor:"content,omitempty"`
+	License      *string             `json:"license,omitempty" cbor:"license,omitempty"`
+	Subscription *SubscriptionOutput `json:"subscription,omitempty" cbor:"subscription,omitempty"`
+	RFP          *RFP                `json:"rfp,omitempty" cbor:"rfp,omitempty"`
+	FromGID      *util.ID            `json:"from_gid,omitempty" cbor:"from_gid,omitempty"`
+	GroupInfo    *GroupInfo          `json:"group_info,omitempty" cbor:"group_info,omitempty"`
 }
 
 type PublicationOutputs []PublicationOutput
-
-func (list *PublicationOutputs) LoadCreators(loader func(ids ...util.ID) []UserInfo) {
-	if len(*list) == 0 {
-		return
-	}
-
-	ids := make([]util.ID, 0, len(*list))
-	for _, v := range *list {
-		if v.Creator != nil {
-			ids = append(ids, *v.Creator)
-		}
-	}
-
-	users := loader(ids...)
-	if len(users) == 0 {
-		return
-	}
-
-	infoMap := make(map[util.ID]*UserInfo, len(users))
-	for i := range users {
-		infoMap[*users[i].ID] = &users[i]
-		infoMap[*users[i].ID].ID = nil
-	}
-
-	for i := range *list {
-		(*list)[i].CreatorInfo = infoMap[*(*list)[i].Creator]
-		(*list)[i].Creator = nil
-	}
-}
 
 func (list *PublicationOutputs) LoadGroups(loader func(ids ...util.ID) []GroupInfo) {
 	if len(*list) == 0 {
@@ -232,7 +206,7 @@ func (i *PublicationOutput) IntoPublicationDraft(gid util.ID, language, model st
 
 func (b *Writing) InitApp(ctx context.Context, _ *gear.App) error {
 	for _, v := range conf.Config.Recommendations {
-		res, err := b.GetPublicationList(ctx, 2, &GidCidInput{
+		res, err := b.GetPublicationList(ctx, 2, &QueryGidCid{
 			GID: v.GID,
 			CID: v.CID,
 		})
@@ -303,9 +277,11 @@ func (b *Writing) GetPublication(ctx context.Context, input *QueryPublication) (
 type ImplicitQueryPublication struct {
 	CID      util.ID  `json:"cid" cbor:"cid" query:"cid" validate:"required"`
 	GID      *util.ID `json:"gid" cbor:"gid" query:"gid"`
+	Parent   *util.ID `json:"parent" cbor:"parent" query:"parent"`
 	Language string   `json:"language" cbor:"language" query:"language"`
 	Version  uint16   `json:"version" cbor:"version" query:"version" validate:"omitempty,gte=0,lte=10000"`
 	Fields   string   `json:"fields" cbor:"fields" query:"fields"`
+	SubToken string   `json:"subtoken" cbor:"subtoken" query:"subtoken"`
 }
 
 func (i *ImplicitQueryPublication) Validate() error {
@@ -316,13 +292,22 @@ func (i *ImplicitQueryPublication) Validate() error {
 	return nil
 }
 
-func (b *Writing) ImplicitGetPublication(ctx context.Context, input *ImplicitQueryPublication) (*PublicationOutput, error) {
+// ImplicitGetPublication is used to get a publication.
+// It will check the subscription if subscription_in privided. (ignore checking if nil)
+func (b *Writing) ImplicitGetPublication(ctx context.Context, input *ImplicitQueryPublication,
+	subscription_in *util.ID) (*PublicationOutput, error) {
 	output := SuccessResponse[PublicationOutput]{}
 
 	query := url.Values{}
 	query.Add("cid", input.CID.String())
 	if input.GID != nil {
 		query.Add("gid", input.GID.String())
+	}
+	if input.Parent != nil {
+		query.Add("parent", input.Parent.String())
+	}
+	if subscription_in != nil {
+		query.Add("subscription_in", subscription_in.String())
 	}
 	if input.Language != "" {
 		query.Add("language", input.Language)
@@ -434,7 +419,7 @@ func (b *Writing) ListLatestPublications(ctx context.Context, input *Pagination)
 	return &output, nil
 }
 
-func (b *Writing) GetPublicationList(ctx context.Context, from_status int8, input *GidCidInput) (*SuccessResponse[PublicationOutputs], error) {
+func (b *Writing) GetPublicationList(ctx context.Context, from_status int8, input *QueryGidCid) (*SuccessResponse[PublicationOutputs], error) {
 	output := SuccessResponse[PublicationOutputs]{}
 	query := url.Values{}
 	query.Add("gid", input.GID.String())

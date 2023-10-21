@@ -79,7 +79,7 @@ func (a *Creation) Create(ctx *gear.Context) error {
 }
 
 func (a *Creation) Get(ctx *gear.Context) error {
-	input := &bll.QueryCreation{}
+	input := &bll.QueryGidID{}
 	if err := ctx.ParseURL(input); err != nil {
 		return err
 	}
@@ -137,7 +137,7 @@ func (a *Creation) Update(ctx *gear.Context) error {
 }
 
 func (a *Creation) Delete(ctx *gear.Context) error {
-	input := &bll.QueryCreation{}
+	input := &bll.QueryGidID{}
 	if err := ctx.ParseURL(input); err != nil {
 		return err
 	}
@@ -218,7 +218,7 @@ func (a *Creation) ListArchived(ctx *gear.Context) error {
 }
 
 func (a *Creation) Archive(ctx *gear.Context) error {
-	input := &bll.UpdateCreationStatusInput{}
+	input := &bll.UpdateStatusInput{}
 	if err := ctx.ParseBody(input); err != nil {
 		return err
 	}
@@ -246,7 +246,7 @@ func (a *Creation) Archive(ctx *gear.Context) error {
 }
 
 func (a *Creation) Redraft(ctx *gear.Context) error {
-	input := &bll.UpdateCreationStatusInput{}
+	input := &bll.UpdateStatusInput{}
 	if err := ctx.ParseBody(input); err != nil {
 		return err
 	}
@@ -274,7 +274,7 @@ func (a *Creation) Redraft(ctx *gear.Context) error {
 }
 
 func (a *Creation) checkTokens(ctx *gear.Context, gid, cid util.ID) error {
-	src, err := a.blls.Writing.GetCreation(ctx, &bll.QueryCreation{
+	src, err := a.blls.Writing.GetCreation(ctx, &bll.QueryGidID{
 		GID:    gid,
 		ID:     cid,
 		Fields: "content",
@@ -399,7 +399,7 @@ func (a *Creation) release(gctx context.Context, creation *bll.CreationOutput, a
 		}
 
 		// 用户私有 group 自动提升 status，无需 review 和 approve
-		statusInput := &bll.UpdateCreationStatusInput{
+		statusInput := &bll.UpdateStatusInput{
 			GID: creation.GID,
 			ID:  creation.ID,
 		}
@@ -487,7 +487,7 @@ func (a *Creation) UpdateContent(ctx *gear.Context) error {
 }
 
 func (a *Creation) UploadFile(ctx *gear.Context) error {
-	input := &bll.QueryCreation{}
+	input := &bll.QueryGidID{}
 	if err := ctx.ParseBody(input); err != nil {
 		return err
 	}
@@ -503,6 +503,34 @@ func (a *Creation) UploadFile(ctx *gear.Context) error {
 
 	output := a.blls.Writing.SignPostPolicy(creation.GID, creation.ID, *creation.Language, uint(*creation.Version))
 	return ctx.OkSend(bll.SuccessResponse[service.PostFilePolicy]{Result: output})
+}
+
+func (a *Creation) UpdatePrice(ctx *gear.Context) error {
+	input := &bll.UpdateCreationPriceInput{}
+	if err := ctx.ParseBody(input); err != nil {
+		return err
+	}
+
+	doc, err := a.checkWritePermission(ctx, input.GID, input.ID)
+	if err != nil {
+		return err
+	}
+
+	_, err = a.blls.Writing.UpdateCreationPrice(ctx, input)
+	if err != nil {
+		return gear.ErrInternalServerError.From(err)
+	}
+
+	if _, err = a.blls.Logbase.Log(ctx, bll.LogActionCreationUpdate, 1, input.GID, &bll.LogPayload{
+		GID:   input.GID,
+		CID:   input.ID,
+		Price: &input.Price,
+	}); err != nil {
+		logging.SetTo(ctx, "writeLogError", err.Error())
+	}
+
+	doc.Price = &input.Price
+	return ctx.OkSend(bll.SuccessResponse[*bll.CreationOutput]{Result: doc})
 }
 
 func (a *Creation) checkReadPermission(ctx *gear.Context, gid util.ID) error {
@@ -541,7 +569,7 @@ func (a *Creation) checkWritePermission(ctx *gear.Context, gid, cid util.ID) (*b
 		return nil, gear.ErrForbidden.WithMsg("no permission")
 	}
 
-	creation, err := a.blls.Writing.GetCreation(ctx, &bll.QueryCreation{
+	creation, err := a.blls.Writing.GetCreation(ctx, &bll.QueryGidID{
 		GID:    gid,
 		ID:     cid,
 		Fields: "status,creator,updated_at,language,version",
@@ -563,7 +591,7 @@ func (a *Creation) checkWritePermission(ctx *gear.Context, gid, cid util.ID) (*b
 
 // summarize and embedding when updating status from 1 to 2
 func (a *Creation) summarize(gctx context.Context, gid, cid util.ID, auditLog *bll.UpdateLog) (*bll.CreationOutput, error) {
-	creation, err := a.blls.Writing.GetCreation(gctx, &bll.QueryCreation{
+	creation, err := a.blls.Writing.GetCreation(gctx, &bll.QueryGidID{
 		GID:    gid,
 		ID:     cid,
 		Fields: "status,creator,updated_at,language,version,keywords,summary,content",

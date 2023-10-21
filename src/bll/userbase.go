@@ -22,6 +22,9 @@ func (b *Userbase) UserGroupRole(ctx context.Context, uid, gid util.ID) (int8, e
 	if uid == gid {
 		return 2, nil
 	}
+	if gid.Compare(util.MinID) <= 0 {
+		return -2, gear.ErrBadRequest.WithMsg("invalid group id")
+	}
 
 	output := SuccessResponse[GroupInfo]{}
 	api := fmt.Sprintf("/v1/group/get_by_user?id=%s&fields=cn,status", gid.String())
@@ -188,6 +191,21 @@ func (b *Userbase) GroupInfo(ctx context.Context, input *QueryIdCn) (*GroupInfo,
 		query.Add("cn", *input.CN)
 	}
 	query.Add("fields", "cn,name,logo,status,slogan")
+
+	err := b.svc.Get(ctx, "/v1/group?"+query.Encode(), &output)
+	if err != nil {
+		return nil, err
+	}
+
+	return &output.Result, nil
+}
+
+func (b *Userbase) GetGroup(ctx context.Context, id util.ID, fields string) (*Group, error) {
+	output := SuccessResponse[Group]{}
+
+	query := url.Values{}
+	query.Add("id", id.String())
+	query.Add("fields", fields)
 
 	err := b.svc.Get(ctx, "/v1/group?"+query.Encode(), &output)
 	if err != nil {

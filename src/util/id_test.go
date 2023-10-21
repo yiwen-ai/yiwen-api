@@ -18,6 +18,10 @@ func TestID(t *testing.T) {
 	t.Run("CBOR", func(t *testing.T) {
 		assert := assert.New(t)
 
+		assert.True(MinID.Compare(ZeroID) > 0)
+		assert.True(MinID.Compare(JARVIS) > 0)
+		assert.True(MinID.Compare(ANON) > 0)
+
 		data, err := cbor.Marshal(JARVIS)
 		assert.NoError(err)
 		var id ID

@@ -82,6 +82,9 @@ func (s *OSS) SignPostPolicy(gid, cid, lang string, version uint) PostFilePolicy
 	// https://help.aliyun.com/zh/oss/use-cases/oss-performance-and-scalability-best-practices
 	// 反转打散分区，避免热点
 	dir := fmt.Sprintf("%s/%s/%d/%s/", util.Reverse(cid), gid, version, lang)
+	if lang == "" {
+		dir = fmt.Sprintf("%s/%s/%d/", util.Reverse(cid), gid, version)
+	}
 
 	data, _ := json.Marshal(map[string]any{
 		"expiration": expiration,

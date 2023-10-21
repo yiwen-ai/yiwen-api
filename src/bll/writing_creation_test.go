@@ -23,7 +23,7 @@ func TestCreateCreationInput(t *testing.T) {
 	assert.NoError(obj.Validate())
 
 	str := `{"gid":"0000000000000jarvis0","id":"0000000000000jarvis0","updated_at":123,"status":0}`
-	var input UpdateCreationStatusInput
+	var input UpdateStatusInput
 	err = json.Unmarshal([]byte(str), &input)
 	fmt.Println(input)
 	require.NoError(t, err)

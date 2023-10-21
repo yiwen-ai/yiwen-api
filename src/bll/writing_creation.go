@@ -20,7 +20,9 @@ type CreateCreationInput struct {
 	Keywords    *[]string  `json:"keywords,omitempty" cbor:"keywords,omitempty" validate:"omitempty,gte=0,lte=5"`
 	Labels      *[]string  `json:"labels,omitempty" cbor:"labels,omitempty" validate:"omitempty,gte=0,lte=5"`
 	Authors     *[]string  `json:"authors,omitempty" cbor:"authors,omitempty" validate:"omitempty,gte=0,lte=10"`
+	Summary     *string    `json:"summary,omitempty" cbor:"summary,omitempty" validate:"omitempty,gte=4,lte=2048"`
 	License     *string    `json:"license,omitempty" cbor:"license,omitempty"`
+	Parent      *util.ID   `json:"parent,omitempty" cbor:"parent,omitempty"`
 }
 
 func (i *CreateCreationInput) Validate() error {
@@ -36,6 +38,7 @@ type CreationOutput struct {
 	GID         util.ID     `json:"gid" cbor:"gid"`
 	Status      *int8       `json:"status,omitempty" cbor:"status,omitempty"`
 	Rating      *int8       `json:"rating,omitempty" cbor:"rating,omitempty"`
+	Price       *int64      `json:"price,omitempty" cbor:"price,omitempty"`
 	Version     *uint16     `json:"version,omitempty" cbor:"version,omitempty"`
 	Language    *string     `json:"language,omitempty" cbor:"language,omitempty"`
 	Creator     *util.ID    `json:"creator,omitempty" cbor:"creator,omitempty"`
@@ -121,17 +124,7 @@ func (b *Writing) CreateCreation(ctx context.Context, input *CreateCreationInput
 	return &output.Result, nil
 }
 
-type QueryCreation struct {
-	GID    util.ID `json:"gid" cbor:"gid" query:"gid" validate:"required"`
-	ID     util.ID `json:"id" cbor:"id" query:"id" validate:"required"`
-	Fields string  `json:"fields" cbor:"fields" query:"fields"`
-}
-
-func (i *QueryCreation) Validate() error {
-	return nil
-}
-
-func (b *Writing) GetCreation(ctx context.Context, input *QueryCreation) (*CreationOutput, error) {
+func (b *Writing) GetCreation(ctx context.Context, input *QueryGidID) (*CreationOutput, error) {
 	output := SuccessResponse[CreationOutput]{}
 
 	query := url.Values{}
@@ -178,7 +171,7 @@ func (b *Writing) UpdateCreation(ctx context.Context, input *UpdateCreationInput
 	return &output.Result, nil
 }
 
-func (b *Writing) DeleteCreation(ctx context.Context, input *QueryCreation) (bool, error) {
+func (b *Writing) DeleteCreation(ctx context.Context, input *QueryGidID) (bool, error) {
 	output := SuccessResponse[bool]{}
 
 	query := url.Values{}
@@ -200,15 +193,22 @@ func (b *Writing) ListCreation(ctx context.Context, input *GIDPagination) (*Succ
 	return &output, nil
 }
 
-// TODO: more validation
-type UpdateCreationStatusInput struct {
-	GID       util.ID `json:"gid" cbor:"gid" validate:"required"`
-	ID        util.ID `json:"id" cbor:"id" validate:"required"`
-	UpdatedAt int64   `json:"updated_at" cbor:"updated_at" validate:"required"`
-	Status    int8    `json:"status" cbor:"status" validate:"gte=-2,lte=2"`
+func (b *Writing) UpdateCreationStatus(ctx context.Context, input *UpdateStatusInput) (*CreationOutput, error) {
+	output := SuccessResponse[CreationOutput]{}
+	if err := b.svc.Patch(ctx, "/v1/creation/update_status", input, &output); err != nil {
+		return nil, err
+	}
+
+	return &output.Result, nil
 }
 
-func (i *UpdateCreationStatusInput) Validate() error {
+type UpdateCreationPriceInput struct {
+	GID   util.ID `json:"gid" cbor:"gid" validate:"required"`
+	ID    util.ID `json:"id" cbor:"id" validate:"required"`
+	Price int64   `json:"price" cbor:"price" validate:"gte=-1,lte=100000"`
+}
+
+func (i *UpdateCreationPriceInput) Validate() error {
 	if err := util.Validator.Struct(i); err != nil {
 		return gear.ErrBadRequest.From(err)
 	}
@@ -216,13 +216,13 @@ func (i *UpdateCreationStatusInput) Validate() error {
 	return nil
 }
 
-func (b *Writing) UpdateCreationStatus(ctx context.Context, input *UpdateCreationStatusInput) (*CreationOutput, error) {
-	output := SuccessResponse[CreationOutput]{}
-	if err := b.svc.Patch(ctx, "/v1/creation/update_status", input, &output); err != nil {
-		return nil, err
+func (b *Writing) UpdateCreationPrice(ctx context.Context, input *UpdateCreationPriceInput) (bool, error) {
+	output := SuccessResponse[bool]{}
+	if err := b.svc.Patch(ctx, "/v1/creation/update_price", input, &output); err != nil {
+		return false, err
 	}
 
-	return &output.Result, nil
+	return output.Result, nil
 }
 
 // TODO: more validation
@@ -245,6 +245,26 @@ func (i *UpdateCreationContentInput) Validate() error {
 func (b *Writing) UpdateCreationContent(ctx context.Context, input *UpdateCreationContentInput) (*CreationOutput, error) {
 	output := SuccessResponse[CreationOutput]{}
 	if err := b.svc.Put(ctx, "/v1/creation/update_content", input, &output); err != nil {
+		return nil, err
+	}
+
+	return &output.Result, nil
+}
+
+func (b *Writing) InternalGetCreationSubscription(ctx context.Context, id util.ID) (*SubscriptionOutput, error) {
+	output := SuccessResponse[SubscriptionOutput]{}
+	query := url.Values{}
+	query.Add("id", id.String())
+	if err := b.svc.Get(ctx, "/v1/creation/subscription?"+query.Encode(), &output); err != nil {
+		return nil, err
+	}
+
+	return &output.Result, nil
+}
+
+func (b *Writing) InternalUpdateCreationSubscription(ctx context.Context, input *SubscriptionInput) (*SubscriptionOutput, error) {
+	output := SuccessResponse[SubscriptionOutput]{}
+	if err := b.svc.Put(ctx, "/v1/creation/subscription", input, &output); err != nil {
 		return nil, err
 	}
 

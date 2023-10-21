@@ -83,7 +83,7 @@ func (a *Group) GetInfo(ctx *gear.Context) error {
 	return ctx.OkSend(bll.SuccessResponse[*bll.GroupInfo]{Result: res})
 }
 
-func (a *Group) UploadLogo(ctx *gear.Context) error {
+func (a *Group) UploadPicture(ctx *gear.Context) error {
 	input := &bll.QueryIdCn{}
 	err := ctx.ParseURL(input)
 	if err != nil {
