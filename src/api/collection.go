@@ -35,6 +35,8 @@ func (a *Collection) Get(ctx *gear.Context) error {
 		status = 0
 	case -1:
 		status = 1
+	case -2:
+		input.GID = util.ZeroID
 	}
 
 	output, err := a.blls.Writing.GetCollection(ctx, input, status)
@@ -73,6 +75,8 @@ func (a *Collection) ListByChild(ctx *gear.Context) error {
 		input.Status = 0
 	case -1:
 		input.Status = 1
+	case -2:
+		input.GID = util.ZeroID
 	}
 	input.Fields = "gid,status,info"
 
@@ -115,6 +119,8 @@ func (a *Collection) ListChildren(ctx *gear.Context) error {
 		input.Status = util.Ptr(int8(0))
 	case -1:
 		input.Status = util.Ptr(int8(1))
+	case -2:
+		input.GID = util.ZeroID
 	}
 
 	output, err := a.blls.Writing.ListCollectionChildren(ctx, input)

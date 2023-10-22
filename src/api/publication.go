@@ -311,9 +311,10 @@ func (a *Publication) Get(ctx *gear.Context) error {
 		return err
 	}
 
+	now := time.Now().Unix() * 1000
 	subscription_in := &util.ZeroID
 	subtoken, err := util.DecodeMac0[SubscriptionToken](a.blls.MACer, input.SubToken, []byte("SubscriptionToken"))
-	if err == nil {
+	if err == nil && subtoken.ExpireAt >= now {
 		// fast API calling with subtoken
 		subscription_in = &subtoken.GID
 		if input.Parent != nil && *input.Parent != subtoken.CID {
@@ -327,6 +328,8 @@ func (a *Publication) Get(ctx *gear.Context) error {
 		role, _ := a.blls.Userbase.UserGroupRole(ctx, sess.UserID, *input.GID)
 		if role >= -1 {
 			subscription_in = nil
+		} else {
+			input.GID = &util.ZeroID
 		}
 	}
 

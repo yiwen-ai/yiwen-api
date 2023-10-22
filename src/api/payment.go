@@ -103,7 +103,7 @@ func (a *Payment) GetCode(ctx *gear.Context) error {
 
 		if *doc.FromGID != input.GID {
 			PayeeGID = *doc.FromGID
-			SubPayeeGID = &input.GID
+			SubPayeeGID = &doc.GID
 		}
 
 		code.Amount = *doc.Price
@@ -150,7 +150,7 @@ func (a *Payment) GetCode(ctx *gear.Context) error {
 
 	if SubPayeeGID != nil {
 		group, err := a.blls.Userbase.GetGroup(ctx, *SubPayeeGID, "uid,status")
-		if err == nil && *group.Status >= 0 {
+		if err == nil && *group.Status >= 0 && *group.UID != sess.UserID {
 			code.SubPayee = group.UID
 		}
 	}
