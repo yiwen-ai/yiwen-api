@@ -488,7 +488,11 @@ func (a *Creation) UpdateContent(ctx *gear.Context) error {
 
 func (a *Creation) UploadFile(ctx *gear.Context) error {
 	input := &bll.QueryGidID{}
-	if err := ctx.ParseBody(input); err != nil {
+	if ctx.Method == "POST" {
+		if err := ctx.ParseBody(input); err != nil {
+			return err
+		}
+	} else if err := ctx.ParseURL(input); err != nil {
 		return err
 	}
 

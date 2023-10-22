@@ -311,18 +311,26 @@ func (a *Publication) Get(ctx *gear.Context) error {
 		return err
 	}
 
-	subscription_in := util.ZeroID
+	subscription_in := &util.ZeroID
 	subtoken, err := util.DecodeMac0[SubscriptionToken](a.blls.MACer, input.SubToken, []byte("SubscriptionToken"))
 	if err == nil {
 		// fast API calling with subtoken
-		subscription_in = subtoken.GID
+		subscription_in = &subtoken.GID
 		if input.Parent != nil && *input.Parent != subtoken.CID {
 			return gear.ErrBadRequest.WithMsg("invalid parent")
 		}
 		input.Parent = &subtoken.CID
 	}
 
-	output, err := a.blls.Writing.ImplicitGetPublication(ctx, input, &subscription_in)
+	sess := gear.CtxValue[middleware.Session](ctx)
+	if sess.UserID.Compare(util.MinID) > 0 && input.GID != nil {
+		role, _ := a.blls.Userbase.UserGroupRole(ctx, sess.UserID, *input.GID)
+		if role >= -1 {
+			subscription_in = nil
+		}
+	}
+
+	output, err := a.blls.Writing.ImplicitGetPublication(ctx, input, subscription_in)
 	if err != nil {
 		return gear.ErrBadRequest.From(err)
 	}
@@ -918,7 +926,11 @@ func (a *Publication) Bookmark(ctx *gear.Context) error {
 
 func (a *Publication) UploadFile(ctx *gear.Context) error {
 	input := &bll.QueryPublication{}
-	if err := ctx.ParseBody(input); err != nil {
+	if ctx.Method == "POST" {
+		if err := ctx.ParseBody(input); err != nil {
+			return err
+		}
+	} else if err := ctx.ParseURL(input); err != nil {
 		return err
 	}
 	publication, err := a.checkWritePermission(ctx, input.GID, input.CID, input.Language, input.Version)

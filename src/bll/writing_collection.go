@@ -285,8 +285,8 @@ type CollectionChildrenOutput struct {
 	Summary   string  `json:"summary" cbor:"summary"`
 }
 
-func (b *Writing) ListCollectionChildren(ctx context.Context, input *IDGIDPagination) (*SuccessResponse[CollectionOutputs], error) {
-	output := SuccessResponse[CollectionOutputs]{}
+func (b *Writing) ListCollectionChildren(ctx context.Context, input *IDGIDPagination) (*SuccessResponse[[]CollectionChildrenOutput], error) {
+	output := SuccessResponse[[]CollectionChildrenOutput]{}
 	if err := b.svc.Post(ctx, "/v1/collection/list_children", input, &output); err != nil {
 		return nil, err
 	}

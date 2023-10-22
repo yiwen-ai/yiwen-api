@@ -18,6 +18,7 @@ func (a *Collection) Get(ctx *gear.Context) error {
 	if err := ctx.ParseURL(input); err != nil {
 		return err
 	}
+
 	role, _ := a.checkReadPermission(ctx, input.GID)
 	status := int8(2)
 	switch role {
@@ -66,6 +67,7 @@ func (a *Collection) ListByChild(ctx *gear.Context) error {
 	case -1:
 		input.Status = 1
 	}
+	input.Fields = "gid,status,info"
 
 	output, err := a.blls.Writing.ListCollectionByChild(ctx, input)
 	if err != nil {
@@ -112,10 +114,6 @@ func (a *Collection) ListChildren(ctx *gear.Context) error {
 	if err != nil {
 		return gear.ErrInternalServerError.From(err)
 	}
-
-	output.Result.LoadGroups(func(ids ...util.ID) []bll.GroupInfo {
-		return a.blls.Userbase.LoadGroupInfo(ctx, ids...)
-	})
 
 	return ctx.OkSend(output)
 }

@@ -112,6 +112,7 @@ func newRouters(apis *APIs) []*gear.Router {
 	router.Patch("/v1/creation/update_content", middleware.AuthToken.Auth, middleware.CheckUserStatus(0), todo) // 暂不实现
 	router.Post("/v1/creation/assist", middleware.AuthToken.Auth, middleware.CheckUserStatus(0), todo)          // 暂不实现
 	router.Post("/v1/creation/upload", middleware.AuthToken.Auth, middleware.CheckUserStatus(0), apis.Creation.UploadFile)
+	router.Get("/v1/creation/upload", middleware.AuthToken.Auth, middleware.CheckUserStatus(0), apis.Creation.UploadFile)
 	router.Patch("/v1/creation/price", middleware.AuthToken.Auth, middleware.CheckUserStatus(0), apis.Creation.UpdatePrice)
 
 	router.Post("/v1/publication", middleware.AuthToken.Auth, middleware.CheckUserStatus(0), apis.Publication.Create)
@@ -130,13 +131,14 @@ func newRouters(apis *APIs) []*gear.Router {
 	router.Post("/v1/publication/assist", middleware.AuthToken.Auth, middleware.CheckUserStatus(0), todo) // 暂不实现
 	router.Post("/v1/publication/bookmark", middleware.AuthToken.Auth, apis.Publication.Bookmark)
 	router.Post("/v1/publication/upload", middleware.AuthToken.Auth, middleware.CheckUserStatus(0), apis.Publication.UploadFile)
+	router.Get("/v1/publication/upload", middleware.AuthToken.Auth, middleware.CheckUserStatus(0), apis.Publication.UploadFile)
 
 	router.Post("/v1/collection/list_archived", middleware.AuthToken.Auth, apis.Collection.ListArchived)
 	router.Post("/v1/collection", middleware.AuthToken.Auth, middleware.CheckUserStatus(0), apis.Collection.Create)
 	router.Patch("/v1/collection", middleware.AuthToken.Auth, middleware.CheckUserStatus(0), apis.Collection.Update)
 	router.Delete("/v1/collection", middleware.AuthToken.Auth, middleware.CheckUserStatus(0), apis.Collection.Delete)
-	router.Get("/v1/collection/info", middleware.AuthToken.Auth, apis.Collection.GetInfo)
-	router.Patch("/v1/collection/info", middleware.AuthToken.Auth, middleware.CheckUserStatus(0), apis.Collection.UpdateInfo)
+	router.Get("/v1/collection/raw_info", middleware.AuthToken.Auth, apis.Collection.GetInfo)
+	router.Patch("/v1/collection/translate_info", middleware.AuthToken.Auth, middleware.CheckUserStatus(0), apis.Collection.UpdateInfo)
 	router.Patch("/v1/collection/status", middleware.AuthToken.Auth, middleware.CheckUserStatus(0), apis.Collection.UpdateStatus)
 	router.Post("/v1/collection/child", middleware.AuthToken.Auth, middleware.CheckUserStatus(0), apis.Collection.AddChildren)
 	router.Patch("/v1/collection/child", middleware.AuthToken.Auth, middleware.CheckUserStatus(0), apis.Collection.UpdateChild)
