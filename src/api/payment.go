@@ -72,7 +72,7 @@ func (a *Payment) GetCode(ctx *gear.Context) error {
 		GID:      input.GID,
 		UID:      sess.UserID,
 		CID:      input.CID,
-		Duration: 3600 * 24 * 365 * 3,
+		Duration: 3600 * 24 * 365 * 3, // seconds
 	}
 	output := &PaymentCodeOutput{
 		Kind:     code.Kind,

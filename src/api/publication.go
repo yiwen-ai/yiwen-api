@@ -311,7 +311,7 @@ func (a *Publication) Get(ctx *gear.Context) error {
 		return err
 	}
 
-	now := time.Now().Unix() * 1000
+	now := time.Now().Unix()
 	subscription_in := &util.ZeroID
 	subtoken, err := util.DecodeMac0[SubscriptionToken](a.blls.MACer, input.SubToken, []byte("SubscriptionToken"))
 	if err == nil && subtoken.ExpireAt >= now {
