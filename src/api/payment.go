@@ -150,7 +150,7 @@ func (a *Payment) GetCode(ctx *gear.Context) error {
 
 	if SubPayeeGID != nil {
 		group, err := a.blls.Userbase.GetGroup(ctx, *SubPayeeGID, "uid,status")
-		if err == nil && group.UID != nil && group.Status != nil && *group.Status >= 0 {
+		if err == nil && *group.Status >= 0 {
 			code.SubPayee = group.UID
 		}
 	}
@@ -159,7 +159,7 @@ func (a *Payment) GetCode(ctx *gear.Context) error {
 	if err != nil {
 		return gear.ErrInternalServerError.From(err)
 	}
-	if group.Status == nil || group.UID == nil || *group.Status <= 0 {
+	if *group.Status < 0 {
 		return gear.ErrBadRequest.WithMsg("group is not active")
 	}
 	code.Payee = *group.UID

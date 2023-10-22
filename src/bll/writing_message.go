@@ -62,6 +62,7 @@ func (i *CreateMessageInput) Validate() error {
 
 type MessageOutput struct {
 	ID           util.ID               `json:"id" cbor:"id"`
+	Languages    []string              `json:"languages" cbor:"languages"`
 	I18nMessages map[string]util.Bytes `json:"i18n_messages" cbor:"i18n_messages"`
 	AttachTo     *util.ID              `json:"attach_to,omitempty" cbor:"attach_to,omitempty"`
 	Kind         *string               `json:"kind,omitempty" cbor:"kind,omitempty"`

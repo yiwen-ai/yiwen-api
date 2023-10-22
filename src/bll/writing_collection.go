@@ -45,6 +45,7 @@ type CollectionOutput struct {
 	Price         *int64                    `json:"price,omitempty" cbor:"price,omitempty"`
 	CreationPrice *int64                    `json:"creation_price,omitempty" cbor:"creation_price,omitempty"`
 	Language      *string                   `json:"language,omitempty" cbor:"language,omitempty"`
+	Languages     []string                  `json:"languages,omitempty" cbor:"languages,omitempty"`
 	Version       *uint16                   `json:"version,omitempty" cbor:"version,omitempty"`
 	Info          *CollectionInfo           `json:"info,omitempty" cbor:"info,omitempty"`
 	I18nInfo      map[string]CollectionInfo `json:"i18n_info,omitempty" cbor:"i18n_info,omitempty"`
