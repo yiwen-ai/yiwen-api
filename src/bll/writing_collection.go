@@ -282,6 +282,7 @@ type CollectionChildrenOutput struct {
 	Cover     string  `json:"cover" cbor:"cover"`
 	Price     int64   `json:"price" cbor:"price"`
 	Language  string  `json:"language" cbor:"language"`
+	Version   uint16  `json:"version" cbor:"version"`
 	Title     string  `json:"title" cbor:"title"`
 	Summary   string  `json:"summary" cbor:"summary"`
 }

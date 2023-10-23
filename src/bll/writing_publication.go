@@ -256,7 +256,8 @@ func (i *QueryJob) Validate() error {
 	return nil
 }
 
-func (b *Writing) GetPublication(ctx context.Context, input *QueryPublication) (*PublicationOutput, error) {
+func (b *Writing) GetPublication(ctx context.Context, input *ImplicitQueryPublication,
+	subscription_in *util.ID) (*PublicationOutput, error) {
 	output := SuccessResponse[PublicationOutput]{}
 
 	query := url.Values{}
@@ -264,6 +265,12 @@ func (b *Writing) GetPublication(ctx context.Context, input *QueryPublication) (
 	query.Add("cid", input.CID.String())
 	query.Add("language", input.Language)
 	query.Add("version", strconv.Itoa(int(input.Version)))
+	if input.Parent != nil {
+		query.Add("parent", input.Parent.String())
+	}
+	if subscription_in != nil {
+		query.Add("subscription_in", subscription_in.String())
+	}
 	if input.Fields != "" {
 		query.Add("fields", input.Fields)
 	}

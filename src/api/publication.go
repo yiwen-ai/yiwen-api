@@ -41,7 +41,12 @@ func (a *Publication) Estimate(ctx *gear.Context) error {
 		return err
 	}
 
-	src, err := a.tryReadOne(ctx, input.GID, input.CID, input.Language, input.Version, true)
+	src, err := a.tryReadOne(ctx, &bll.ImplicitQueryPublication{
+		GID:      &input.GID,
+		CID:      input.CID,
+		Language: input.Language,
+		Version:  input.Version,
+	}, true)
 	if err != nil {
 		return gear.ErrForbidden.From(err)
 	}
@@ -124,7 +129,12 @@ func (a *Publication) Create(ctx *gear.Context) error {
 		return gear.ErrBadRequest.WithMsgf("model %q is not allowed for user level < 2", input.Model)
 	}
 
-	src, err := a.tryReadOne(ctx, input.GID, input.CID, input.Language, input.Version, true)
+	src, err := a.tryReadOne(ctx, &bll.ImplicitQueryPublication{
+		GID:      &input.GID,
+		CID:      input.CID,
+		Language: input.Language,
+		Version:  input.Version,
+	}, true)
 	if err != nil {
 		return gear.ErrForbidden.From(err)
 	}
@@ -158,13 +168,13 @@ func (a *Publication) Create(ctx *gear.Context) error {
 		input.Context = util.Ptr(fmt.Sprintf("The text is part or all of the %q", *src.Title))
 	}
 
-	dst, _ := a.blls.Writing.GetPublication(ctx, &bll.QueryPublication{
-		GID:      *input.ToGID,
+	dst, _ := a.blls.Writing.GetPublication(ctx, &bll.ImplicitQueryPublication{
+		GID:      input.ToGID,
 		CID:      input.CID,
 		Language: *input.ToLanguage,
 		Version:  input.Version,
 		Fields:   "status,creator,updated_at",
-	})
+	}, nil)
 	if dst != nil && dst.Status != nil && *dst.Status >= 0 {
 		return gear.ErrConflict.WithMsgf("%s publication already exists", *input.ToLanguage)
 	}
@@ -324,8 +334,9 @@ func (a *Publication) Get(ctx *gear.Context) error {
 	}
 
 	sess := gear.CtxValue[middleware.Session](ctx)
+	role := int8(-2)
 	if sess.UserID.Compare(util.MinID) > 0 && input.GID != nil {
-		role, _ := a.blls.Userbase.UserGroupRole(ctx, sess.UserID, *input.GID)
+		role, _ = a.blls.Userbase.UserGroupRole(ctx, sess.UserID, *input.GID)
 		if role >= -1 {
 			subscription_in = nil
 		} else {
@@ -333,7 +344,16 @@ func (a *Publication) Get(ctx *gear.Context) error {
 		}
 	}
 
-	output, err := a.blls.Writing.ImplicitGetPublication(ctx, input, subscription_in)
+	var output *bll.PublicationOutput
+	if input.GID != nil && input.Language != "" && input.Version > 0 {
+		output, err = a.blls.Writing.GetPublication(ctx, input, subscription_in)
+		if err == nil && role < -1 && *output.Status < 2 {
+			err = gear.ErrForbidden.WithMsg("no permission")
+		}
+	} else {
+		output, err = a.blls.Writing.ImplicitGetPublication(ctx, input, subscription_in)
+	}
+
 	if err != nil {
 		return gear.ErrBadRequest.From(err)
 	}
@@ -418,12 +438,12 @@ func (a *Publication) GetByJob(ctx *gear.Context) error {
 		}
 	}
 
-	output, err := a.blls.Writing.GetPublication(ctx, &bll.QueryPublication{
-		GID:      teInput.GID,
+	output, err := a.blls.Writing.GetPublication(ctx, &bll.ImplicitQueryPublication{
+		GID:      &teInput.GID,
 		CID:      teInput.CID,
 		Language: teInput.Language,
 		Version:  teInput.Version,
-	})
+	}, nil)
 
 	if err != nil {
 		if util.IsNotFoundErr(err) {
@@ -510,13 +530,13 @@ func (a *Publication) ListJob(ctx *gear.Context) error {
 			}
 		}
 
-		doc, err := a.blls.Writing.GetPublication(ctx, &bll.QueryPublication{
-			GID:      teInput.GID,
+		doc, err := a.blls.Writing.GetPublication(ctx, &bll.ImplicitQueryPublication{
+			GID:      &teInput.GID,
 			CID:      teInput.CID,
 			Language: teInput.Language,
 			Version:  teInput.Version,
 			Fields:   "status,from_language,updated_at,title",
-		})
+		}, nil)
 		if err == nil {
 			job.Publication = *doc
 		}
@@ -904,7 +924,12 @@ func (a *Publication) Bookmark(ctx *gear.Context) error {
 		return err
 	}
 
-	if _, err := a.tryReadOne(ctx, input.GID, input.CID, input.Language, input.Version, false); err != nil {
+	if _, err := a.tryReadOne(ctx, &bll.ImplicitQueryPublication{
+		GID:      &input.GID,
+		CID:      input.CID,
+		Language: input.Language,
+		Version:  input.Version,
+	}, false); err != nil {
 		return gear.ErrForbidden.From(err)
 	}
 
@@ -997,13 +1022,13 @@ func (a *Publication) checkWritePermission(ctx *gear.Context, gid, cid util.ID, 
 		return nil, gear.ErrForbidden.WithMsg("no permission")
 	}
 
-	publication, err := a.blls.Writing.GetPublication(ctx, &bll.QueryPublication{
-		GID:      gid,
+	publication, err := a.blls.Writing.GetPublication(ctx, &bll.ImplicitQueryPublication{
+		GID:      &gid,
 		CID:      cid,
 		Language: language,
 		Version:  version,
 		Fields:   "status,creator,updated_at",
-	})
+	}, nil)
 
 	if err != nil {
 		return nil, gear.ErrNotFound.From(err)
@@ -1019,30 +1044,30 @@ func (a *Publication) checkWritePermission(ctx *gear.Context, gid, cid util.ID, 
 	return publication, nil
 }
 
-func (a *Publication) tryReadOne(ctx *gear.Context, gid, cid util.ID, language string, version uint16, full bool) (*bll.PublicationOutput, error) {
+func (a *Publication) tryReadOne(ctx *gear.Context, input *bll.ImplicitQueryPublication, full bool) (*bll.PublicationOutput, error) {
 	sess := gear.CtxValue[middleware.Session](ctx)
 	if sess == nil || sess.UserID.Compare(util.MinID) <= 0 {
 		return nil, gear.ErrForbidden.WithMsg("no permission")
 	}
-
-	role, _ := a.blls.Userbase.UserGroupRole(ctx, sess.UserID, gid)
-	input := &bll.QueryPublication{
-		GID:      gid,
-		CID:      cid,
-		Language: language,
-		Version:  version,
-		Fields:   "status,creator,updated_at",
+	subscription_in := input.GID
+	if !full {
+		subscription_in = nil
+		input.Fields = "status,creator,updated_at"
 	}
-	if full {
-		input.Fields = ""
-	}
-	publication, err := a.blls.Writing.GetPublication(ctx, input)
 
+	role, _ := a.blls.Userbase.UserGroupRole(ctx, sess.UserID, *input.GID)
+	if role > -2 {
+		subscription_in = nil
+	} else if subscription_in != nil {
+		subscription_in = &util.ZeroID
+	}
+
+	publication, err := a.blls.Writing.GetPublication(ctx, input, subscription_in)
 	if err != nil {
 		return nil, gear.ErrNotFound.From(err)
 	}
 
-	if publication.Creator == nil || publication.Status == nil {
+	if publication.Status == nil {
 		return nil, gear.ErrInternalServerError.WithMsg("invalid publication")
 	}
 
