@@ -339,8 +339,6 @@ func (a *Publication) Get(ctx *gear.Context) error {
 		role, _ = a.blls.Userbase.UserGroupRole(ctx, sess.UserID, *input.GID)
 		if role >= -1 {
 			subscription_in = nil
-		} else {
-			input.GID = &util.ZeroID
 		}
 	}
 
@@ -351,6 +349,9 @@ func (a *Publication) Get(ctx *gear.Context) error {
 			err = gear.ErrForbidden.WithMsg("no permission")
 		}
 	} else {
+		if role < -1 {
+			input.GID = nil
+		}
 		output, err = a.blls.Writing.ImplicitGetPublication(ctx, input, subscription_in)
 	}
 
