@@ -2,6 +2,7 @@ package bll
 
 import (
 	"context"
+	"errors"
 	"net/url"
 
 	"github.com/fxamacker/cbor/v2"
@@ -10,7 +11,18 @@ import (
 	"github.com/yiwen-ai/yiwen-api/src/util"
 )
 
+type MessageContainer interface {
+	cbor.Unmarshaler
+	cbor.Marshaler
+	FromTEContents(content.TEContents)
+	ToTEContents() content.TEContents
+	NewlyAdd(MessageContainer) (MessageContainer, error)
+	IsEmpty() bool
+	New() MessageContainer
+}
+
 type KVMessage map[string]string
+type ArrayMessage content.TEContents
 
 func (m KVMessage) ToTEContents() content.TEContents {
 	tes := make(content.TEContents, 0, len(m))
@@ -20,23 +32,145 @@ func (m KVMessage) ToTEContents() content.TEContents {
 	return tes
 }
 
-func (d *KVMessage) FromTEContents(te content.TEContents) {
+func (m ArrayMessage) ToTEContents() content.TEContents {
+	return content.TEContents(m)
+}
+
+func (m *KVMessage) FromTEContents(te content.TEContents) {
 	for _, v := range te {
-		if len(v.Texts) == 1 {
-			map[string]string(*d)[v.ID] = v.Texts[0]
+		if len(v.Texts) > 0 {
+			map[string]string(*m)[v.ID] = v.Texts[0]
 		}
 	}
 }
 
-func (d *KVMessage) WithContent(data util.Bytes) error {
+func (m *ArrayMessage) FromTEContents(te content.TEContents) {
+	mp := make(map[string]*content.TEContent, len(*m))
+	for _, v := range *m {
+		mp[v.ID] = v
+	}
+	for _, v := range te {
+		if e, ok := mp[v.ID]; !ok {
+			*m = append(*m, v)
+		} else {
+			e.Texts = v.Texts
+		}
+	}
+}
+
+func (m *KVMessage) NewlyAdd(mc MessageContainer) (MessageContainer, error) {
+	mm, ok := mc.(*KVMessage)
+	if !ok {
+		return nil, errors.New("KVMessage.NewlyAdd: invalid message container")
+	}
+
+	na := make(KVMessage, len(*m))
+	for k := range *m {
+		if _, ok := (*mm)[k]; !ok {
+			na[k] = (*m)[k]
+		}
+	}
+	return &na, nil
+}
+
+func (m *ArrayMessage) NewlyAdd(mc MessageContainer) (MessageContainer, error) {
+	mm, ok := mc.(*ArrayMessage)
+	if !ok {
+		return nil, errors.New("ArrayMessage.NewlyAdd: invalid message container")
+	}
+	keys := make(map[string]struct{}, len(*mm))
+	for _, v := range *mm {
+		keys[v.ID] = struct{}{}
+	}
+	na := make(ArrayMessage, 0, len(*m))
+	for _, v := range *m {
+		if _, ok := keys[v.ID]; !ok {
+			na = append(na, v)
+		}
+	}
+	return &na, nil
+}
+
+func (m KVMessage) MarshalCBOR() ([]byte, error) {
+	return cbor.Marshal(map[string]string(m))
+}
+
+func (m ArrayMessage) MarshalCBOR() ([]byte, error) {
+	return cbor.Marshal(content.TEContents(m))
+}
+
+func (m *KVMessage) UnmarshalCBOR(data []byte) error {
+	if m == nil {
+		return errors.New("KVMessage.UnmarshalCBOR: nil pointer")
+	}
+
+	var mm map[string]string
+	if err := cbor.Unmarshal(data, &mm); err != nil {
+		return errors.New("KVMessage.UnmarshalCBOR: " + err.Error())
+	}
+
+	*m = KVMessage(mm)
+	return nil
+}
+
+func (m *ArrayMessage) UnmarshalCBOR(data []byte) error {
+	if m == nil {
+		return errors.New("ArrayMessage.UnmarshalCBOR: nil pointer")
+	}
+
+	var mm content.TEContents
+	if err := cbor.Unmarshal(data, &mm); err != nil {
+		return errors.New("ArrayMessage.UnmarshalCBOR: " + err.Error())
+	}
+
+	*m = ArrayMessage(mm)
+	return nil
+}
+
+func (m KVMessage) IsEmpty() bool {
+	return len(map[string]string(m)) == 0
+}
+
+func (m ArrayMessage) IsEmpty() bool {
+	return len(content.TEContents(m)) == 0
+}
+
+func (m KVMessage) New() MessageContainer {
+	return new(KVMessage)
+}
+
+func (m ArrayMessage) New() MessageContainer {
+	return new(ArrayMessage)
+}
+
+func WithContent[T MessageContainer](m T, data util.Bytes) error {
 	var te content.TEContents
 	if err := cbor.Unmarshal(data, &te); err != nil {
 		return err
 	}
 
-	d.FromTEContents(te)
+	m.FromTEContents(te)
 	return nil
 }
+
+func FromContent[T MessageContainer](data util.Bytes) (T, error) {
+	var m T
+	if err := cbor.Unmarshal(data, &m); err != nil {
+		return m, err
+	}
+	return m, nil
+}
+
+func ValidMessage(data util.Bytes) error {
+	var m MessageContainer
+	if err := cbor.Unmarshal(data, &m); err != nil {
+		return err
+	}
+	return nil
+}
+
+var _ MessageContainer = (*KVMessage)(nil)
+var _ MessageContainer = (*ArrayMessage)(nil)
 
 type CreateMessageInput struct {
 	AttachTo util.ID    `json:"attach_to" cbor:"attach_to" validate:"required"`
@@ -90,6 +224,7 @@ type UpdateMessageInput struct {
 	Context  *string     `json:"context,omitempty" cbor:"context,omitempty" validate:"omitempty,gte=4,lte=1024"`
 	Language *string     `json:"language,omitempty" cbor:"language,omitempty"`
 	Message  *util.Bytes `json:"message,omitempty" cbor:"message,omitempty"`
+	NewlyAdd *bool       `json:"newly_add,omitempty" cbor:"newly_add,omitempty"` // default true
 }
 
 func (i *UpdateMessageInput) Validate() error {
@@ -101,6 +236,9 @@ func (i *UpdateMessageInput) Validate() error {
 	}
 	if i.Message != nil && i.Language == nil {
 		return gear.ErrBadRequest.WithMsg("language is required with message")
+	}
+	if i.NewlyAdd == nil {
+		i.NewlyAdd = util.Ptr(true)
 	}
 
 	return nil

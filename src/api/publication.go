@@ -200,6 +200,7 @@ func (a *Publication) Create(ctx *gear.Context) error {
 		CID:      src.CID,
 		Language: input.ToLanguage,
 		Version:  &src.Version,
+		Kind:     util.Ptr(int8(1)),
 	}
 
 	log, err := a.blls.Logbase.Log(ctx, bll.LogActionPublicationCreate, 0, payload.GID, payload)
@@ -572,6 +573,7 @@ func (a *Publication) Update(ctx *gear.Context) error {
 		CID:      input.CID,
 		Language: &input.Language,
 		Version:  &input.Version,
+		Kind:     util.Ptr(int8(1)),
 		Status:   output.Status,
 	}); err != nil {
 		logging.SetTo(ctx, "writeLogError", err.Error())
@@ -605,6 +607,7 @@ func (a *Publication) Delete(ctx *gear.Context) error {
 		CID:      input.CID,
 		Language: &input.Language,
 		Version:  &input.Version,
+		Kind:     util.Ptr(int8(1)),
 		Status:   util.Ptr(int8(-2)),
 	}); err != nil {
 		logging.SetTo(ctx, "writeLogError", err.Error())
@@ -789,6 +792,7 @@ func (a *Publication) Archive(ctx *gear.Context) error {
 		CID:      input.CID,
 		Language: &input.Language,
 		Version:  &input.Version,
+		Kind:     util.Ptr(int8(1)),
 		Status:   util.Ptr(int8(-1)),
 	}); err != nil {
 		logging.SetTo(ctx, "writeLogError", err.Error())
@@ -823,6 +827,7 @@ func (a *Publication) Redraft(ctx *gear.Context) error {
 		CID:      input.CID,
 		Language: &input.Language,
 		Version:  &input.Version,
+		Kind:     util.Ptr(int8(1)),
 		Status:   util.Ptr(int8(0)),
 	}); err != nil {
 		logging.SetTo(ctx, "writeLogError", err.Error())
@@ -865,6 +870,7 @@ func (a *Publication) Publish(ctx *gear.Context) error {
 		CID:      input.CID,
 		Language: &input.Language,
 		Version:  &input.Version,
+		Kind:     util.Ptr(int8(1)),
 		Status:   util.Ptr(int8(2)),
 	}); err != nil {
 		logging.SetTo(ctx, "writeLogError", err.Error())
@@ -911,6 +917,7 @@ func (a *Publication) UpdateContent(ctx *gear.Context) error {
 		CID:      input.CID,
 		Language: &input.Language,
 		Version:  &input.Version,
+		Kind:     util.Ptr(int8(1)),
 		Status:   output.Status,
 	}); err != nil {
 		logging.SetTo(ctx, "writeLogError", err.Error())
@@ -946,6 +953,7 @@ func (a *Publication) Bookmark(ctx *gear.Context) error {
 		CID:      input.CID,
 		Language: &input.Language,
 		Version:  &input.Version,
+		Kind:     util.Ptr(int8(1)),
 	}); err != nil {
 		logging.SetTo(ctx, "writeLogError", err.Error())
 	}

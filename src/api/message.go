@@ -25,8 +25,7 @@ func (a *Message) Create(ctx *gear.Context) error {
 		return err
 	}
 
-	var kv bll.KVMessage
-	if err := cbor.Unmarshal(input.Message, &kv); err != nil {
+	if err := bll.ValidMessage(input.Message); err != nil {
 		return gear.ErrBadRequest.From(err)
 	}
 
@@ -59,8 +58,7 @@ func (a *Message) Update(ctx *gear.Context) error {
 	}
 
 	if input.Message != nil {
-		var kv bll.KVMessage
-		if err := cbor.Unmarshal(*input.Message, &kv); err != nil {
+		if err := bll.ValidMessage(*input.Message); err != nil {
 			return gear.ErrBadRequest.From(err)
 		}
 	}
@@ -117,22 +115,30 @@ func (a *Message) UpdateI18n(ctx *gear.Context) error {
 		return gear.ErrForbidden.WithMsg("no permission")
 	}
 
-	var kv bll.KVMessage
-	if err := cbor.Unmarshal(*msg.Message, &kv); err != nil {
+	var srcMsg bll.MessageContainer
+	srcMsg, err = bll.FromContent[*bll.KVMessage](*msg.Message)
+	if err != nil {
+		srcMsg, err = bll.FromContent[*bll.ArrayMessage](*msg.Message)
+	}
+	if err != nil {
 		return gear.ErrInternalServerError.From(err)
 	}
 
-	langKV := make(bll.KVMessage)
+	dstMsg := srcMsg.New()
 	if data, ok := msg.I18nMessages[lang]; ok {
-		if err := cbor.Unmarshal(data, &langKV); err != nil {
+		if err = dstMsg.UnmarshalCBOR(data); err != nil {
 			return gear.ErrInternalServerError.From(err)
-		}
-		for k := range langKV {
-			delete(kv, k) // don't need to translate
 		}
 	}
 
-	if len(kv) == 0 {
+	if input.NewlyAdd != nil && *input.NewlyAdd {
+		srcMsg, err = srcMsg.NewlyAdd(dstMsg)
+		if err != nil {
+			return gear.ErrInternalServerError.From(err)
+		}
+	}
+
+	if srcMsg.IsEmpty() {
 		return gear.ErrBadRequest.WithMsg("no need to translate")
 	}
 
@@ -146,7 +152,7 @@ func (a *Message) UpdateI18n(ctx *gear.Context) error {
 		return gear.ErrPaymentRequired.WithMsg("insufficient balance")
 	}
 
-	teContents := kv.ToTEContents()
+	teContents := srcMsg.ToTEContents()
 	teData, err := cbor.Marshal(teContents)
 	if err != nil {
 		return gear.ErrInternalServerError.From(err)
@@ -210,7 +216,7 @@ func (a *Message) UpdateI18n(ctx *gear.Context) error {
 		})
 
 		if err == nil {
-			err = langKV.WithContent(tmOutput.Content)
+			err = bll.WithContent(dstMsg, tmOutput.Content)
 		}
 
 		if err == nil {
@@ -234,7 +240,7 @@ func (a *Message) UpdateI18n(ctx *gear.Context) error {
 					ID:  wallet.Txn,
 				}
 
-				data, err := cbor.Marshal(langKV)
+				data, err := cbor.Marshal(dstMsg)
 				if err == nil {
 					input.Message = util.Ptr(util.Bytes(data))
 					_, err = a.blls.Writing.UpdateMessage(gctx, input)

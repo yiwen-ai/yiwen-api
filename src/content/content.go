@@ -32,6 +32,21 @@ type TEContent struct {
 	Texts []string `json:"texts" cbor:"texts"`
 }
 
+func (te *TEContent) Equal(b *TEContent) bool {
+	if te.ID != b.ID {
+		return false
+	}
+	if len(te.Texts) != len(b.Texts) {
+		return false
+	}
+	for i := range te.Texts {
+		if te.Texts[i] != b.Texts[i] {
+			return false
+		}
+	}
+	return true
+}
+
 type TEContents []*TEContent
 
 func (te *TEContents) visitNode(node *DocumentNode) {

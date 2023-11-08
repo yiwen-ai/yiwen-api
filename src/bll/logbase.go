@@ -112,6 +112,7 @@ type LogPayload struct {
 	CID      util.ID `json:"cid" cbor:"cid"`
 	Version  *uint16 `json:"version,omitempty" cbor:"version,omitempty"`
 	Language *string `json:"language,omitempty" cbor:"language,omitempty"`
+	Kind     *int8   `json:"kind,omitempty" cbor:"kind,omitempty"`
 	Status   *int8   `json:"status,omitempty" cbor:"status,omitempty"`
 	Rating   *int8   `json:"rating,omitempty" cbor:"rating,omitempty"`
 	Price    *int64  `json:"price,omitempty" cbor:"price,omitempty"`

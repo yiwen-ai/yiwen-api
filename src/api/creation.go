@@ -71,6 +71,7 @@ func (a *Creation) Create(ctx *gear.Context) error {
 		CID:      output.ID,
 		Language: output.Language,
 		Version:  output.Version,
+		Kind:     util.Ptr(int8(0)),
 	}); err != nil {
 		logging.SetTo(ctx, "writeLogError", err.Error())
 	}
@@ -129,6 +130,7 @@ func (a *Creation) Update(ctx *gear.Context) error {
 		CID:      output.ID,
 		Language: output.Language,
 		Version:  output.Version,
+		Kind:     util.Ptr(int8(0)),
 	}); err != nil {
 		logging.SetTo(ctx, "writeLogError", err.Error())
 	}
@@ -159,6 +161,7 @@ func (a *Creation) Delete(ctx *gear.Context) error {
 	if _, err = a.blls.Logbase.Log(ctx, bll.LogActionCreationDelete, 1, input.GID, &bll.LogPayload{
 		GID:    input.GID,
 		CID:    input.ID,
+		Kind:   util.Ptr(int8(0)),
 		Status: util.Ptr(int8(-2)),
 	}); err != nil {
 		logging.SetTo(ctx, "writeLogError", err.Error())
@@ -237,6 +240,7 @@ func (a *Creation) Archive(ctx *gear.Context) error {
 	if _, err = a.blls.Logbase.Log(ctx, bll.LogActionCreationUpdate, 1, input.GID, &bll.LogPayload{
 		GID:    input.GID,
 		CID:    input.ID,
+		Kind:   util.Ptr(int8(0)),
 		Status: util.Ptr(int8(-1)),
 	}); err != nil {
 		logging.SetTo(ctx, "writeLogError", err.Error())
@@ -265,6 +269,7 @@ func (a *Creation) Redraft(ctx *gear.Context) error {
 	if _, err = a.blls.Logbase.Log(ctx, bll.LogActionCreationUpdate, 1, input.GID, &bll.LogPayload{
 		GID:    input.GID,
 		CID:    input.ID,
+		Kind:   util.Ptr(int8(0)),
 		Status: util.Ptr(int8(0)),
 	}); err != nil {
 		logging.SetTo(ctx, "writeLogError", err.Error())
@@ -329,6 +334,7 @@ func (a *Creation) Release(ctx *gear.Context) error {
 		CID:      creation.ID,
 		Language: creation.Language,
 		Version:  creation.Version,
+		Kind:     util.Ptr(int8(0)),
 	})
 
 	if err != nil {
@@ -378,6 +384,7 @@ func (a *Creation) Release(ctx *gear.Context) error {
 				CID:      creation.ID,
 				Language: creation.Language,
 				Version:  creation.Version,
+				Kind:     util.Ptr(int8(0)),
 			})
 		}
 
@@ -479,6 +486,7 @@ func (a *Creation) UpdateContent(ctx *gear.Context) error {
 		CID:      input.ID,
 		Language: output.Language,
 		Version:  output.Version,
+		Kind:     util.Ptr(int8(0)),
 	}); err != nil {
 		logging.SetTo(ctx, "writeLogError", err.Error())
 	}
@@ -528,6 +536,7 @@ func (a *Creation) UpdatePrice(ctx *gear.Context) error {
 	if _, err = a.blls.Logbase.Log(ctx, bll.LogActionCreationUpdate, 1, input.GID, &bll.LogPayload{
 		GID:   input.GID,
 		CID:   input.ID,
+		Kind:  util.Ptr(int8(0)),
 		Price: &input.Price,
 	}); err != nil {
 		logging.SetTo(ctx, "writeLogError", err.Error())

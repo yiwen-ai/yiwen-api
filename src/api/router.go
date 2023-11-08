@@ -143,6 +143,7 @@ func newRouters(apis *APIs) []*gear.Router {
 	router.Post("/v1/collection/child", middleware.AuthToken.Auth, middleware.CheckUserStatus(0), apis.Collection.AddChildren)
 	router.Patch("/v1/collection/child", middleware.AuthToken.Auth, middleware.CheckUserStatus(0), apis.Collection.UpdateChild)
 	router.Delete("/v1/collection/child", middleware.AuthToken.Auth, middleware.CheckUserStatus(0), apis.Collection.RemoveChild)
+	router.Post("/v1/collection/bookmark", middleware.AuthToken.Auth, apis.Collection.Bookmark)
 	router.Get("/v1/collection/upload", middleware.AuthToken.Auth, middleware.CheckUserStatus(0), apis.Collection.UploadFile)
 
 	router.Post("/v1/message", middleware.AuthToken.Auth, apis.Message.Create)

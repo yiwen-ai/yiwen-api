@@ -271,9 +271,6 @@ func (a *Collection) UpdateInfo(ctx *gear.Context) error {
 	if err != nil {
 		return gear.ErrInternalServerError.From(err)
 	}
-	if err != nil {
-		return gear.ErrInternalServerError.From(err)
-	}
 	if *msg.Version != input.Version {
 		return gear.ErrBadRequest.WithMsg("version mismatch")
 	}
@@ -281,22 +278,28 @@ func (a *Collection) UpdateInfo(ctx *gear.Context) error {
 		return gear.ErrBadRequest.WithMsg("language is the same")
 	}
 
-	var kv bll.KVMessage
-	if err := cbor.Unmarshal(*msg.Message, &kv); err != nil {
+	var srcMsg bll.MessageContainer
+	srcMsg, err = bll.FromContent[*bll.ArrayMessage](*msg.Message)
+	if err != nil {
 		return gear.ErrInternalServerError.From(err)
 	}
 
-	langKV := make(bll.KVMessage)
+	dstMsg := srcMsg.New()
 	if data, ok := msg.I18nMessages[lang]; ok {
-		if err := cbor.Unmarshal(data, &langKV); err != nil {
+		if err = dstMsg.UnmarshalCBOR(data); err != nil {
 			return gear.ErrInternalServerError.From(err)
-		}
-		for k := range langKV {
-			delete(kv, k) // don't need to translate
 		}
 	}
 
-	if len(kv) == 0 {
+	// translate all
+	// if input.NewlyAdd != nil && *input.NewlyAdd {
+	// 	srcMsg, err = srcMsg.NewlyAdd(dstMsg)
+	// 	if err != nil {
+	// 		return gear.ErrInternalServerError.From(err)
+	// 	}
+	// }
+
+	if srcMsg.IsEmpty() {
 		return gear.ErrBadRequest.WithMsg("no need to translate")
 	}
 
@@ -310,7 +313,7 @@ func (a *Collection) UpdateInfo(ctx *gear.Context) error {
 		return gear.ErrPaymentRequired.WithMsg("insufficient balance")
 	}
 
-	teContents := kv.ToTEContents()
+	teContents := srcMsg.ToTEContents()
 	teData, err := cbor.Marshal(teContents)
 	if err != nil {
 		return gear.ErrInternalServerError.From(err)
@@ -374,7 +377,7 @@ func (a *Collection) UpdateInfo(ctx *gear.Context) error {
 		})
 
 		if err == nil {
-			err = langKV.WithContent(tmOutput.Content)
+			err = bll.WithContent(dstMsg, tmOutput.Content)
 		}
 
 		if err == nil {
@@ -398,7 +401,7 @@ func (a *Collection) UpdateInfo(ctx *gear.Context) error {
 					ID:  wallet.Txn,
 				}
 
-				data, err := cbor.Marshal(langKV)
+				data, err := cbor.Marshal(dstMsg)
 				if err == nil {
 					input.Message = util.Ptr(util.Bytes(data))
 					_, err = a.blls.Writing.UpdateCollectionInfo(gctx, input)
@@ -515,6 +518,39 @@ func (a *Collection) RemoveChild(ctx *gear.Context) error {
 	return ctx.OkSend(bll.SuccessResponse[bool]{Result: output})
 }
 
+func (a *Collection) Bookmark(ctx *gear.Context) error {
+	input := &bll.CreateBookmarkInput{}
+	if err := ctx.ParseBody(input); err != nil {
+		return err
+	}
+
+	if _, err := a.tryReadOne(ctx, &bll.QueryGidID{
+		GID: input.GID,
+		ID:  input.CID,
+	}); err != nil {
+		return gear.ErrForbidden.From(err)
+	}
+
+	input.Kind = 2
+	output, err := a.blls.Writing.CreateBookmark(ctx, input)
+	if err != nil {
+		return gear.ErrInternalServerError.From(err)
+	}
+
+	sess := gear.CtxValue[middleware.Session](ctx)
+	if _, err = a.blls.Logbase.Log(ctx, bll.LogActionUserBookmark, 1, sess.UserID, &bll.LogPayload{
+		GID:      input.GID,
+		CID:      input.CID,
+		Language: &input.Language,
+		Version:  &input.Version,
+		Kind:     util.Ptr(int8(2)),
+	}); err != nil {
+		logging.SetTo(ctx, "writeLogError", err.Error())
+	}
+
+	return ctx.OkSend(bll.SuccessResponse[*bll.BookmarkOutput]{Result: output})
+}
+
 func (a *Collection) UploadFile(ctx *gear.Context) error {
 	input := &bll.QueryGidID{}
 	if err := ctx.ParseURL(input); err != nil {
@@ -572,4 +608,39 @@ func (a *Collection) checkWritePermission(ctx *gear.Context, gid util.ID) error 
 	}
 
 	return nil
+}
+
+func (a *Collection) tryReadOne(ctx *gear.Context, input *bll.QueryGidID) (*bll.CollectionOutput, error) {
+	sess := gear.CtxValue[middleware.Session](ctx)
+	if sess == nil || sess.UserID.Compare(util.MinID) <= 0 {
+		return nil, gear.ErrForbidden.WithMsg("no permission")
+	}
+
+	role, _ := a.checkReadPermission(ctx, input.GID)
+	status := int8(2)
+	switch role {
+	case 2, 1:
+		status = -1
+	case 0:
+		status = 0
+	case -1:
+		status = 1
+	case -2:
+		input.GID = util.ZeroID
+	}
+	input.Fields = "gid,status,updated_at"
+	output, err := a.blls.Writing.GetCollection(ctx, input, status)
+	if err != nil {
+		return nil, gear.ErrInternalServerError.From(err)
+	}
+
+	if output.Status == nil {
+		return nil, gear.ErrInternalServerError.WithMsg("invalid collection")
+	}
+
+	if role < -1 && *output.Status < 2 {
+		return nil, gear.ErrForbidden.WithMsg("no permission")
+	}
+
+	return output, nil
 }
