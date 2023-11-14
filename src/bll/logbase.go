@@ -119,11 +119,12 @@ type LogPayload struct {
 }
 
 type LogMessage struct {
-	ID       util.ID `json:"id" cbor:"id"`
-	AttachTo util.ID `json:"attach_to" cbor:"attach_to"`
-	Kind     *string `json:"kind,omitempty" cbor:"kind,omitempty"`
-	Language *string `json:"language,omitempty" cbor:"language,omitempty"`
-	Version  *uint16 `json:"version,omitempty" cbor:"version,omitempty"`
+	ID        util.ID  `json:"id" cbor:"id"`
+	AttachTo  util.ID  `json:"attach_to" cbor:"attach_to"`
+	Kind      *string  `json:"kind,omitempty" cbor:"kind,omitempty"`
+	Language  *string  `json:"language,omitempty" cbor:"language,omitempty"`
+	Languages []string `json:"languages,omitempty" cbor:"languages,omitempty"`
+	Version   *uint16  `json:"version,omitempty" cbor:"version,omitempty"`
 }
 
 func (b *Logbase) Log(ctx *gear.Context, action string, status int8, gid util.ID, payload any) (*LogOutput, error) {

@@ -5,9 +5,11 @@ import (
 	"sync"
 	"time"
 
+	"github.com/fxamacker/cbor/v2"
 	"github.com/teambition/gear"
 
 	"github.com/yiwen-ai/yiwen-api/src/bll"
+	"github.com/yiwen-ai/yiwen-api/src/content"
 	"github.com/yiwen-ai/yiwen-api/src/logging"
 	"github.com/yiwen-ai/yiwen-api/src/middleware"
 	"github.com/yiwen-ai/yiwen-api/src/util"
@@ -306,4 +308,37 @@ func (a *Jarvis) OriginalSearch(ctx *gear.Context) error {
 		return a.blls.Userbase.LoadGroupInfo(ctx, ids...)
 	})
 	return ctx.OkSend(bll.SuccessResponse[bll.SearchOutput]{Result: output})
+}
+
+func (a *Jarvis) DetectLang(ctx *gear.Context) error {
+	input := &bll.DetectLangInput{}
+	if err := ctx.ParseBody(input); err != nil {
+		return err
+	}
+
+	doc, err := content.ParseDocumentNode(input.Content)
+	if err != nil {
+		return gear.ErrBadRequest.From(err)
+	}
+	teContents := doc.ToTEContents()
+	if len(teContents) == 0 {
+		return gear.ErrBadRequest.WithMsg("invalid content")
+	}
+
+	teData, err := cbor.Marshal(teContents)
+	if err != nil {
+		return gear.ErrBadRequest.From(err)
+	}
+
+	output, err := a.blls.Jarvis.DetectLang(ctx, &bll.DetectLangInput{
+		GID:      util.ANON,
+		Language: input.Language,
+		Content:  teData,
+	})
+
+	if err != nil {
+		return gear.ErrInternalServerError.From(err)
+	}
+
+	return ctx.OkSend(bll.SuccessResponse[*bll.TEOutput]{Result: output})
 }

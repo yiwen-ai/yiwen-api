@@ -59,7 +59,15 @@ func (b *Jarvis) ListLanguages(ctx context.Context) ([][]string, error) {
 type DetectLangInput struct {
 	GID      util.ID    `json:"gid" cbor:"gid" validate:"required"`
 	Language string     `json:"language,omitempty" cbor:"language,omitempty"`
-	Content  util.Bytes `json:"content" cbor:"content"`
+	Content  util.Bytes `json:"content" cbor:"content" validate:"required"`
+}
+
+func (i *DetectLangInput) Validate() error {
+	if err := util.Validator.Struct(i); err != nil {
+		return gear.ErrBadRequest.From(err)
+	}
+
+	return nil
 }
 
 type TEInput struct {

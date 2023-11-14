@@ -88,7 +88,7 @@ func (a *Payment) GetCode(ctx *gear.Context) error {
 	switch input.Kind {
 	default:
 		return gear.ErrBadRequest.WithMsg("invalid kind")
-	case 0:
+	case 0, 1:
 		doc, err := a.blls.Writing.ImplicitGetPublication(ctx, &bll.ImplicitQueryPublication{
 			CID:    input.CID,
 			GID:    &input.GID,
@@ -116,10 +116,10 @@ func (a *Payment) GetCode(ctx *gear.Context) error {
 		version = doc.Version
 	case 2:
 		doc, err := a.blls.Writing.GetCollection(ctx, &bll.QueryGidID{
-			GID:    input.GID,
+			GID:    util.ZeroID,
 			ID:     input.CID,
 			Fields: "gid,info",
-		}, 2)
+		})
 		if err != nil {
 			return gear.ErrInternalServerError.From(err)
 		}

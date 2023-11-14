@@ -14,8 +14,8 @@ type CreateBookmarkInput struct {
 	CID      util.ID     `json:"cid" cbor:"cid" validate:"required"`
 	Language string      `json:"language" cbor:"language" validate:"required"`
 	Kind     int8        `json:"kind" cbor:"kind" validate:"gte=0,lte=2"`
-	Version  uint16      `json:"version" cbor:"version" validate:"gte=1,lte=10000"`
-	Title    string      `json:"title" cbor:"title" validate:"gte=4,lte=256"`
+	Version  uint16      `json:"version" cbor:"version" validate:"gte=0,lte=10000"`
+	Title    string      `json:"title" cbor:"title" validate:"gte=1,lte=256"`
 	Labels   *[]string   `json:"labels,omitempty" cbor:"labels,omitempty" validate:"omitempty,gte=0,lte=5"`
 	Payload  *util.Bytes `json:"payload,omitempty" cbor:"payload,omitempty"`
 }

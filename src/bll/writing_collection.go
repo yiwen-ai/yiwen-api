@@ -35,6 +35,21 @@ func (i *CreateCollectionInput) Validate() error {
 	return nil
 }
 
+type CollectionInfoOutput struct {
+	ID            util.ID        `json:"id" cbor:"id"`
+	GID           util.ID        `json:"gid" cbor:"gid"`
+	Status        int8           `json:"status" cbor:"status"`
+	UpdatedAt     int64          `json:"updated_at" cbor:"updated_at"`
+	Cover         string         `json:"cover" cbor:"cover"`
+	Price         int64          `json:"price" cbor:"price"`
+	CreationPrice int64          `json:"creation_price" cbor:"creation_price"`
+	Language      string         `json:"language" cbor:"language"`
+	Languages     []string       `json:"languages" cbor:"languages"`
+	Version       uint16         `json:"version" cbor:"version"`
+	Context       string         `json:"context" cbor:"context"`
+	Info          CollectionInfo `json:"info" cbor:"info"`
+}
+
 type CollectionOutput struct {
 	ID            util.ID                   `json:"id" cbor:"id"`
 	GID           util.ID                   `json:"gid" cbor:"gid"`
@@ -91,12 +106,11 @@ func (b *Writing) CreateCollection(ctx context.Context, input *CreateCollectionI
 	return &output.Result, nil
 }
 
-func (b *Writing) GetCollection(ctx context.Context, input *QueryGidID, status int8) (*CollectionOutput, error) {
+func (b *Writing) GetCollection(ctx context.Context, input *QueryGidID) (*CollectionOutput, error) {
 	output := SuccessResponse[CollectionOutput]{}
 	query := url.Values{}
 	query.Add("id", input.ID.String())
 	query.Add("gid", input.GID.String())
-	query.Add("status", strconv.Itoa(int(status)))
 	if input.Fields != "" {
 		query.Add("fields", input.Fields)
 	}
@@ -108,12 +122,16 @@ func (b *Writing) GetCollection(ctx context.Context, input *QueryGidID, status i
 }
 
 type UpdateCollectionInput struct {
-	ID            util.ID `json:"id" cbor:"id" validate:"required"`
-	GID           util.ID `json:"gid" cbor:"gid" validate:"required"`
-	UpdatedAt     int64   `json:"updated_at" cbor:"updated_at" validate:"gte=1"`
-	Cover         *string `json:"cover" cbor:"cover" validate:"omitempty,http_url"`
-	Price         *int64  `json:"price" cbor:"price" validate:"omitempty,gte=-1,lte=1000000"`
-	CreationPrice *int64  `json:"creation_price" cbor:"creation_price" validate:"omitempty,gte=-1,lte=100000"`
+	ID            util.ID         `json:"id" cbor:"id" validate:"required"`
+	GID           util.ID         `json:"gid" cbor:"gid" validate:"required"`
+	UpdatedAt     int64           `json:"updated_at" cbor:"updated_at" validate:"gte=1"`
+	Version       *uint16         `json:"version,omitempty" cbor:"version,omitempty" validate:"omitempty,gte=0,lte=32767"`
+	Language      *string         `json:"language,omitempty" cbor:"language,omitempty" validate:",omitempty,required"`
+	Context       *string         `json:"context,omitempty" cbor:"context,omitempty" validate:"omitempty,gte=0,lte=1024"`
+	Info          *CollectionInfo `json:"info,omitempty" cbor:"info,omitempty" validate:"omitempty,required"`
+	Cover         *string         `json:"cover,omitempty" cbor:"cover,omitempty" validate:"omitempty,http_url"`
+	Price         *int64          `json:"price,omitempty" cbor:"price,omitempty" validate:"omitempty,gte=-1,lte=1000000"`
+	CreationPrice *int64          `json:"creation_price,omitempty" cbor:"creation_price,omitempty" validate:"omitempty,gte=-1,lte=100000"`
 }
 
 func (i *UpdateCollectionInput) Validate() error {
@@ -159,6 +177,20 @@ func (b *Writing) GetCollectionInfo(ctx context.Context, input *QueryGidID) (*Me
 	}
 
 	return &output.Result, nil
+}
+
+type TranslateCollectionInfoInput struct {
+	ID        util.ID  `json:"id" cbor:"id" validate:"required"`
+	GID       util.ID  `json:"gid" cbor:"gid" validate:"required"`
+	Version   uint16   `json:"version" cbor:"version" validate:"gte=0,lte=32767"`
+	Languages []string `json:"languages" cbor:"languages" validate:"gte=1,lte=100"`
+}
+
+func (i *TranslateCollectionInfoInput) Validate() error {
+	if err := util.Validator.Struct(i); err != nil {
+		return gear.ErrBadRequest.From(err)
+	}
+	return nil
 }
 
 func (b *Writing) UpdateCollectionInfo(ctx context.Context, input *UpdateMessageInput) (*MessageOutput, error) {

@@ -93,8 +93,9 @@ func newRouters(apis *APIs) []*gear.Router {
 	router.Get("/v1/search/in_group", middleware.AuthToken.Auth, apis.Jarvis.GroupSearch)
 	router.Get("/v1/search/by_original_url", middleware.AuthToken.Auth, apis.Jarvis.OriginalSearch)
 
-	router.Get("/v1/scraping", middleware.AuthToken.Auth, apis.Scraping.Create)
-	router.Post("/v1/converting", middleware.AuthToken.Auth, apis.Scraping.Convert)
+	router.Get("/v1/scraping", middleware.AuthToken.Auth, middleware.CheckUserStatus(0), apis.Scraping.Create)
+	router.Post("/v1/converting", middleware.AuthToken.Auth, middleware.CheckUserStatus(0), apis.Scraping.Convert)
+	router.Post("/v1/detect_language", middleware.AuthToken.Auth, middleware.CheckUserStatus(0), apis.Jarvis.DetectLang)
 
 	router.Post("/v1/creation", middleware.AuthToken.Auth, middleware.CheckUserStatus(0), apis.Creation.Create)
 	router.Get("/v1/creation", middleware.AuthToken.Auth, apis.Creation.Get)
@@ -137,8 +138,8 @@ func newRouters(apis *APIs) []*gear.Router {
 	router.Post("/v1/collection", middleware.AuthToken.Auth, middleware.CheckUserStatus(0), apis.Collection.Create)
 	router.Patch("/v1/collection", middleware.AuthToken.Auth, middleware.CheckUserStatus(0), apis.Collection.Update)
 	router.Delete("/v1/collection", middleware.AuthToken.Auth, middleware.CheckUserStatus(0), apis.Collection.Delete)
-	router.Get("/v1/collection/raw_info", middleware.AuthToken.Auth, apis.Collection.GetInfo)
-	router.Patch("/v1/collection/translate_info", middleware.AuthToken.Auth, middleware.CheckUserStatus(0), apis.Collection.UpdateInfo)
+	router.Get("/v1/collection/full_info", middleware.AuthToken.Auth, apis.Collection.GetInfo)
+	router.Patch("/v1/collection/translate_info", middleware.AuthToken.Auth, middleware.CheckUserStatus(0), apis.Collection.TranslateInfo)
 	router.Patch("/v1/collection/status", middleware.AuthToken.Auth, middleware.CheckUserStatus(0), apis.Collection.UpdateStatus)
 	router.Post("/v1/collection/child", middleware.AuthToken.Auth, middleware.CheckUserStatus(0), apis.Collection.AddChildren)
 	router.Patch("/v1/collection/child", middleware.AuthToken.Auth, middleware.CheckUserStatus(0), apis.Collection.UpdateChild)
