@@ -14,9 +14,9 @@ type CreateCollectionInput struct {
 	Language      string         `json:"language" cbor:"language" validate:"required"`
 	Context       string         `json:"context" cbor:"context" validate:"gte=0,lte=1024"`
 	Info          CollectionInfo `json:"info" cbor:"info" validate:"required"`
-	Cover         string         `json:"cover" cbor:"cover" validate:"omitempty,http_url"`
 	Price         int64          `json:"price" cbor:"price" validate:"gte=-1,lte=1000000"`
 	CreationPrice int64          `json:"creation_price" cbor:"creation_price" validate:"gte=-1,lte=100000"`
+	Cover         *string        `json:"cover,omitempty" cbor:"cover,omitempty" validate:"omitempty,http_url"`
 	Parent        *util.ID       `json:"parent,omitempty" cbor:"parent,omitempty"`
 }
 
