@@ -182,10 +182,37 @@ func (a *Collection) Create(ctx *gear.Context) error {
 		return err
 	}
 
+	teContent := content.TEContents{
+		&content.TEContent{
+			ID:    "title",
+			Texts: []string{input.Info.Title},
+		},
+	}
+	if input.Info.Summary != nil {
+		teContent = append(teContent, &content.TEContent{
+			ID:    "summary",
+			Texts: []string{*input.Info.Summary},
+		})
+	}
+	teData, err := cbor.Marshal(teContent)
+	if err != nil {
+		return gear.ErrBadRequest.From(err)
+	}
+
 	if err := a.checkWritePermission(ctx, input.GID); err != nil {
 		return err
 	}
 
+	te, err := a.blls.Jarvis.DetectLang(ctx, &bll.DetectLangInput{
+		GID:      input.GID,
+		Language: input.Language,
+		Content:  teData,
+	})
+	if err != nil {
+		return gear.ErrInternalServerError.From(err)
+	}
+
+	input.Language = te.Language
 	output, err := a.blls.Writing.CreateCollection(ctx, input)
 	if err != nil {
 		return gear.ErrInternalServerError.From(err)
