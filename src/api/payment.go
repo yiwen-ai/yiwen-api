@@ -35,7 +35,7 @@ type SubscriptionToken struct {
 }
 
 type QueryPaymentCode struct {
-	Kind int8    `json:"kind" cbor:"kind" query:"kind" validate:"required"`
+	Kind int8    `json:"kind" cbor:"kind" query:"kind" validate:"gte=0,lte=2"`
 	CID  util.ID `json:"cid" cbor:"cid" query:"cid" validate:"required"`
 	// 触发支付的 group，如果不是订阅对象所属 group，则分享收益给该 group
 	GID util.ID `json:"gid" cbor:"gid" query:"gid" validate:"required"`
@@ -232,7 +232,7 @@ func (a *Payment) PayByCode(ctx *gear.Context) error {
 	switch code.Kind {
 	default:
 		return gear.ErrBadRequest.WithMsg("invalid kind")
-	case 0:
+	case 0, 1:
 		logAction = bll.LogActionCreationSubscribe
 		subscription, _ = a.blls.Writing.InternalGetCreationSubscription(ctx, code.CID)
 	case 2:
