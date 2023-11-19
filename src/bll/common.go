@@ -224,10 +224,15 @@ type SubscriptionOutput struct {
 	UpdatedAt int64   `json:"updated_at" cbor:"updated_at"`
 }
 
+type RFPInfo struct {
+	ID    util.ID `json:"id" cbor:"id"`
+	Price int64   `json:"price" cbor:"price"`
+}
+
 // Request for Payment
 type RFP struct {
-	Creation   uint64 `json:"creation,omitempty" cbor:"creation,omitempty"`
-	Collection uint64 `json:"collection,omitempty" cbor:"collection,omitempty"`
+	Creation   *RFPInfo `json:"creation,omitempty" cbor:"creation,omitempty"`
+	Collection *RFPInfo `json:"collection,omitempty" cbor:"collection,omitempty"`
 }
 
 type UpdateStatusInput struct {
