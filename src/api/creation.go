@@ -517,35 +517,6 @@ func (a *Creation) UploadFile(ctx *gear.Context) error {
 	return ctx.OkSend(bll.SuccessResponse[service.PostFilePolicy]{Result: output})
 }
 
-func (a *Creation) UpdatePrice(ctx *gear.Context) error {
-	input := &bll.UpdateCreationPriceInput{}
-	if err := ctx.ParseBody(input); err != nil {
-		return err
-	}
-
-	doc, err := a.checkWritePermission(ctx, input.GID, input.ID)
-	if err != nil {
-		return err
-	}
-
-	_, err = a.blls.Writing.UpdateCreationPrice(ctx, input)
-	if err != nil {
-		return gear.ErrInternalServerError.From(err)
-	}
-
-	if _, err = a.blls.Logbase.Log(ctx, bll.LogActionCreationUpdate, 1, input.GID, &bll.LogPayload{
-		GID:   input.GID,
-		CID:   input.ID,
-		Kind:  util.Ptr(int8(0)),
-		Price: &input.Price,
-	}); err != nil {
-		logging.SetTo(ctx, "writeLogError", err.Error())
-	}
-
-	doc.Price = &input.Price
-	return ctx.OkSend(bll.SuccessResponse[*bll.CreationOutput]{Result: doc})
-}
-
 func (a *Creation) checkReadPermission(ctx *gear.Context, gid util.ID) error {
 	sess := gear.CtxValue[middleware.Session](ctx)
 	role, err := a.blls.Userbase.UserGroupRole(ctx, sess.UserID, gid)

@@ -14,6 +14,7 @@ type CreateCreationInput struct {
 	Title       string     `json:"title" cbor:"title" validate:"gte=1,lte=256"`
 	Content     util.Bytes `json:"content" cbor:"content" validate:"required"`
 	Language    string     `json:"language" cbor:"language"`
+	Price       *int64     `json:"price" cbor:"price" validate:"omitempty,gte=-1,lte=100000"`
 	OriginalUrl *string    `json:"original_url,omitempty" cbor:"original_url,omitempty" validate:"omitempty,http_url"`
 	Genre       *[]string  `json:"genre,omitempty" cbor:"genre,omitempty"`
 	Cover       *string    `json:"cover,omitempty" cbor:"cover,omitempty" validate:"omitempty,http_url"`
@@ -145,6 +146,7 @@ type UpdateCreationInput struct {
 	GID       util.ID   `json:"gid" cbor:"gid" validate:"required"`
 	ID        util.ID   `json:"id" cbor:"id" validate:"required"`
 	UpdatedAt int64     `json:"updated_at" cbor:"updated_at"  validate:"required"`
+	Price     *int64    `json:"price" cbor:"price" validate:"omitempty,gte=-1,lte=100000"`
 	Title     *string   `json:"title,omitempty" cbor:"title,omitempty" validate:"omitempty,gte=4,lte=256"`
 	Cover     *string   `json:"cover,omitempty" cbor:"cover,omitempty" validate:"omitempty,http_url"`
 	Keywords  *[]string `json:"keywords,omitempty" cbor:"keywords,omitempty" validate:"omitempty,gte=0,lte=5"`
@@ -200,29 +202,6 @@ func (b *Writing) UpdateCreationStatus(ctx context.Context, input *UpdateStatusI
 	}
 
 	return &output.Result, nil
-}
-
-type UpdateCreationPriceInput struct {
-	GID   util.ID `json:"gid" cbor:"gid" validate:"required"`
-	ID    util.ID `json:"id" cbor:"id" validate:"required"`
-	Price int64   `json:"price" cbor:"price" validate:"gte=-1,lte=100000"`
-}
-
-func (i *UpdateCreationPriceInput) Validate() error {
-	if err := util.Validator.Struct(i); err != nil {
-		return gear.ErrBadRequest.From(err)
-	}
-
-	return nil
-}
-
-func (b *Writing) UpdateCreationPrice(ctx context.Context, input *UpdateCreationPriceInput) (bool, error) {
-	output := SuccessResponse[bool]{}
-	if err := b.svc.Patch(ctx, "/v1/creation/update_price", input, &output); err != nil {
-		return false, err
-	}
-
-	return output.Result, nil
 }
 
 // TODO: more validation
