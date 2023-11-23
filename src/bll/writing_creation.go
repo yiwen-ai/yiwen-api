@@ -21,7 +21,7 @@ type CreateCreationInput struct {
 	Keywords    *[]string  `json:"keywords,omitempty" cbor:"keywords,omitempty" validate:"omitempty,gte=0,lte=5"`
 	Labels      *[]string  `json:"labels,omitempty" cbor:"labels,omitempty" validate:"omitempty,gte=0,lte=5"`
 	Authors     *[]string  `json:"authors,omitempty" cbor:"authors,omitempty" validate:"omitempty,gte=0,lte=10"`
-	Summary     *string    `json:"summary,omitempty" cbor:"summary,omitempty" validate:"omitempty,gte=4,lte=2048"`
+	Summary     *string    `json:"summary,omitempty" cbor:"summary,omitempty" validate:"omitempty,gte=0,lte=2048"`
 	License     *string    `json:"license,omitempty" cbor:"license,omitempty"`
 	Parent      *util.ID   `json:"parent,omitempty" cbor:"parent,omitempty"`
 }
@@ -147,12 +147,12 @@ type UpdateCreationInput struct {
 	ID        util.ID   `json:"id" cbor:"id" validate:"required"`
 	UpdatedAt int64     `json:"updated_at" cbor:"updated_at"  validate:"required"`
 	Price     *int64    `json:"price" cbor:"price" validate:"omitempty,gte=-1,lte=100000"`
-	Title     *string   `json:"title,omitempty" cbor:"title,omitempty" validate:"omitempty,gte=4,lte=256"`
+	Title     *string   `json:"title,omitempty" cbor:"title,omitempty" validate:"omitempty,gte=1,lte=256"`
 	Cover     *string   `json:"cover,omitempty" cbor:"cover,omitempty" validate:"omitempty,http_url"`
 	Keywords  *[]string `json:"keywords,omitempty" cbor:"keywords,omitempty" validate:"omitempty,gte=0,lte=5"`
 	Labels    *[]string `json:"labels,omitempty" cbor:"labels,omitempty" validate:"omitempty,gte=0,lte=5"`
 	Authors   *[]string `json:"authors,omitempty" cbor:"authors,omitempty" validate:"omitempty,gte=0,lte=10"`
-	Summary   *string   `json:"summary,omitempty" cbor:"summary,omitempty" validate:"omitempty,gte=4,lte=2048"`
+	Summary   *string   `json:"summary,omitempty" cbor:"summary,omitempty" validate:"omitempty,gte=0,lte=2048"`
 	License   *string   `json:"license,omitempty" cbor:"license,omitempty"`
 }
 

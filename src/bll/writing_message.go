@@ -161,14 +161,6 @@ func FromContent[T MessageContainer](data util.Bytes) (T, error) {
 	return m, nil
 }
 
-func ValidMessage(data util.Bytes) error {
-	var m MessageContainer
-	if err := cbor.Unmarshal(data, &m); err != nil {
-		return err
-	}
-	return nil
-}
-
 var _ MessageContainer = (*KVMessage)(nil)
 var _ MessageContainer = (*ArrayMessage)(nil)
 

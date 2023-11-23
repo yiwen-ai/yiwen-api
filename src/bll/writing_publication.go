@@ -335,8 +335,7 @@ type UpdatePublicationInput struct {
 	Language  string    `json:"language" cbor:"language" validate:"required"`
 	Version   uint16    `json:"version" cbor:"version" validate:"gte=1,lte=10000"`
 	UpdatedAt int64     `json:"updated_at" cbor:"updated_at"  validate:"required"`
-	Model     *string   `json:"model,omitempty" cbor:"model,omitempty" validate:"omitempty,gte=2,lte=16"`
-	Title     *string   `json:"title,omitempty" cbor:"title,omitempty" validate:"omitempty,gte=4,lte=256"`
+	Title     *string   `json:"title,omitempty" cbor:"title,omitempty" validate:"omitempty,gte=1,lte=256"`
 	Cover     *string   `json:"cover,omitempty" cbor:"cover,omitempty" validate:"omitempty,http_url"`
 	Keywords  *[]string `json:"keywords,omitempty" cbor:"keywords,omitempty" validate:"omitempty,gte=0,lte=5"`
 	Summary   *string   `json:"summary,omitempty" cbor:"summary,omitempty" validate:"omitempty,gte=4,lte=2048"`

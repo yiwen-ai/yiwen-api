@@ -25,7 +25,11 @@ func (a *Message) Create(ctx *gear.Context) error {
 		return err
 	}
 
-	if err := bll.ValidMessage(input.Message); err != nil {
+	_, err := bll.FromContent[*bll.KVMessage](input.Message)
+	if err != nil {
+		_, err = bll.FromContent[*bll.ArrayMessage](input.Message)
+	}
+	if err != nil {
 		return gear.ErrBadRequest.From(err)
 	}
 
@@ -58,7 +62,11 @@ func (a *Message) Update(ctx *gear.Context) error {
 	}
 
 	if input.Message != nil {
-		if err := bll.ValidMessage(*input.Message); err != nil {
+		_, err := bll.FromContent[*bll.KVMessage](*input.Message)
+		if err != nil {
+			_, err = bll.FromContent[*bll.ArrayMessage](*input.Message)
+		}
+		if err != nil {
 			return gear.ErrBadRequest.From(err)
 		}
 	}
