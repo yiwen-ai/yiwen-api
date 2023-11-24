@@ -111,14 +111,14 @@ func (a *Creation) Update(ctx *gear.Context) error {
 		return err
 	}
 
-	creation, err := a.checkWritePermission(ctx, input.GID, input.ID)
+	_, err := a.checkWritePermission(ctx, input.GID, input.ID)
 	if err != nil {
 		return err
 	}
-
-	if *creation.Status != 0 && *creation.Status != 1 {
-		return gear.ErrBadRequest.WithMsg("cannot update creation, status is not 0 or 1")
-	}
+	// we can update price in status 2
+	// if *creation.Status != 0 && *creation.Status != 1 {
+	// 	return gear.ErrBadRequest.WithMsg("cannot update creation, status is not 0 or 1")
+	// }
 
 	output, err := a.blls.Writing.UpdateCreation(ctx, input)
 	if err != nil {
