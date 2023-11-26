@@ -221,6 +221,7 @@ type UpdateMessageInput struct {
 	Version  uint16      `json:"version" cbor:"version" validate:"gte=1,lte=32767"`
 	Context  *string     `json:"context,omitempty" cbor:"context,omitempty" validate:"omitempty,gte=4,lte=1024"`
 	Language *string     `json:"language,omitempty" cbor:"language,omitempty"`
+	Model    *string     `json:"model,omitempty" cbor:"model,omitempty" validate:"omitempty,gte=2,lte=16"`
 	Message  *util.Bytes `json:"message,omitempty" cbor:"message,omitempty"`
 	NewlyAdd *bool       `json:"newly_add,omitempty" cbor:"newly_add,omitempty"` // default true
 }

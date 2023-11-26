@@ -196,6 +196,7 @@ type TranslateCollectionInfoInput struct {
 	GID       util.ID  `json:"gid" cbor:"gid" validate:"required"`
 	Version   uint16   `json:"version" cbor:"version" validate:"gte=0,lte=32767"`
 	Languages []string `json:"languages" cbor:"languages" validate:"gte=1,lte=100"`
+	Model     *string  `json:"model,omitempty" cbor:"model,omitempty" validate:"omitempty,gte=2,lte=16"`
 }
 
 func (i *TranslateCollectionInfoInput) Validate() error {

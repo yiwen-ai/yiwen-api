@@ -106,6 +106,11 @@ func (a *Message) UpdateI18n(ctx *gear.Context) error {
 		return err
 	}
 
+	model := bll.DefaultModel
+	if input.Model != nil {
+		model = bll.GetAIModel(*input.Model)
+	}
+
 	lang := *input.Language
 	msg, err := a.blls.Writing.GetMessage(ctx, &bll.QueryID{
 		ID: input.ID, Fields: "version,language,attach_to,context,message," + lang,
@@ -177,7 +182,7 @@ func (a *Message) UpdateI18n(ctx *gear.Context) error {
 	}
 
 	tokens := a.blls.Jarvis.EstimateTranslatingTokens(trans, *msg.Language, *input.Language)
-	estimate_cost := bll.DefaultModel.CostWEN(tokens)
+	estimate_cost := model.CostWEN(tokens)
 	if b := wallet.Balance(); b < estimate_cost {
 		return gear.ErrPaymentRequired.WithMsgf("insufficient balance, expected %d, got %d", estimate_cost, b)
 	}
@@ -219,7 +224,7 @@ func (a *Message) UpdateI18n(ctx *gear.Context) error {
 			Version:      *msg.Version,
 			FromLanguage: msg.Language,
 			Context:      msg.Context,
-			Model:        util.Ptr(bll.DefaultModel.ID),
+			Model:        util.Ptr(model.ID),
 			Content:      util.Ptr(util.Bytes(teData)),
 		})
 
@@ -236,8 +241,8 @@ func (a *Message) UpdateI18n(ctx *gear.Context) error {
 				Action:   bll.LogActionMessageUpdate,
 				Language: *input.Language,
 				Version:  *msg.Version,
-				Model:    bll.DefaultModel.ID,
-				Price:    bll.DefaultModel.Price,
+				Model:    model.ID,
+				Price:    model.Price,
 				Tokens:   tmOutput.Tokens,
 			}
 
@@ -283,7 +288,7 @@ func (a *Message) UpdateI18n(ctx *gear.Context) error {
 			log["error"] = err.Error()
 		} else {
 			auditLog.Status = 1
-			log["cost"] = bll.DefaultModel.CostWEN(*auditLog.Tokens)
+			log["cost"] = model.CostWEN(*auditLog.Tokens)
 		}
 
 		go a.blls.Logbase.Update(gctx, auditLog)
