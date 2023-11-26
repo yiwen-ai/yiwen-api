@@ -28,6 +28,11 @@ func (i *CreatePublicationInput) Validate() error {
 	if err := util.Validator.Struct(i); err != nil {
 		return gear.ErrBadRequest.From(err)
 	}
+	if i.Context != nil {
+		if tk := util.Tiktokens(*i.Context); tk > 2048 {
+			return gear.ErrBadRequest.WithMsgf("context is too long, max tokens is 2048, got %d", tk)
+		}
+	}
 
 	return nil
 }

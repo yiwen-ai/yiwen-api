@@ -188,8 +188,8 @@ func RequestCBOR(ctx context.Context, cli *http.Client, method, api string, inpu
 		if e != nil {
 			str = string(data)
 		}
-		er := gear.Err.WithCode(resp.StatusCode).WithMsgf("RequestCBOR failed, url: %q, rid: %s, code: %d, error: %v",
-			api, rid, resp.StatusCode, err)
+		er := gear.Err.WithCode(resp.StatusCode).WithMsgf("RequestCBOR failed, url: %q, rid: %s, code: %d, error: %v, body: %s",
+			api, rid, resp.StatusCode, err, str)
 		er.Data = str
 		return er
 	}
@@ -199,8 +199,8 @@ func RequestCBOR(ctx context.Context, cli *http.Client, method, api string, inpu
 		if e != nil {
 			str = string(data)
 		}
-		er := gear.ErrInternalServerError.WithMsgf("RequestCBOR failed, url: %q, rid: %s, code: %d, error: %v",
-			api, rid, resp.StatusCode, err)
+		er := gear.ErrInternalServerError.WithMsgf("RequestCBOR failed, url: %q, rid: %s, code: %d, error: %v, body: %s",
+			api, rid, resp.StatusCode, err, str)
 		er.Data = str
 		return er
 	}

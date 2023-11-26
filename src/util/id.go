@@ -12,8 +12,8 @@ import (
 )
 
 var ZeroID ID
-var JARVIS ID = mustParseID("0000000000000jarvis0") // system user
-var ANON ID = mustParseID("000000000000000anon0")   // anonymous user
+var JARVIS ID = MustParseID("0000000000000jarvis0") // system user
+var ANON ID = MustParseID("000000000000000anon0")   // anonymous user
 var MinID ID = ID(xid.ID([12]byte{0, 0, 0, 0, 255, 255, 255, 255, 255, 255, 255, 255}))
 
 func NewID() ID {
@@ -28,7 +28,7 @@ func ParseID(s string) (ID, error) {
 	return ID(id), nil
 }
 
-func mustParseID(s string) ID {
+func MustParseID(s string) ID {
 	id, err := xid.FromString(s)
 	if err != nil {
 		panic(err)

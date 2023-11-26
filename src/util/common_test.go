@@ -18,7 +18,7 @@ func TestRemoveDuplicates(t *testing.T) {
 	assert.Equal(t, RemoveDuplicates([]string{"a", "b", "a"}), []string{"a", "b"})
 
 	id := NewID()
-	id2 := mustParseID(id.String())
+	id2 := MustParseID(id.String())
 	assert.Equal(t, RemoveDuplicates([]ID{id, id2}), []ID{id})
 }
 

@@ -183,6 +183,12 @@ func (i *CreateMessageInput) Validate() error {
 		return gear.ErrBadRequest.WithMsg("message is too large")
 	}
 
+	if i.Context != "" {
+		if tk := util.Tiktokens(i.Context); tk > 2048 {
+			return gear.ErrBadRequest.WithMsgf("context is too long, max tokens is 2048, got %d", tk)
+		}
+	}
+
 	return nil
 }
 
@@ -228,6 +234,11 @@ func (i *UpdateMessageInput) Validate() error {
 	}
 	if i.Message != nil && i.Language == nil {
 		return gear.ErrBadRequest.WithMsg("language is required with message")
+	}
+	if i.Context != nil {
+		if tk := util.Tiktokens(*i.Context); tk > 2048 {
+			return gear.ErrBadRequest.WithMsgf("context is too long, max tokens is 2048, got %d", tk)
+		}
 	}
 	if i.NewlyAdd == nil {
 		i.NewlyAdd = util.Ptr(true)
