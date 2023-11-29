@@ -847,8 +847,22 @@ func (a *Publication) Publish(ctx *gear.Context) error {
 		return err
 	}
 
-	if *publication.Status != 1 {
-		return gear.ErrBadRequest.WithMsg("cannot update publication, status is not 1")
+	status := *publication.Status
+	if status == 2 {
+		return ctx.OkSend(bll.SuccessResponse[*bll.PublicationOutput]{Result: publication})
+	}
+
+	if status < 0 {
+		return gear.ErrBadRequest.WithMsgf("cannot update publication, status is %d", status)
+	}
+
+	if status == 0 {
+		input.Status = 1
+		output, err := a.blls.Writing.UpdatePublicationStatus(ctx, input)
+		if err != nil {
+			return gear.ErrInternalServerError.From(err)
+		}
+		input.UpdatedAt = *output.UpdatedAt
 	}
 
 	input.Status = 2
