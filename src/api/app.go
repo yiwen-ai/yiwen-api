@@ -28,6 +28,7 @@ func NewApp() *gear.App {
 	app.Set(gear.SetGraceTimeout, time.Duration(conf.Config.Server.GracefulShutdown)*time.Second)
 	app.Set(gear.SetSender, &sendObject{})
 	app.Set(gear.SetEnv, conf.Config.Env)
+	app.Set(gear.SetServerName, "Yiwen")
 
 	app.UseHandler(logging.AccessLogger)
 	err := util.DigInvoke(func(blls *bll.Blls, routers []*gear.Router) error {
@@ -87,6 +88,8 @@ func (d *bodyParser) Parse(buf []byte, body any, mediaType, charset string) erro
 type sendObject struct{}
 
 func (s *sendObject) Send(ctx *gear.Context, code int, data any) error {
+	ctx.SetHeader(gear.HeaderCacheControl, "no-cache")
+	ctx.SetHeader(gear.HeaderXContentTypeOptions, "nosniff")
 	if strings.HasPrefix(ctx.GetHeader(gear.HeaderAccept), gear.MIMEApplicationCBOR) || strings.HasPrefix(ctx.GetHeader(gear.HeaderContentType), gear.MIMEApplicationCBOR) {
 		data, err := cbor.Marshal(data)
 		if err != nil {
