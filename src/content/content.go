@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"strconv"
+	"strings"
 
 	"github.com/fxamacker/cbor/v2"
 	"github.com/jaevor/go-nanoid"
@@ -67,6 +68,17 @@ func (te *TEContents) visitNode(node *DocumentNode) {
 			content.Texts = append(content.Texts, *child.Text)
 		} else {
 			te.visitNode(&child)
+		}
+	}
+}
+
+var contentFilter = strings.NewReplacer("强奸", "**")
+
+// 部分关键词会被 open ai 识别拒绝，需要过滤
+func (te TEContents) ContentFilter() {
+	for i := range te {
+		for j := range te[i].Texts {
+			te[i].Texts[j] = contentFilter.Replace(te[i].Texts[j])
 		}
 	}
 }

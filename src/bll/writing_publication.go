@@ -14,14 +14,15 @@ import (
 
 // TODO: more validation
 type CreatePublicationInput struct {
-	GID        util.ID  `json:"gid" cbor:"gid" validate:"required"`
-	CID        util.ID  `json:"cid" cbor:"cid" validate:"required"`
-	Language   string   `json:"language" cbor:"language" validate:"required"`
-	Version    uint16   `json:"version" cbor:"version" validate:"gte=1,lte=10000"`
-	Model      string   `json:"model" cbor:"model" validate:"omitempty,gte=2,lte=16"`
-	ToGID      *util.ID `json:"to_gid,omitempty" cbor:"to_gid,omitempty"`
-	ToLanguage *string  `json:"to_language,omitempty" cbor:"to_language,omitempty"`
-	Context    *string  `json:"context,omitempty" cbor:"context,omitempty"` // Contextual definition for translating
+	GID           util.ID  `json:"gid" cbor:"gid" validate:"required"`
+	CID           util.ID  `json:"cid" cbor:"cid" validate:"required"`
+	Language      string   `json:"language" cbor:"language" validate:"required"`
+	Version       uint16   `json:"version" cbor:"version" validate:"gte=1,lte=10000"`
+	Model         string   `json:"model" cbor:"model" validate:"omitempty,gte=2,lte=16"`
+	ToGID         *util.ID `json:"to_gid,omitempty" cbor:"to_gid,omitempty"`
+	ToLanguage    *string  `json:"to_language,omitempty" cbor:"to_language,omitempty"`
+	Context       *string  `json:"context,omitempty" cbor:"context,omitempty"` // Contextual definition for translating
+	ContentFilter *bool    `json:"content_filter,omitempty" cbor:"content_filter,omitempty"`
 }
 
 func (i *CreatePublicationInput) Validate() error {

@@ -143,6 +143,10 @@ func (a *Publication) Create(ctx *gear.Context) error {
 	if err != nil {
 		return gear.ErrInternalServerError.From(err)
 	}
+	if input.ContentFilter != nil && *input.ContentFilter {
+		teContents.ContentFilter()
+	}
+
 	teData, err := cbor.Marshal(teContents)
 	if err != nil {
 		return gear.ErrInternalServerError.From(err)

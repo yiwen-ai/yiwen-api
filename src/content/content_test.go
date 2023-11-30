@@ -205,3 +205,27 @@ func TestEstimateTranslatingString(t *testing.T) {
 	fmt.Println(str)
 	assert.Equal("[\"0\"]\n[\"Hello\"]\n[\"2\"]\n[\"world\"]\n[\"4\"]\n[\"some text\"]\n", str)
 }
+
+func TestContentFilter(t *testing.T) {
+	assert := assert.New(t)
+	obj := DocumentNode{
+		Type: "doc",
+		Content: []DocumentNode{
+			{
+				Type:  "paragraph",
+				Attrs: map[string]AttrValue{"id": String("123456")},
+				Content: []DocumentNode{
+					{
+						Type: "text",
+						Text: util.Ptr("some 暴力强奸 text"),
+					},
+				},
+			},
+		},
+	}
+
+	te := obj.ToTEContents()
+	assert.Equal(te[0].Texts, []string{"some 暴力强奸 text"})
+	te.ContentFilter()
+	assert.Equal(te[0].Texts, []string{"some 暴力** text"})
+}
