@@ -83,6 +83,7 @@ func newRouters(apis *APIs) []*gear.Router {
 	router.Get("/v1/collection", middleware.AuthAllowAnon.Auth, apis.Collection.Get)
 	router.Get("/v1/collection/list_by_child", middleware.AuthAllowAnon.Auth, apis.Collection.ListByChild)
 	router.Post("/v1/collection/list", middleware.AuthAllowAnon.Auth, apis.Collection.List)
+	router.Post("/v1/collection/list_latest", middleware.AuthAllowAnon.Auth, apis.Collection.ListLatest)
 	router.Post("/v1/collection/list_children", middleware.AuthAllowAnon.Auth, apis.Collection.ListChildren)
 	router.Get("/v1/group/info", middleware.AuthAllowAnon.Auth, apis.Group.GetInfo)
 	router.Get("/v1/group/statistic", middleware.AuthAllowAnon.Auth, apis.Group.GetStatistic)

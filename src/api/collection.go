@@ -153,6 +153,24 @@ func (a *Collection) List(ctx *gear.Context) error {
 	return ctx.OkSend(output)
 }
 
+func (a *Collection) ListLatest(ctx *gear.Context) error {
+	input := &bll.Pagination{}
+	if err := ctx.ParseBody(input); err != nil {
+		return err
+	}
+
+	output, err := a.blls.Writing.ListLatestCollections(ctx, input)
+	if err != nil {
+		return gear.ErrInternalServerError.From(err)
+	}
+
+	output.Result.LoadGroups(func(ids ...util.ID) []bll.GroupInfo {
+		return a.blls.Userbase.LoadGroupInfo(ctx, ids...)
+	})
+
+	return ctx.OkSend(output)
+}
+
 func (a *Collection) ListArchived(ctx *gear.Context) error {
 	input := &bll.GIDPagination{}
 	if err := ctx.ParseBody(input); err != nil {

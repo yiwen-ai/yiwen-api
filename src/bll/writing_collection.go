@@ -315,6 +315,15 @@ func (b *Writing) ListCollection(ctx context.Context, input *GIDPagination) (*Su
 	return &output, nil
 }
 
+func (b *Writing) ListLatestCollections(ctx context.Context, input *Pagination) (*SuccessResponse[CollectionOutputs], error) {
+	output := SuccessResponse[CollectionOutputs]{}
+	if err := b.svc.Post(ctx, "/v1/collection/list_latest", input, &output); err != nil {
+		return nil, err
+	}
+
+	return &output, nil
+}
+
 type CollectionChildrenOutput struct {
 	Parent    util.ID `json:"parent" cbor:"parent"`
 	GID       util.ID `json:"gid" cbor:"gid"`
