@@ -8,7 +8,6 @@ import (
 
 	"github.com/teambition/gear"
 	"github.com/yiwen-ai/yiwen-api/src/conf"
-	"github.com/yiwen-ai/yiwen-api/src/logging"
 	"github.com/yiwen-ai/yiwen-api/src/service"
 	"github.com/yiwen-ai/yiwen-api/src/util"
 )
@@ -277,42 +276,42 @@ func (b *Jarvis) GetTranslation(ctx context.Context, input *TEInput) (*Translati
 	return &output.Result, nil
 }
 
-func (b *Jarvis) Embedding(ctx context.Context, input *TEInput) (*TEOutput, error) {
-	output := SuccessResponse[TEOutput]{}
-	if err := b.svc.Post(ctx, "/v1/embedding", input, &output); err != nil {
-		return nil, err
-	}
+// func (b *Jarvis) Embedding(ctx context.Context, input *TEInput) (*TEOutput, error) {
+// 	output := SuccessResponse[TEOutput]{}
+// 	if err := b.svc.Post(ctx, "/v1/embedding", input, &output); err != nil {
+// 		return nil, err
+// 	}
 
-	return &output.Result, nil
-}
+// 	return &output.Result, nil
+// }
 
-func (b *Jarvis) EmbeddingPublic(ctx context.Context, input *TEInput) {
-	input.Content = nil
-	output := SuccessResponse[any]{}
-	if err := b.svc.Post(ctx, "/v1/embedding/public", input, &output); err != nil {
-		logging.Warningf("Jarvis.EmbeddingPublic error: %v", err)
-	}
-}
+// func (b *Jarvis) EmbeddingPublic(ctx context.Context, input *TEInput) {
+// 	input.Content = nil
+// 	output := SuccessResponse[any]{}
+// 	if err := b.svc.Post(ctx, "/v1/embedding/public", input, &output); err != nil {
+// 		logging.Warningf("Jarvis.EmbeddingPublic error: %v", err)
+// 	}
+// }
 
-type EmbeddingSearchInput struct {
-	Input    string   `json:"input" cbor:"input"`
-	Public   bool     `json:"public" cbor:"public"`
-	GID      *util.ID `json:"gid,omitempty" cbor:"gid,omitempty"`
-	Language *string  `json:"language,omitempty" cbor:"language,omitempty"`
-	CID      *util.ID `json:"cid,omitempty" cbor:"cid,omitempty"`
-}
+// type EmbeddingSearchInput struct {
+// 	Input    string   `json:"input" cbor:"input"`
+// 	Public   bool     `json:"public" cbor:"public"`
+// 	GID      *util.ID `json:"gid,omitempty" cbor:"gid,omitempty"`
+// 	Language *string  `json:"language,omitempty" cbor:"language,omitempty"`
+// 	CID      *util.ID `json:"cid,omitempty" cbor:"cid,omitempty"`
+// }
 
-type EmbeddingSearchOutput struct {
-	GID      util.ID    `json:"gid" cbor:"gid"`
-	CID      util.ID    `json:"cid" cbor:"cid"`
-	Language string     `json:"language" cbor:"language"`
-	Version  uint16     `json:"version" cbor:"version"`
-	IDs      string     `json:"ids" cbor:"ids"`
-	Content  util.Bytes `json:"content" cbor:"content"`
-}
+// type EmbeddingSearchOutput struct {
+// 	GID      util.ID    `json:"gid" cbor:"gid"`
+// 	CID      util.ID    `json:"cid" cbor:"cid"`
+// 	Language string     `json:"language" cbor:"language"`
+// 	Version  uint16     `json:"version" cbor:"version"`
+// 	IDs      string     `json:"ids" cbor:"ids"`
+// 	Content  util.Bytes `json:"content" cbor:"content"`
+// }
 
-func (b *Jarvis) EmbeddingSearch(ctx context.Context, input *EmbeddingSearchInput) []*EmbeddingSearchOutput {
-	output := SuccessResponse[[]*EmbeddingSearchOutput]{}
-	b.svc.Post(ctx, "/v1/embedding/search", input, &output)
-	return output.Result
-}
+// func (b *Jarvis) EmbeddingSearch(ctx context.Context, input *EmbeddingSearchInput) []*EmbeddingSearchOutput {
+// 	output := SuccessResponse[[]*EmbeddingSearchOutput]{}
+// 	b.svc.Post(ctx, "/v1/embedding/search", input, &output)
+// 	return output.Result
+// }

@@ -558,13 +558,9 @@ func (a *Publication) Update(ctx *gear.Context) error {
 		return err
 	}
 
-	publication, err := a.checkWritePermission(ctx, input.GID, input.CID, input.Language, input.Version)
+	_, err := a.checkWritePermission(ctx, input.GID, input.CID, input.Language, input.Version)
 	if err != nil {
 		return err
-	}
-
-	if *publication.Status != 0 {
-		return gear.ErrBadRequest.WithMsg("cannot update publication, status is not 0")
 	}
 
 	output, err := a.blls.Writing.UpdatePublication(ctx, input)
@@ -632,9 +628,6 @@ func (a *Publication) ListPublished(ctx *gear.Context) error {
 		return gear.ErrInternalServerError.From(err)
 	}
 
-	// output.Result.LoadCreators(func(ids ...util.ID) []bll.UserInfo {
-	// 	return a.blls.Userbase.LoadUserInfo(ctx, ids...)
-	// })
 	output.Result.LoadGroups(func(ids ...util.ID) []bll.GroupInfo {
 		return a.blls.Userbase.LoadGroupInfo(ctx, ids...)
 	})
@@ -875,13 +868,13 @@ func (a *Publication) Publish(ctx *gear.Context) error {
 		return gear.ErrInternalServerError.From(err)
 	}
 
-	gctx := middleware.WithGlobalCtx(ctx)
-	go a.blls.Jarvis.EmbeddingPublic(gctx, &bll.TEInput{
-		GID:      input.GID,
-		CID:      input.CID,
-		Language: input.Language,
-		Version:  input.Version,
-	})
+	// gctx := middleware.WithGlobalCtx(ctx)
+	// go a.blls.Jarvis.EmbeddingPublic(gctx, &bll.TEInput{
+	// 	GID:      input.GID,
+	// 	CID:      input.CID,
+	// 	Language: input.Language,
+	// 	Version:  input.Version,
+	// })
 
 	if _, err = a.blls.Logbase.Log(ctx, bll.LogActionPublicationPublish, 1, input.GID, &bll.LogPayload{
 		GID:      input.GID,
