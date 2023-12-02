@@ -2,6 +2,7 @@ package bll
 
 import (
 	"context"
+	"strings"
 
 	"github.com/ldclabs/cose/key"
 	_ "github.com/ldclabs/cose/key/aesgcm"
@@ -107,6 +108,42 @@ func (i *Pagination) Validate() error {
 	return nil
 }
 
+type QueryPagination struct {
+	PageToken *string `json:"page_token,omitempty" cbor:"page_token,omitempty"  query:"page_token"`
+	PageSize  *uint16 `json:"page_size,omitempty" cbor:"page_size,omitempty"  query:"page_size" validate:"omitempty,gte=5,lte=100"`
+	Status    *int8   `json:"status,omitempty" cbor:"status,omitempty" query:"status"`
+	Fields    *string `json:"fields,omitempty" cbor:"fields,omitempty" query:"fields"`
+	pageToken *util.Bytes
+}
+
+func (i *QueryPagination) Validate() error {
+	if err := util.Validator.Struct(i); err != nil {
+		return gear.ErrBadRequest.From(err)
+	}
+	if i.PageToken != nil {
+		i.pageToken = &util.Bytes{}
+		if err := i.pageToken.UnmarshalText([]byte(*i.PageToken)); err != nil {
+			return gear.ErrBadRequest.From(err)
+		}
+	}
+
+	return nil
+}
+
+func (i *QueryPagination) To() *Pagination {
+	to := &Pagination{
+		PageToken: i.pageToken,
+		PageSize:  i.PageSize,
+		Status:    i.Status,
+	}
+
+	if i.Fields != nil {
+		fields := strings.Split(*i.Fields, ",")
+		to.Fields = &fields
+	}
+	return to
+}
+
 type IDGIDPagination struct {
 	ID        util.ID     `json:"id" cbor:"id" validate:"required"`
 	GID       util.ID     `json:"gid" cbor:"gid" validate:"required"`
@@ -124,6 +161,47 @@ func (i *IDGIDPagination) Validate() error {
 	return nil
 }
 
+type QueryIDGIDPagination struct {
+	ID        util.ID `json:"id" cbor:"id" query:"id" validate:"required"`
+	GID       util.ID `json:"gid" cbor:"gid" query:"gid" validate:"required"`
+	PageToken *string `json:"page_token,omitempty" cbor:"page_token,omitempty" query:"page_token"`
+	PageSize  *uint16 `json:"page_size,omitempty" cbor:"page_size,omitempty" query:"page_size" validate:"omitempty,gte=5,lte=100"`
+	Status    *int8   `json:"status,omitempty" cbor:"status,omitempty" query:"status"`
+	Fields    *string `json:"fields,omitempty" cbor:"fields,omitempty" query:"fields"`
+	pageToken *util.Bytes
+}
+
+func (i *QueryIDGIDPagination) Validate() error {
+	if err := util.Validator.Struct(i); err != nil {
+		return gear.ErrBadRequest.From(err)
+	}
+
+	if i.PageToken != nil {
+		i.pageToken = &util.Bytes{}
+		if err := i.pageToken.UnmarshalText([]byte(*i.PageToken)); err != nil {
+			return gear.ErrBadRequest.From(err)
+		}
+	}
+
+	return nil
+}
+
+func (i *QueryIDGIDPagination) To() *IDGIDPagination {
+	to := &IDGIDPagination{
+		ID:        i.ID,
+		GID:       i.GID,
+		PageToken: i.pageToken,
+		PageSize:  i.PageSize,
+		Status:    i.Status,
+	}
+
+	if i.Fields != nil {
+		fields := strings.Split(*i.Fields, ",")
+		to.Fields = &fields
+	}
+	return to
+}
+
 type GIDPagination struct {
 	GID       util.ID     `json:"gid" cbor:"gid" validate:"required"`
 	PageToken *util.Bytes `json:"page_token,omitempty" cbor:"page_token,omitempty"`
@@ -138,6 +216,44 @@ func (i *GIDPagination) Validate() error {
 	}
 
 	return nil
+}
+
+type QueryGIDPagination struct {
+	GID       util.ID `json:"gid" cbor:"gid" query:"gid" validate:"required"`
+	PageToken *string `json:"page_token,omitempty" cbor:"page_token,omitempty"  query:"page_token"`
+	PageSize  *uint16 `json:"page_size,omitempty" cbor:"page_size,omitempty"  query:"page_size" validate:"omitempty,gte=5,lte=100"`
+	Status    *int8   `json:"status,omitempty" cbor:"status,omitempty" query:"status"`
+	Fields    *string `json:"fields,omitempty" cbor:"fields,omitempty" query:"fields"`
+	pageToken *util.Bytes
+}
+
+func (i *QueryGIDPagination) Validate() error {
+	if err := util.Validator.Struct(i); err != nil {
+		return gear.ErrBadRequest.From(err)
+	}
+	if i.PageToken != nil {
+		i.pageToken = &util.Bytes{}
+		if err := i.pageToken.UnmarshalText([]byte(*i.PageToken)); err != nil {
+			return gear.ErrBadRequest.From(err)
+		}
+	}
+
+	return nil
+}
+
+func (i *QueryGIDPagination) To() *GIDPagination {
+	to := &GIDPagination{
+		GID:       i.GID,
+		PageToken: i.pageToken,
+		PageSize:  i.PageSize,
+		Status:    i.Status,
+	}
+
+	if i.Fields != nil {
+		fields := strings.Split(*i.Fields, ",")
+		to.Fields = &fields
+	}
+	return to
 }
 
 type QueryIdCn struct {

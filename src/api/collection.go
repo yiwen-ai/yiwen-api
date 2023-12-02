@@ -103,7 +103,14 @@ func (a *Collection) ListByChild(ctx *gear.Context) error {
 
 func (a *Collection) ListChildren(ctx *gear.Context) error {
 	input := &bll.IDGIDPagination{}
-	if err := ctx.ParseBody(input); err != nil {
+	if ctx.Method == "GET" {
+		in := &bll.QueryIDGIDPagination{}
+		if err := ctx.ParseURL(in); err != nil {
+			return err
+		}
+
+		input = in.To()
+	} else if err := ctx.ParseBody(input); err != nil {
 		return err
 	}
 
@@ -128,7 +135,14 @@ func (a *Collection) ListChildren(ctx *gear.Context) error {
 
 func (a *Collection) List(ctx *gear.Context) error {
 	input := &bll.GIDPagination{}
-	if err := ctx.ParseBody(input); err != nil {
+	if ctx.Method == "GET" {
+		in := &bll.QueryGIDPagination{}
+		if err := ctx.ParseURL(in); err != nil {
+			return err
+		}
+
+		input = in.To()
+	} else if err := ctx.ParseBody(input); err != nil {
 		return err
 	}
 
@@ -155,7 +169,14 @@ func (a *Collection) List(ctx *gear.Context) error {
 
 func (a *Collection) ListLatest(ctx *gear.Context) error {
 	input := &bll.Pagination{}
-	if err := ctx.ParseBody(input); err != nil {
+	if ctx.Method == "GET" {
+		in := &bll.QueryPagination{}
+		if err := ctx.ParseURL(in); err != nil {
+			return err
+		}
+
+		input = in.To()
+	} else if err := ctx.ParseBody(input); err != nil {
 		return err
 	}
 
@@ -173,7 +194,14 @@ func (a *Collection) ListLatest(ctx *gear.Context) error {
 
 func (a *Collection) ListArchived(ctx *gear.Context) error {
 	input := &bll.GIDPagination{}
-	if err := ctx.ParseBody(input); err != nil {
+	if ctx.Method == "GET" {
+		in := &bll.QueryGIDPagination{}
+		if err := ctx.ParseURL(in); err != nil {
+			return err
+		}
+
+		input = in.To()
+	} else if err := ctx.ParseBody(input); err != nil {
 		return err
 	}
 
@@ -367,6 +395,7 @@ func (a *Collection) GetInfo(ctx *gear.Context) error {
 	return ctx.OkSend(bll.SuccessResponse[bll.CollectionInfoOutput]{Result: bll.CollectionInfoOutput{
 		ID:            collection.ID,
 		GID:           collection.GID,
+		MID:           message.ID,
 		Status:        *collection.Status,
 		UpdatedAt:     *collection.UpdatedAt,
 		Cover:         *collection.Cover,

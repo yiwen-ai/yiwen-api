@@ -189,6 +189,17 @@ func (r *Bytes) UnmarshalJSON(data []byte) error {
 	return err
 }
 
+func (r *Bytes) UnmarshalText(data []byte) error {
+	if r == nil {
+		return errors.New("util.Bytes: UnmarshalText on nil pointer")
+	}
+	data, err := base64.RawURLEncoding.DecodeString(string(data))
+	if err == nil {
+		*r = append((*r)[0:0], data...)
+	}
+	return err
+}
+
 func Unmarshal[T any](b *Bytes) (*T, error) {
 	if b == nil {
 		return nil, errors.New("nil bytes")

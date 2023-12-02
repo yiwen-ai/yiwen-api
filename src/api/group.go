@@ -52,9 +52,17 @@ func (a *Group) UnFollow(ctx *gear.Context) error {
 
 func (a *Group) ListFollowing(ctx *gear.Context) error {
 	input := &bll.Pagination{}
-	if err := ctx.ParseBody(input); err != nil {
+	if ctx.Method == "GET" {
+		in := &bll.QueryPagination{}
+		if err := ctx.ParseURL(in); err != nil {
+			return err
+		}
+
+		input = in.To()
+	} else if err := ctx.ParseBody(input); err != nil {
 		return err
 	}
+
 	output, err := a.blls.Userbase.ListFollowing(ctx, input)
 	if err != nil {
 		return gear.ErrInternalServerError.From(err)

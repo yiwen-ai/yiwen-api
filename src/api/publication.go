@@ -618,7 +618,14 @@ func (a *Publication) Delete(ctx *gear.Context) error {
 
 func (a *Publication) ListPublished(ctx *gear.Context) error {
 	input := &bll.GIDPagination{}
-	if err := ctx.ParseBody(input); err != nil {
+	if ctx.Method == "GET" {
+		in := &bll.QueryGIDPagination{}
+		if err := ctx.ParseURL(in); err != nil {
+			return err
+		}
+
+		input = in.To()
+	} else if err := ctx.ParseBody(input); err != nil {
 		return err
 	}
 
@@ -637,7 +644,14 @@ func (a *Publication) ListPublished(ctx *gear.Context) error {
 
 func (a *Publication) List(ctx *gear.Context) error {
 	input := &bll.GIDPagination{}
-	if err := ctx.ParseBody(input); err != nil {
+	if ctx.Method == "GET" {
+		in := &bll.QueryGIDPagination{}
+		if err := ctx.ParseURL(in); err != nil {
+			return err
+		}
+
+		input = in.To()
+	} else if err := ctx.ParseBody(input); err != nil {
 		return err
 	}
 
@@ -673,7 +687,14 @@ func (a *Publication) Recommendations(ctx *gear.Context) error {
 
 func (a *Publication) ListByFollowing(ctx *gear.Context) error {
 	input := &bll.Pagination{}
-	if err := ctx.ParseBody(input); err != nil {
+	if ctx.Method == "GET" {
+		in := &bll.QueryPagination{}
+		if err := ctx.ParseURL(in); err != nil {
+			return err
+		}
+
+		input = in.To()
+	} else if err := ctx.ParseBody(input); err != nil {
 		return err
 	}
 
@@ -715,7 +736,14 @@ func (a *Publication) ListByFollowing(ctx *gear.Context) error {
 
 func (a *Publication) ListArchived(ctx *gear.Context) error {
 	input := &bll.GIDPagination{}
-	if err := ctx.ParseBody(input); err != nil {
+	if ctx.Method == "GET" {
+		in := &bll.QueryGIDPagination{}
+		if err := ctx.ParseURL(in); err != nil {
+			return err
+		}
+
+		input = in.To()
+	} else if err := ctx.ParseBody(input); err != nil {
 		return err
 	}
 

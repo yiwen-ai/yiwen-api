@@ -168,7 +168,14 @@ func (a *Creation) Delete(ctx *gear.Context) error {
 
 func (a *Creation) List(ctx *gear.Context) error {
 	input := &bll.GIDPagination{}
-	if err := ctx.ParseBody(input); err != nil {
+	if ctx.Method == "GET" {
+		in := &bll.QueryGIDPagination{}
+		if err := ctx.ParseURL(in); err != nil {
+			return err
+		}
+
+		input = in.To()
+	} else if err := ctx.ParseBody(input); err != nil {
 		return err
 	}
 
@@ -193,7 +200,14 @@ func (a *Creation) List(ctx *gear.Context) error {
 
 func (a *Creation) ListArchived(ctx *gear.Context) error {
 	input := &bll.GIDPagination{}
-	if err := ctx.ParseBody(input); err != nil {
+	if ctx.Method == "GET" {
+		in := &bll.QueryGIDPagination{}
+		if err := ctx.ParseURL(in); err != nil {
+			return err
+		}
+
+		input = in.To()
+	} else if err := ctx.ParseBody(input); err != nil {
 		return err
 	}
 

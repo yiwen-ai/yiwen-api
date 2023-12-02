@@ -44,6 +44,7 @@ func (i *CreateCollectionInput) Validate() error {
 type CollectionInfoOutput struct {
 	ID            util.ID        `json:"id" cbor:"id"`
 	GID           util.ID        `json:"gid" cbor:"gid"`
+	MID           util.ID        `json:"mid" cbor:"mid"`
 	Status        int8           `json:"status" cbor:"status"`
 	UpdatedAt     int64          `json:"updated_at" cbor:"updated_at"`
 	Cover         string         `json:"cover" cbor:"cover"`

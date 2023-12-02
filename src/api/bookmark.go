@@ -41,7 +41,14 @@ func (a *Bookmark) Delete(ctx *gear.Context) error {
 
 func (a *Bookmark) List(ctx *gear.Context) error {
 	input := &bll.Pagination{}
-	if err := ctx.ParseBody(input); err != nil {
+	if ctx.Method == "GET" {
+		in := &bll.QueryPagination{}
+		if err := ctx.ParseURL(in); err != nil {
+			return err
+		}
+
+		input = in.To()
+	} else if err := ctx.ParseBody(input); err != nil {
 		return err
 	}
 
