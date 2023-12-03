@@ -62,7 +62,7 @@ func (a *Jarvis) Search(ctx *gear.Context) error {
 		}
 	} else {
 		var wg sync.WaitGroup
-		wg.Add(2)
+		wg.Add(1)
 
 		now := time.Now()
 		// semanticElapsed := int64(0)
@@ -182,22 +182,10 @@ func (a *Jarvis) GroupSearch(ctx *gear.Context) error {
 	// }
 
 	output := bll.SearchOutput{}
-	var wg sync.WaitGroup
-	wg.Add(2)
 
 	now := time.Now()
-	literalElapsed := int64(0)
-
-	var literalOutput bll.SearchOutput
-	go logging.Run(func() logging.Log {
-		defer wg.Done()
-
-		literalOutput = a.blls.Writing.GroupSearch(ctx, input)
-		literalElapsed = int64(time.Since(now)) / 1e6
-		return nil
-	})
-
-	wg.Wait()
+	literalOutput := a.blls.Writing.GroupSearch(ctx, input)
+	literalElapsed := int64(time.Since(now)) / 1e6
 	logging.SetTo(ctx, "literalResults", len(literalOutput.Hits))
 	logging.SetTo(ctx, "literalElapsed", literalElapsed)
 
