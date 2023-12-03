@@ -134,6 +134,7 @@ type UpdateCollectionInput struct {
 	UpdatedAt     int64           `json:"updated_at" cbor:"updated_at" validate:"gte=1"`
 	Version       *uint16         `json:"version,omitempty" cbor:"version,omitempty" validate:"omitempty,gte=0,lte=32767"`
 	Language      *string         `json:"language,omitempty" cbor:"language,omitempty"`
+	Languages     *[]string       `json:"languages,omitempty" cbor:"languages,omitempty"`
 	Context       *string         `json:"context,omitempty" cbor:"context,omitempty" validate:"omitempty,gte=0,lte=1024"`
 	Info          *CollectionInfo `json:"info,omitempty" cbor:"info,omitempty" validate:"omitempty,required"`
 	Cover         *string         `json:"cover,omitempty" cbor:"cover,omitempty" validate:"omitempty,http_url"`

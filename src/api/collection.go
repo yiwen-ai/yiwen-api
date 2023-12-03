@@ -286,13 +286,14 @@ func (a *Collection) Update(ctx *gear.Context) error {
 			return gear.ErrInternalServerError.From(err)
 		}
 	}
-	if input.Version != nil && (input.Context != nil || input.Info != nil) {
+	if input.Version != nil && (input.Context != nil || input.Info != nil || input.Languages != nil) {
 		infoInput := &bll.UpdateMessageInput{
-			ID:       input.ID,
-			GID:      input.GID,
-			Version:  *input.Version,
-			Context:  input.Context,
-			Language: input.Language,
+			ID:        input.ID,
+			GID:       input.GID,
+			Version:   *input.Version,
+			Context:   input.Context,
+			Language:  input.Language,
+			Languages: input.Languages,
 		}
 		if input.Info != nil {
 			msg := bll.ArrayMessage{
